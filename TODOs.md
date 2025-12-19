@@ -62,6 +62,12 @@ JSON/MD 출력
   - [x] `backend/render/` (Markdown 렌더러)
   - [x] `backend/api/routes/` (FastAPI 라우터)
   - [x] `backend/core/` (상수, 유틸리티)
+- [x] FastAPI 앱 초기화 (`backend/main.py`)
+  - [x] FastAPI 앱 생성
+  - [x] CORS 설정
+  - [x] 예외 처리 미들웨어
+  - [x] Health Check 엔드포인트 (`/health`)
+  - [x] OpenAPI/Swagger 문서 자동 생성 확인
 
 ### 프론트엔드 설정
 - [x] Next.js 프로젝트 초기화 (`frontend/` 디렉토리)
@@ -914,16 +920,22 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 2 (백엔드 파서 구현)
+**현재 Phase**: Phase 1 완료, Phase 2 시작 준비
 
-**마지막 업데이트**: 2025-12-19
+**마지막 업데이트**: 2025-01-XX
 
 **완료된 Phase**:
-- Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
+- Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-01-XX 완료)
+  - Poetry 프로젝트 초기화 완료
+  - 백엔드/프론트엔드 디렉토리 구조 생성 완료
+  - FastAPI 앱 초기화 완료 (`backend/main.py`)
+  - 기본 문서 및 설정 파일 생성 완료
 
 **진행 중인 Phase**:
-- Phase 2: 백엔드 파서 구현 (마크다운 파싱)
+- Phase 2: 백엔드 파서 구현 (마크다운 파싱) - 시작 준비
 
 **다음 단계**:
 - Phase 2: 백엔드 파서 구현 시작
+  - 텍스트 정규화 (`backend/parser/normalize.py`)
+  - 세션 메타 추출 (`backend/parser/meta.py`)
 
