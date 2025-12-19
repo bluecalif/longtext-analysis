@@ -1,0 +1,426 @@
+---
+alwaysApply: true
+description: 이벤트 정규화 및 Timeline/Issue Cards 빌더 규칙
+---
+
+# Event Normalization & Builders
+
+## Overview
+파싱된 Turn 데이터를 이벤트로 정규화하고, Timeline과 Issue Cards를 생성하는 규칙. 링킹(연결) 로직을 통해 재사용 가능한 작업 지식을 구성합니다.
+
+## Domain Knowledge
+
+### 이벤트 타입 (MVP 고정)
+- `status_review` - 상태 리뷰
+- `plan` - 계획 수립
+- `artifact` - 파일 생성/수정/실행
+- `debug` - 디버깅 이벤트
+- `completion` - 완료 요약
+- `next_step` - 다음 단계
+- `turn` - 일반 Turn (fallback)
+
+### Issue Card 구조
+- **symptom** (주로 User 발화) - 증상
+- **root_cause** (주로 Cursor 발화) - 원인 (confirmed/hypothesis)
+- **fix** - 조치 방법
+- **validation** - 검증 방법
+- **related_artifacts** - 관련 파일
+- **snippet_refs** - 관련 코드 스니펫
+
+### 링킹 원칙
+- **근접성 우선**: 슬라이딩 윈도우(최근 6~10 turns) 내에서 연결
+- **키워드 트리거**: error, 원인, 해결, 조치, 검증 등
+- **산출물 연결**: 파일 경로/코드 블록이 있으면 ArtifactEvent로 변환 후 연결
+
+## Standards & Conventions
+
+### 1. 파일 구조
+```
+backend/builders/
+├── event_normalizer.py  # Turn → Event 변환
+├── timeline_builder.py  # Timeline 생성
+└── issues_builder.py    # Issue Cards 생성
+```
+
+### 2. 이벤트 정규화 규칙
+
+```python
+# backend/builders/event_normalizer.py
+from typing import List
+from backend.core.models import Turn, Event, EventType
+
+# Debug 트리거 패턴
+DEBUG_TRIGGERS = {
+    "error": re.compile(
+        r'(?i)\b(error|exception|stack trace|violates check constraint|constraint)\b'
+    ),
+    "root_cause": re.compile(
+        r'(?i)\b(원인|Root cause|because|due to)\b'
+    ),
+    "fix": re.compile(
+        r'(?i)\b(해결|조치|수정|patch|fix|ALTER TABLE|UPDATE|script)\b'
+    ),
+    "validation": re.compile(
+        r'(?i)\b(검증|확인|테스트|scenario|check)\b'
+    )
+}
+
+def normalize_turns_to_events(turns: List[Turn]) -> List[Event]:
+    """
+    Turn 리스트를 Event 리스트로 변환
+    
+    Args:
+        turns: 파싱된 Turn 리스트
+    
+    Returns:
+        정규화된 Event 리스트
+    """
+    events = []
+    
+    for turn in turns:
+        # 1. ArtifactEvent 체크 (파일 경로가 있으면)
+        if turn.path_candidates:
+            events.append(create_artifact_event(turn))
+        
+        # 2. DebugEvent 체크 (디버그 트리거가 있으면)
+        if is_debug_turn(turn):
+            events.append(create_debug_event(turn))
+        
+        # 3. 일반 MessageEvent
+        events.append(create_message_event(turn))
+    
+    return events
+
+def is_debug_turn(turn: Turn) -> bool:
+    """디버그 Turn인지 판단"""
+    if turn.speaker != "Cursor":
+        return False
+    
+    text = turn.body.lower()
+    return any(
+        trigger.search(text) 
+        for trigger in DEBUG_TRIGGERS.values()
+    )
+
+def create_debug_event(turn: Turn) -> Event:
+    """DebugEvent 생성"""
+    return Event(
+        type=EventType.DEBUG,
+        turn_ref=turn.turn_index,
+        summary=summarize_turn(turn),
+        artifacts=[],  # 후속 단계에서 연결
+        snippet_refs=[block.block_index for block in turn.code_blocks]
+    )
+```
+
+### 3. Timeline 빌더 규칙
+
+```python
+# backend/builders/timeline_builder.py
+from typing import List
+from backend.core.models import Event, TimelineEvent, SessionMeta
+
+def build_timeline(
+    session_id: str,
+    events: List[Event],
+    session_meta: SessionMeta
+) -> List[TimelineEvent]:
+    """
+    이벤트 리스트로부터 Timeline 생성
+    
+    Args:
+        session_id: 세션 ID
+        events: 정규화된 이벤트 리스트
+        session_meta: 세션 메타데이터
+    
+    Returns:
+        TimelineEvent 리스트
+    """
+    timeline = []
+    
+    for seq, event in enumerate(events, start=1):
+        timeline_event = TimelineEvent(
+            seq=seq,
+            session_id=session_id,
+            phase=session_meta.phase,
+            subphase=session_meta.subphase,
+            type=event.type,
+            summary=event.summary,
+            artifacts=event.artifacts,
+            snippet_refs=event.snippet_refs
+        )
+        timeline.append(timeline_event)
+    
+    return timeline
+```
+
+### 4. Issue Cards 빌더 규칙
+
+```python
+# backend/builders/issues_builder.py
+from typing import List, Optional
+from backend.core.models import Event, IssueCard, Turn
+
+# 슬라이딩 윈도우 크기
+WINDOW_SIZE = 10
+
+def build_issue_cards(
+    turns: List[Turn],
+    events: List[Event]
+) -> List[IssueCard]:
+    """
+    Turn과 Event로부터 Issue Cards 생성
+    
+    Args:
+        turns: Turn 리스트
+        events: Event 리스트
+    
+    Returns:
+        IssueCard 리스트
+    """
+    issue_cards = []
+    
+    # 1. Seed 탐지 (User symptom)
+    seeds = find_symptom_seeds(turns)
+    
+    for seed_idx, seed_turn in seeds:
+        # 2. 슬라이딩 윈도우 내에서 연결 후보 탐색
+        window_turns = turns[seed_idx:seed_idx + WINDOW_SIZE]
+        window_events = [
+            e for e in events 
+            if seed_idx <= e.turn_ref < seed_idx + WINDOW_SIZE
+        ]
+        
+        # 3. Issue Card 구성
+        issue_card = build_issue_card_from_window(
+            seed_turn=seed_turn,
+            window_turns=window_turns,
+            window_events=window_events,
+            seed_idx=seed_idx
+        )
+        
+        if issue_card:
+            issue_cards.append(issue_card)
+    
+    return issue_cards
+
+def find_symptom_seeds(turns: List[Turn]) -> List[tuple]:
+    """
+    User Turn에서 symptom 후보 탐지
+    
+    Returns:
+        [(turn_index, Turn), ...]
+    """
+    seeds = []
+    symptom_pattern = re.compile(
+        r'(?i)\b(없|안 보|에러|문제|왜|%\s*증가|%\s*감소)\b'
+    )
+    
+    for idx, turn in enumerate(turns):
+        if turn.speaker == "User" and symptom_pattern.search(turn.body):
+            seeds.append((idx, turn))
+    
+    return seeds
+
+def build_issue_card_from_window(
+    seed_turn: Turn,
+    window_turns: List[Turn],
+    window_events: List[Event],
+    seed_idx: int
+) -> Optional[IssueCard]:
+    """
+    슬라이딩 윈도우 내에서 Issue Card 구성
+    """
+    # Symptom 추출
+    symptoms = [seed_turn.body]
+    
+    # Root cause 추출 (Cursor turns에서)
+    root_cause = None
+    for turn in window_turns:
+        if turn.speaker == "Cursor":
+            if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+                root_cause = {
+                    "status": "confirmed",  # 또는 "hypothesis"
+                    "text": extract_root_cause_text(turn.body)
+                }
+                break
+    
+    # Fix 추출
+    fixes = []
+    for event in window_events:
+        if event.type == EventType.DEBUG and event.snippet_refs:
+            fixes.append({
+                "summary": event.summary,
+                "snippet_refs": event.snippet_refs
+            })
+    
+    # Validation 추출
+    validations = []
+    for turn in window_turns:
+        if DEBUG_TRIGGERS["validation"].search(turn.body):
+            validations.append(extract_validation_text(turn.body))
+    
+    # Root cause 또는 Fix 중 하나라도 있어야 카드 생성
+    if not root_cause and not fixes:
+        return None
+    
+    # Issue ID 생성
+    issue_id = f"ISS-{seed_idx:03d}-{hash(seed_turn.body) % 10000}"
+    
+    return IssueCard(
+        issue_id=issue_id,
+        scope={
+            "session_id": "current",  # 실제로는 session_id 전달
+            "phase": None,
+            "subphase": None
+        },
+        title=generate_issue_title(seed_turn, root_cause),
+        symptoms=symptoms,
+        root_cause=root_cause,
+        evidence=[],
+        fix=fixes,
+        validation=validations,
+        related_artifacts=[],
+        snippet_refs=[]
+    )
+```
+
+## Implementation Patterns
+
+### Pattern 1: 점수 기반 링킹
+
+```python
+def score_turn_for_issue(
+    turn: Turn,
+    issue_type: str  # "root_cause", "fix", "validation"
+) -> float:
+    """
+    Turn이 Issue의 특정 부분에 얼마나 적합한지 점수 계산
+    """
+    score = 0.0
+    
+    if issue_type == "root_cause":
+        if DEBUG_TRIGGERS["error"].search(turn.body):
+            score += 5.0
+        if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+            score += 4.0
+    
+    elif issue_type == "fix":
+        if DEBUG_TRIGGERS["fix"].search(turn.body):
+            score += 4.0
+        if turn.code_blocks:
+            score += 3.0  # 코드가 있으면 fix 가능성 높음
+    
+    elif issue_type == "validation":
+        if DEBUG_TRIGGERS["validation"].search(turn.body):
+            score += 3.0
+    
+    # 거리 패널티
+    # (seed에서 멀수록 점수 감소)
+    
+    return score
+```
+
+### Pattern 2: LLM 보조 요약 (옵션)
+
+```python
+# backend/core/llm_service.py
+from backend.core.cache import get_cached_result, save_cached_result
+
+def summarize_with_llm(text: str, cache_key: str) -> str:
+    """
+    LLM으로 요약 (캐싱 적용)
+    """
+    # 캐시 확인
+    cached = get_cached_result(cache_key)
+    if cached:
+        return cached["summary"]
+    
+    # LLM 호출
+    from openai import OpenAI
+    client = OpenAI()
+    
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "요약만 제공하세요."},
+            {"role": "user", "content": f"다음 텍스트를 1-2문장으로 요약: {text}"}
+        ]
+    )
+    
+    summary = response.choices[0].message.content
+    
+    # 캐시 저장
+    save_cached_result(cache_key, {"summary": summary})
+    
+    return summary
+```
+
+## Examples
+
+### 완전한 이벤트 정규화 예시
+
+```python
+# backend/builders/event_normalizer.py
+def normalize_session(
+    session_meta: SessionMeta,
+    turns: List[Turn]
+) -> dict:
+    """
+    전체 세션 정규화
+    
+    Returns:
+        {
+            "events": List[Event],
+            "timeline": List[TimelineEvent],
+            "issues": List[IssueCard]
+        }
+    """
+    # 1. Turn → Event 변환
+    events = normalize_turns_to_events(turns)
+    
+    # 2. Timeline 생성
+    from backend.builders.timeline_builder import build_timeline
+    timeline = build_timeline(
+        session_id=session_meta.session_id,
+        events=events,
+        session_meta=session_meta
+    )
+    
+    # 3. Issue Cards 생성
+    from backend.builders.issues_builder import build_issue_cards
+    issues = build_issue_cards(turns, events)
+    
+    return {
+        "events": events,
+        "timeline": timeline,
+        "issues": issues
+    }
+```
+
+## Checklist
+
+### 이벤트 정규화 구현 시
+- [ ] Event 타입 분류 로직 구현
+- [ ] Debug 트리거 패턴 정의
+- [ ] Artifact 연결 로직 구현
+- [ ] Snippet 참조 연결 로직 구현
+
+### Issue Cards 생성 시
+- [ ] Symptom seed 탐지 로직
+- [ ] 슬라이딩 윈도우 크기 설정
+- [ ] Root cause 추출 로직 (confirmed/hypothesis 구분)
+- [ ] Fix 추출 로직
+- [ ] Validation 추출 로직
+- [ ] 카드 완료 조건 확인 (root_cause 또는 fix 중 하나)
+
+### LLM 사용 시
+- [ ] 캐싱 로직 구현 (파일 기반)
+- [ ] 캐시 키 생성 규칙 명확화
+- [ ] 입력 텍스트에 있는 내용만 사용 (새로운 사실 생성 금지)
+
+## References
+- 상세 지침: `docs/instruction_detail.md`
+- 구체화 지침: `docs/instruction_moredetail.md`
+- Parser Rules: `.cursor/rules/parser-rules.mdc`
+- Models: `backend/core/models.py`

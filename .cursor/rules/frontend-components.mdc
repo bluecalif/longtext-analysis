@@ -1,0 +1,500 @@
+---
+alwaysApply: true
+description: Next.js 프론트엔드 컴포넌트 및 페이지 구현 규칙
+---
+
+# Frontend Components
+
+## Overview
+Next.js 14+ (App Router) 기반 프론트엔드 구현 규칙. TypeScript, Tailwind CSS를 사용하며, 백엔드 API와의 계약 동기화를 보장합니다.
+
+## Domain Knowledge
+
+### 화면 구성 (MVP)
+1. **좌측: 입력 패널**
+   - 파일 업로드 (드래그&드롭)
+   - Session Meta Preview
+   - 파싱 옵션 토글
+
+2. **중앙: 결과 미리보기 탭**
+   - Timeline Preview
+   - Issues Preview
+   - Snippets Preview
+
+3. **우측: Export 패널**
+   - 다운로드 버튼들
+
+### 주요 컴포넌트
+- `FileUpload` - 파일 업로드
+- `SessionMetaPreview` - 세션 메타 표시
+- `TimelinePreview` - Timeline 이벤트 리스트
+- `IssuesPreview` - Issue Cards 리스트
+- `SnippetsPreview` - 코드 스니펫 목록
+
+## Standards & Conventions
+
+### 1. 파일 구조
+```
+frontend/
+├── app/
+│   └── page.tsx              # 메인 페이지
+├── components/
+│   ├── FileUpload.tsx
+│   ├── SessionMetaPreview.tsx
+│   ├── TimelinePreview.tsx
+│   ├── IssuesPreview.tsx
+│   └── SnippetsPreview.tsx
+├── lib/
+│   ├── api.ts                # API 클라이언트
+│   └── constants.ts          # 상수 (백엔드와 동기화)
+├── types/
+│   └── api.ts                # 타입 정의 (백엔드와 동기화)
+└── package.json
+```
+
+### 2. 타입 정의 규칙
+
+```typescript
+// frontend/types/api.ts
+// 백엔드 Pydantic 모델과 동일한 구조 유지
+
+export type EventType = 
+  | 'status_review'
+  | 'plan'
+  | 'artifact'
+  | 'debug'
+  | 'completion'
+  | 'next_step'
+  | 'turn'
+
+export interface SessionMeta {
+  session_id: string
+  exported_at?: string
+  cursor_version?: string
+  phase?: number
+  subphase?: number
+  source_doc: string
+}
+
+export interface TimelineEvent {
+  seq: number
+  session_id: string
+  phase?: number
+  subphase?: number
+  type: EventType
+  summary: string
+  artifacts: Array<{
+    kind: string
+    path: string
+    action: string
+  }>
+  snippet_refs: string[]
+}
+
+export interface IssueCard {
+  issue_id: string
+  scope: {
+    session_id: string
+    phase?: number
+    subphase?: number
+  }
+  title: string
+  symptoms: string[]
+  root_cause?: {
+    status: 'confirmed' | 'hypothesis'
+    text: string
+  }
+  evidence: Array<{
+    type: string
+    text_or_ref: string
+  }>
+  fix: Array<{
+    summary: string
+    snippet_refs: string[]
+  }>
+  validation: string[]
+  related_artifacts: Array<{
+    path: string
+    kind: string
+  }>
+  snippet_refs: string[]
+}
+```
+
+### 3. API 클라이언트 규칙
+
+```typescript
+// frontend/lib/api.ts
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+class ApiClient {
+  private baseUrl: string
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl
+  }
+
+  async parseFile(file: File): Promise<{
+    session_meta: SessionMeta
+    turns: any[]
+    events: any[]
+  }> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch(`${this.baseUrl}/api/parse`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      throw new Error(`Parse failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async createTimeline(
+    sessionId: string,
+    events: any[],
+    sessionMeta: SessionMeta
+  ): Promise<{
+    session_meta: SessionMeta
+    timeline: TimelineEvent[]
+  }> {
+    const response = await fetch(`${this.baseUrl}/api/timeline`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        events,
+        session_meta: sessionMeta
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Timeline creation failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async getSnippet(snippetId: string): Promise<{
+    snippet_id: string
+    lang: string
+    code: string
+  }> {
+    const response = await fetch(`${this.baseUrl}/api/snippets/${snippetId}`)
+
+    if (!response.ok) {
+      throw new Error(`Snippet fetch failed: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+}
+
+export const api = new ApiClient(API_BASE_URL)
+```
+
+### 4. 컴포넌트 구현 규칙
+
+```typescript
+// frontend/components/FileUpload.tsx
+'use client'
+
+import { useState, useCallback } from 'react'
+import { api } from '@/lib/api'
+
+export function FileUpload({
+  onParseComplete
+}: {
+  onParseComplete: (result: any) => void
+}) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [isParsing, setIsParsing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFile = useCallback(async (file: File) => {
+    if (!file.name.endsWith('.md')) {
+      setError('Only .md files are supported')
+      return
+    }
+
+    setIsParsing(true)
+    setError(null)
+
+    try {
+      const result = await api.parseFile(file)
+      onParseComplete(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Parse failed')
+    } finally {
+      setIsParsing(false)
+    }
+  }, [onParseComplete])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFile(file)
+    }
+  }, [handleFile])
+
+  return (
+    <div
+      onDrop={handleDrop}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setIsDragging(true)
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      className={`border-2 border-dashed p-8 ${
+        isDragging ? 'border-blue-500' : 'border-gray-300'
+      }`}
+    >
+      <input
+        type="file"
+        accept=".md"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleFile(file)
+        }}
+        className="hidden"
+        id="file-upload"
+      />
+      <label
+        htmlFor="file-upload"
+        className="cursor-pointer block text-center"
+      >
+        {isParsing ? 'Parsing...' : 'Drop .md file here or click to select'}
+      </label>
+      {error && <div className="text-red-500 mt-2">{error}</div>}
+    </div>
+  )
+}
+```
+
+### 5. 상태 관리 규칙
+
+```typescript
+// frontend/app/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { FileUpload } from '@/components/FileUpload'
+import { SessionMetaPreview } from '@/components/SessionMetaPreview'
+import { TimelinePreview } from '@/components/TimelinePreview'
+import { IssuesPreview } from '@/components/IssuesPreview'
+import { SnippetsPreview } from '@/components/SnippetsPreview'
+import type { SessionMeta, TimelineEvent, IssueCard } from '@/types/api'
+
+export default function Home() {
+  const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
+  const [issues, setIssues] = useState<IssueCard[]>([])
+  const [activeTab, setActiveTab] = useState<'timeline' | 'issues' | 'snippets'>('timeline')
+
+  const handleParseComplete = async (result: any) => {
+    setSessionMeta(result.session_meta)
+
+    // Timeline 생성
+    const timelineResult = await api.createTimeline(
+      result.session_meta.session_id,
+      result.events,
+      result.session_meta
+    )
+    setTimeline(timelineResult.timeline)
+
+    // Issues 생성
+    const issuesResult = await api.createIssues(
+      result.session_meta.session_id,
+      result.events,
+      result.turns
+    )
+    setIssues(issuesResult.issues)
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-4 p-4">
+      {/* 좌측: 입력 패널 */}
+      <div className="col-span-1">
+        <FileUpload onParseComplete={handleParseComplete} />
+        {sessionMeta && (
+          <SessionMetaPreview sessionMeta={sessionMeta} />
+        )}
+      </div>
+
+      {/* 중앙: 결과 미리보기 */}
+      <div className="col-span-1">
+        <div className="tabs">
+          <button onClick={() => setActiveTab('timeline')}>Timeline</button>
+          <button onClick={() => setActiveTab('issues')}>Issues</button>
+          <button onClick={() => setActiveTab('snippets')}>Snippets</button>
+        </div>
+
+        {activeTab === 'timeline' && (
+          <TimelinePreview timeline={timeline} />
+        )}
+        {activeTab === 'issues' && (
+          <IssuesPreview issues={issues} />
+        )}
+        {activeTab === 'snippets' && (
+          <SnippetsPreview />
+        )}
+      </div>
+
+      {/* 우측: Export 패널 */}
+      <div className="col-span-1">
+        <ExportPanel
+          sessionMeta={sessionMeta}
+          timeline={timeline}
+          issues={issues}
+        />
+      </div>
+    </div>
+  )
+}
+```
+
+## Implementation Patterns
+
+### Pattern 1: 에러 처리
+
+```typescript
+// frontend/lib/error-handler.ts
+export function handleApiError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  return 'An unexpected error occurred'
+}
+
+// 사용
+try {
+  const result = await api.parseFile(file)
+} catch (error) {
+  const message = handleApiError(error)
+  toast.error(message)
+}
+```
+
+### Pattern 2: 로딩 상태 관리
+
+```typescript
+// 커스텀 훅
+function useAsync<T>(
+  asyncFn: () => Promise<T>
+): {
+  data: T | null
+  loading: boolean
+  error: string | null
+} {
+  const [data, setData] = useState<T | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    setError(null)
+    asyncFn()
+      .then(setData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [asyncFn])
+
+  return { data, loading, error }
+}
+```
+
+## Examples
+
+### 완전한 컴포넌트 예시
+
+```typescript
+// frontend/components/TimelinePreview.tsx
+'use client'
+
+import { useState } from 'react'
+import type { TimelineEvent } from '@/types/api'
+import { api } from '@/lib/api'
+
+export function TimelinePreview({ timeline }: { timeline: TimelineEvent[] }) {
+  const [expandedSeq, setExpandedSeq] = useState<number | null>(null)
+  const [snippetCache, setSnippetCache] = useState<Record<string, string>>({})
+
+  const loadSnippet = async (snippetId: string) => {
+    if (snippetCache[snippetId]) {
+      return snippetCache[snippetId]
+    }
+
+    const snippet = await api.getSnippet(snippetId)
+    setSnippetCache((prev) => ({
+      ...prev,
+      [snippetId]: snippet.code
+    }))
+    return snippet.code
+  }
+
+  return (
+    <div className="space-y-2">
+      {timeline.map((event) => (
+        <div
+          key={event.seq}
+          className="border p-4 rounded cursor-pointer"
+          onClick={() => setExpandedSeq(
+            expandedSeq === event.seq ? null : event.seq
+          )}
+        >
+          <div className="flex justify-between">
+            <span className="font-bold">#{event.seq}</span>
+            <span className="text-sm text-gray-500">{event.type}</span>
+          </div>
+          <p className="mt-2">{event.summary}</p>
+
+          {expandedSeq === event.seq && (
+            <div className="mt-4">
+              {event.snippet_refs.length > 0 && (
+                <div>
+                  <h4>Snippets:</h4>
+                  {event.snippet_refs.map((snippetId) => (
+                    <div key={snippetId}>
+                      <code>{snippetId}</code>
+                      {/* 스니펫 로드 및 표시 */}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+## Checklist
+
+### 컴포넌트 구현 시
+- [ ] 타입 정의가 백엔드와 동기화되어 있는지 확인
+- [ ] API 클라이언트 에러 처리
+- [ ] 로딩 상태 표시
+- [ ] 반응형 디자인 (Tailwind CSS)
+- [ ] 접근성 고려 (키보드 네비게이션 등)
+
+### API 연동 시
+- [ ] 요청/응답 타입이 백엔드와 일치하는지 확인
+- [ ] 환경 변수 설정 (NEXT_PUBLIC_API_URL)
+- [ ] CORS 설정 확인
+
+## References
+- API Contract Sync: `.cursor/rules/api-contract-sync.mdc`
+- Backend API Design: `.cursor/rules/backend-api-design.mdc`
+- Types: `frontend/types/api.ts`
+- Constants: `frontend/lib/constants.ts`

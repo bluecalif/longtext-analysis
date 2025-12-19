@@ -1,0 +1,330 @@
+---
+alwaysApply: true
+description: FastAPI 백엔드 API 설계 및 구현 규칙
+---
+
+# Backend API Design
+
+## Overview
+FastAPI 기반 백엔드 API 설계 규칙. RESTful 원칙을 따르며, Pydantic 모델을 통한 타입 안정성과 API 계약 동기화를 보장합니다.
+
+## Domain Knowledge
+
+### 핵심 엔드포인트
+- `POST /api/parse` - 마크다운 파일 업로드 및 파싱
+- `POST /api/timeline` - Timeline 생성
+- `POST /api/issues` - Issue Cards 생성
+- `GET /api/snippets/{snippet_id}` - 스니펫 조회
+- `POST /api/snippets/export` - 스니펫 ZIP 다운로드
+- `POST /api/export/timeline` - Timeline JSON/MD 다운로드
+- `POST /api/export/issues` - Issues JSON/MD 다운로드
+- `POST /api/export/all` - 전체 산출물 ZIP 다운로드
+
+### 데이터 모델 계층
+1. **Parser Layer**: `Turn`, `CodeBlock`, `Artifact` (파싱 결과)
+2. **Event Layer**: `MessageEvent`, `ArtifactEvent`, `DebugEvent` (정규화된 이벤트)
+3. **Output Layer**: `TimelineEvent`, `IssueCard`, `Snippet` (최종 산출물)
+
+## Standards & Conventions
+
+### 1. 파일 구조
+```
+backend/
+├── api/
+│   └── routes/
+│       ├── parse.py
+│       ├── timeline.py
+│       ├── issues.py
+│       ├── snippets.py
+│       └── export.py
+├── parser/          # 파싱 모듈
+├── builders/        # Timeline/Issue Cards 빌더
+├── render/          # Markdown 렌더러
+├── core/
+│   ├── models.py    # Pydantic 모델
+│   └── constants.py # 상수 정의
+└── main.py
+```
+
+### 2. Pydantic 모델 정의 규칙
+
+**원칙**: 모든 API 요청/응답은 Pydantic 모델로 정의
+
+```python
+# backend/core/models.py
+from pydantic import BaseModel
+from typing import Optional, List
+from enum import Enum
+
+class EventType(str, Enum):
+    STATUS_REVIEW = "status_review"
+    PLAN = "plan"
+    ARTIFACT = "artifact"
+    DEBUG = "debug"
+    COMPLETION = "completion"
+    NEXT_STEP = "next_step"
+    TURN = "turn"
+
+class SessionMeta(BaseModel):
+    session_id: str
+    exported_at: Optional[str] = None
+    cursor_version: Optional[str] = None
+    phase: Optional[int] = None
+    subphase: Optional[int] = None
+    source_doc: str
+
+class TimelineEvent(BaseModel):
+    seq: int
+    session_id: str
+    phase: Optional[int] = None
+    subphase: Optional[int] = None
+    type: EventType
+    summary: str
+    artifacts: List[dict] = []
+    snippet_refs: List[str] = []
+
+class IssueCard(BaseModel):
+    issue_id: str
+    scope: dict
+    title: str
+    symptoms: List[str]
+    root_cause: Optional[dict] = None
+    evidence: List[dict] = []
+    fix: List[dict] = []
+    validation: List[str] = []
+    related_artifacts: List[dict] = []
+    snippet_refs: List[str] = []
+```
+
+### 3. API 라우터 구현 패턴
+
+```python
+# backend/api/routes/parse.py
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from backend.core.models import SessionMeta, Turn
+from backend.parser import parse_markdown
+
+router = APIRouter(prefix="/api/parse", tags=["parse"])
+
+@router.post("", response_model=dict)
+async def parse_file(file: UploadFile = File(...)):
+    """
+    마크다운 파일을 업로드하고 파싱합니다.
+    
+    Returns:
+        {
+            "session_meta": SessionMeta,
+            "turns": List[Turn],
+            "events": List[Event]
+        }
+    """
+    if not file.filename.endswith('.md'):
+        raise HTTPException(status_code=400, detail="Only .md files are supported")
+    
+    content = await file.read()
+    text = content.decode('utf-8')
+    
+    # 파싱 실행
+    result = parse_markdown(text)
+    
+    return {
+        "session_meta": result.session_meta,
+        "turns": result.turns,
+        "events": result.events
+    }
+```
+
+### 4. 에러 처리 규칙
+
+```python
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+
+# 커스텀 예외 클래스
+class ParseError(Exception):
+    pass
+
+# 예외 핸들러
+@app.exception_handler(ParseError)
+async def parse_error_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": f"Parse error: {str(exc)}"}
+    )
+
+# 사용 예시
+try:
+    result = parse_markdown(text)
+except ParseError as e:
+    raise HTTPException(status_code=400, detail=str(e))
+```
+
+### 5. 파일 업로드 처리
+
+```python
+from fastapi import UploadFile, File
+import aiofiles
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    # 파일 크기 제한 (예: 10MB)
+    MAX_SIZE = 10 * 1024 * 1024
+    
+    content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="File too large")
+    
+    # UTF-8 디코딩
+    try:
+        text = content.decode('utf-8')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid UTF-8 encoding")
+    
+    return {"filename": file.filename, "size": len(content)}
+```
+
+## Implementation Patterns
+
+### Pattern 1: 의존성 주입 (Dependency Injection)
+
+```python
+# backend/core/dependencies.py
+from fastapi import Depends
+
+def get_llm_service():
+    from backend.core.llm_service import LLMService
+    return LLMService()
+
+# 사용
+@router.post("/timeline")
+async def create_timeline(
+    events: List[Event],
+    llm_service: LLMService = Depends(get_llm_service)
+):
+    # LLM 서비스 사용
+    pass
+```
+
+### Pattern 2: 캐싱 전략
+
+```python
+# backend/core/cache.py
+from functools import lru_cache
+import hashlib
+import json
+
+def cache_key(*args, **kwargs):
+    """캐시 키 생성"""
+    data = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
+    return hashlib.sha256(data.encode()).hexdigest()
+
+# 파일 기반 캐시 (LLM 호출 결과)
+def get_cached_result(key: str):
+    cache_file = f"cache/{key}.json"
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return None
+
+def save_cached_result(key: str, result: dict):
+    os.makedirs("cache", exist_ok=True)
+    cache_file = f"cache/{key}.json"
+    with open(cache_file, 'w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+```
+
+### Pattern 3: 백그라운드 작업 처리
+
+```python
+# 백그라운드 작업은 FastAPI BackgroundTasks 사용
+from fastapi import BackgroundTasks
+
+@router.post("/parse")
+async def parse_file(
+    file: UploadFile,
+    background_tasks: BackgroundTasks
+):
+    result = parse_markdown(text)
+    
+    # 백그라운드에서 스니펫 저장
+    background_tasks.add_task(save_snippets, result.snippets)
+    
+    return result
+```
+
+## Examples
+
+### 완전한 API 엔드포인트 예시
+
+```python
+# backend/api/routes/timeline.py
+from fastapi import APIRouter, HTTPException, Depends
+from typing import List
+from backend.core.models import TimelineEvent, SessionMeta
+from backend.builders.timeline_builder import build_timeline
+
+router = APIRouter(prefix="/api/timeline", tags=["timeline"])
+
+@router.post("", response_model=dict)
+async def create_timeline(
+    session_id: str,
+    events: List[dict],
+    session_meta: SessionMeta
+):
+    """
+    이벤트 리스트로부터 Timeline을 생성합니다.
+    
+    Args:
+        session_id: 세션 ID
+        events: 정규화된 이벤트 리스트
+        session_meta: 세션 메타데이터
+    
+    Returns:
+        {
+            "session_meta": SessionMeta,
+            "timeline": List[TimelineEvent]
+        }
+    """
+    try:
+        timeline = build_timeline(
+            session_id=session_id,
+            events=events,
+            session_meta=session_meta
+        )
+        
+        return {
+            "session_meta": session_meta,
+            "timeline": timeline
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to build timeline: {str(e)}"
+        )
+```
+
+## Checklist
+
+### 새 API 엔드포인트 추가 시
+- [ ] Pydantic 모델로 요청/응답 스키마 정의
+- [ ] `response_model` 파라미터 지정
+- [ ] 에러 처리 (HTTPException 사용)
+- [ ] API 문서 (docstring 작성)
+- [ ] 프론트엔드 타입 정의와 동기화 확인 (api-contract-sync.mdc 참조)
+
+### 파일 업로드 처리 시
+- [ ] 파일 크기 제한 검증
+- [ ] 인코딩 검증 (UTF-8)
+- [ ] 파일 확장자 검증
+- [ ] 에러 메시지 명확성
+
+### 캐싱 적용 시
+- [ ] 캐시 키 생성 규칙 명확화
+- [ ] 파일 기반 캐시 사용 (LLM 호출 결과)
+- [ ] 캐시 무효화 전략 수립
+
+## References
+- API Contract Sync: `.cursor/rules/api-contract-sync.mdc`
+- Parser Rules: `.cursor/rules/parser-rules.mdc`
+- Constants: `backend/core/constants.py`
+- Models: `backend/core/models.py`

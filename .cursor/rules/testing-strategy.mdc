@@ -1,0 +1,433 @@
+---
+alwaysApply: true
+description: 테스트 전략 및 E2E 테스트 규칙
+---
+
+# Testing Strategy
+
+## Overview
+프로젝트는 E2E 테스트 중심의 테스트 전략을 사용합니다. 실제 서버를 실행하여 프로덕션 플로우와 동일하게 검증합니다.
+
+## Domain Knowledge
+
+### 테스트 원칙
+1. **E2E 테스트 우선**: 모든 테스트는 실제 서버 실행 필수
+2. **실제 데이터 사용**: Mock 사용 절대 금지
+3. **프로덕션 플로우 동일**: 배포 후 문제가 없음을 보장
+4. **자동 보고 필수**: 테스트 실행 후 상세 분석 리포트
+
+### 테스트 입력 데이터
+- 실제 Cursor export 파일: `docs/cursor_phase_6_3.md`
+- 각 Phase별 E2E 테스트에서 동일 파일 사용
+
+### 테스트 단계별 검증
+- **정합성 검증**: 구조적 정확성 확인
+- **타당성 검증**: 실제 상황에서의 품질 확인
+- **결과 분석**: 상세 분석 및 개선점 도출
+
+## Standards & Conventions
+
+### 1. 파일 구조
+```
+tests/
+├── fixtures/
+│   └── cursor_phase_6_3.md    # 실제 입력 데이터
+├── golden/
+│   ├── parser_expected.json
+│   ├── timeline_expected.json
+│   └── issues_expected.json
+├── conftest_e2e.py             # E2E 테스트 fixture
+├── test_parser_e2e.py
+├── test_event_normalizer_e2e.py
+├── test_timeline_issues_e2e.py
+├── test_snippet_e2e.py
+└── test_api_e2e.py
+```
+
+### 2. E2E 테스트 Fixture
+
+```python
+# tests/conftest_e2e.py
+import pytest
+import subprocess
+import time
+import httpx
+from pathlib import Path
+
+@pytest.fixture(scope="session")
+def test_server():
+    """
+    실제 uvicorn 서버 실행 fixture
+    """
+    # 서버 시작
+    process = subprocess.Popen(
+        ["poetry", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
+        cwd=Path(__file__).parent.parent,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    # 서버 준비 대기
+    max_retries = 30
+    for _ in range(max_retries):
+        try:
+            response = httpx.get("http://localhost:8000/health", timeout=1.0)
+            if response.status_code == 200:
+                break
+        except:
+            time.sleep(0.5)
+    else:
+        process.terminate()
+        raise RuntimeError("Server failed to start")
+    
+    yield process
+    
+    # 서버 종료
+    process.terminate()
+    process.wait()
+
+@pytest.fixture
+def client(test_server):
+    """
+    httpx.Client fixture (실제 HTTP 요청)
+    """
+    return httpx.Client(base_url="http://localhost:8000", timeout=30.0)
+```
+
+### 3. E2E 테스트 패턴
+
+```python
+# tests/test_parser_e2e.py
+import pytest
+from pathlib import Path
+from backend.parser import parse_markdown
+
+def test_parser_e2e():
+    """
+    실제 입력 데이터로 전체 파서 파이프라인 테스트
+    """
+    # 1. 실제 입력 데이터 로드
+    input_file = Path(__file__).parent.parent / "docs" / "cursor_phase_6_3.md"
+    text = input_file.read_text(encoding='utf-8')
+    
+    # 2. 파싱 실행
+    result = parse_markdown(text, source_doc=str(input_file))
+    
+    # 3. 정합성 검증
+    assert result["session_meta"] is not None
+    assert result["session_meta"].session_id is not None
+    assert len(result["turns"]) > 0
+    
+    # Session Meta 추출 정확성
+    assert result["session_meta"].phase is not None or result["session_meta"].phase is None
+    # (phase가 없을 수도 있으므로 None도 허용)
+    
+    # Turn 블록 분할 정확성
+    user_turns = [t for t in result["turns"] if t.speaker == "User"]
+    cursor_turns = [t for t in result["turns"] if t.speaker == "Cursor"]
+    unknown_turns = [t for t in result["turns"] if t.speaker == "Unknown"]
+    
+    assert len(user_turns) > 0, "User turns should exist"
+    assert len(cursor_turns) > 0, "Cursor turns should exist"
+    
+    # Unknown 비율 검증
+    unknown_ratio = len(unknown_turns) / len(result["turns"])
+    assert unknown_ratio < 0.2, f"Unknown speaker ratio too high: {unknown_ratio:.1%}"
+    
+    # 코드 스니펫 추출 정확성
+    all_code_blocks = []
+    for turn in result["turns"]:
+        all_code_blocks.extend(turn.code_blocks)
+    
+    assert len(all_code_blocks) > 0, "Code blocks should be extracted"
+    
+    # 4. 타당성 검증
+    # 파싱 실패율 검증
+    assert unknown_ratio < 0.2, "Parse failure rate too high"
+    
+    # 5. 결과 분석 및 피드백
+    print(f"\n[Parser E2E Test Results]")
+    print(f"Total turns: {len(result['turns'])}")
+    print(f"User turns: {len(user_turns)}")
+    print(f"Cursor turns: {len(cursor_turns)}")
+    print(f"Unknown turns: {len(unknown_turns)} ({unknown_ratio:.1%})")
+    print(f"Code blocks: {len(all_code_blocks)}")
+    print(f"Artifacts: {len(result.get('artifacts', []))}")
+```
+
+### 4. API E2E 테스트 패턴
+
+```python
+# tests/test_api_e2e.py
+import pytest
+from pathlib import Path
+import httpx
+
+def test_parse_endpoint_e2e(client: httpx.Client):
+    """
+    POST /api/parse 엔드포인트 E2E 테스트
+    """
+    # 실제 입력 파일
+    input_file = Path(__file__).parent.parent / "docs" / "cursor_phase_6_3.md"
+    
+    with open(input_file, "rb") as f:
+        files = {"file": ("cursor_phase_6_3.md", f, "text/markdown")}
+        response = client.post("/api/parse", files=files)
+    
+    assert response.status_code == 200
+    
+    data = response.json()
+    
+    # 응답 스키마 검증
+    assert "session_meta" in data
+    assert "turns" in data
+    assert "events" in data
+    
+    # 파싱 결과 정확성
+    assert data["session_meta"]["session_id"] is not None
+    assert len(data["turns"]) > 0
+
+def test_timeline_endpoint_e2e(client: httpx.Client):
+    """
+    POST /api/timeline 엔드포인트 E2E 테스트
+    """
+    # 1. 먼저 파싱
+    input_file = Path(__file__).parent.parent / "docs" / "cursor_phase_6_3.md"
+    
+    with open(input_file, "rb") as f:
+        files = {"file": ("cursor_phase_6_3.md", f, "text/markdown")}
+        parse_response = client.post("/api/parse", files=files)
+    
+    parse_data = parse_response.json()
+    
+    # 2. Timeline 생성
+    timeline_response = client.post(
+        "/api/timeline",
+        json={
+            "session_id": parse_data["session_meta"]["session_id"],
+            "events": parse_data["events"],
+            "session_meta": parse_data["session_meta"]
+        }
+    )
+    
+    assert timeline_response.status_code == 200
+    
+    timeline_data = timeline_response.json()
+    
+    # Timeline JSON 구조 검증
+    assert "session_meta" in timeline_data
+    assert "timeline" in timeline_data
+    assert len(timeline_data["timeline"]) > 0
+    
+    # Artifact/Snippet 연결 확인
+    for event in timeline_data["timeline"]:
+        assert "seq" in event
+        assert "type" in event
+        assert "summary" in event
+```
+
+### 5. 테스트 후 자동 보고
+
+```python
+# tests/test_parser_e2e.py
+def test_parser_e2e_with_report():
+    """
+    테스트 실행 후 상세 보고 포함
+    """
+    # ... 테스트 실행 ...
+    
+    # 결과 분석
+    report = {
+        "test_name": "parser_e2e",
+        "input_file": str(input_file),
+        "results": {
+            "total_turns": len(result["turns"]),
+            "user_turns": len(user_turns),
+            "cursor_turns": len(cursor_turns),
+            "unknown_ratio": unknown_ratio,
+            "code_blocks": len(all_code_blocks),
+            "artifacts": len(result.get("artifacts", []))
+        },
+        "warnings": [],
+        "errors": []
+    }
+    
+    if unknown_ratio > 0.2:
+        report["warnings"].append(
+            f"High Unknown speaker ratio: {unknown_ratio:.1%}"
+        )
+    
+    # 리포트 출력
+    import json
+    print("\n" + "="*50)
+    print("E2E Test Report")
+    print("="*50)
+    print(json.dumps(report, indent=2, ensure_ascii=False))
+    print("="*50)
+    
+    # 리포트 파일 저장
+    report_file = Path(__file__).parent / "reports" / "parser_e2e_report.json"
+    report_file.parent.mkdir(exist_ok=True)
+    report_file.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
+        encoding='utf-8'
+    )
+```
+
+## Implementation Patterns
+
+### Pattern 1: Golden 파일 비교
+
+```python
+# tests/test_parser_e2e.py
+def test_parser_golden_comparison():
+    """
+    Golden 파일과 비교하여 회귀 테스트
+    """
+    # 실제 파싱
+    result = parse_markdown(text, source_doc)
+    
+    # Golden 파일 로드
+    golden_file = Path(__file__).parent / "golden" / "parser_expected.json"
+    if golden_file.exists():
+        expected = json.loads(golden_file.read_text(encoding='utf-8'))
+        
+        # 비교 (주요 필드만)
+        assert result["session_meta"].session_id == expected["session_meta"]["session_id"]
+        assert len(result["turns"]) == len(expected["turns"])
+    else:
+        # Golden 파일 생성 (최초 1회)
+        golden_file.parent.mkdir(exist_ok=True)
+        golden_file.write_text(
+            json.dumps({
+                "session_meta": result["session_meta"].dict(),
+                "turns_count": len(result["turns"])
+            }, indent=2, ensure_ascii=False),
+            encoding='utf-8'
+        )
+```
+
+### Pattern 2: 로그 파일 저장
+
+```python
+# 테스트 실행 시 로그 파일로 저장
+import logging
+from pathlib import Path
+
+def setup_test_logging():
+    """
+    테스트용 로깅 설정
+    """
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    
+    log_file = log_dir / f"test_{time.strftime('%Y%m%d_%H%M%S')}.log"
+    
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
+    
+    return logging.getLogger(__name__)
+```
+
+## Examples
+
+### 완전한 E2E 테스트 예시
+
+```python
+# tests/test_api_e2e.py
+import pytest
+from pathlib import Path
+import httpx
+import json
+
+@pytest.mark.e2e
+def test_full_pipeline_e2e(client: httpx.Client):
+    """
+    전체 파이프라인 E2E 테스트
+    파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Export
+    """
+    input_file = Path(__file__).parent.parent / "docs" / "cursor_phase_6_3.md"
+    
+    # 1. 파일 업로드 및 파싱
+    with open(input_file, "rb") as f:
+        files = {"file": ("cursor_phase_6_3.md", f, "text/markdown")}
+        parse_response = client.post("/api/parse", files=files)
+    
+    assert parse_response.status_code == 200
+    parse_data = parse_response.json()
+    
+    # 2. Timeline 생성
+    timeline_response = client.post(
+        "/api/timeline",
+        json={
+            "session_id": parse_data["session_meta"]["session_id"],
+            "events": parse_data["events"],
+            "session_meta": parse_data["session_meta"]
+        }
+    )
+    assert timeline_response.status_code == 200
+    timeline_data = timeline_response.json()
+    
+    # 3. Issues 생성
+    issues_response = client.post(
+        "/api/issues",
+        json={
+            "session_id": parse_data["session_meta"]["session_id"],
+            "events": parse_data["events"],
+            "turns": parse_data["turns"]
+        }
+    )
+    assert issues_response.status_code == 200
+    issues_data = issues_response.json()
+    
+    # 4. Export 테스트
+    export_response = client.post(
+        "/api/export/all",
+        json={
+            "session_id": parse_data["session_meta"]["session_id"]
+        }
+    )
+    assert export_response.status_code == 200
+    
+    # 5. 결과 검증
+    assert len(timeline_data["timeline"]) > 0
+    assert len(issues_data["issues"]) >= 0  # 이슈가 없을 수도 있음
+    
+    # 6. 리포트 생성
+    report = {
+        "test": "full_pipeline_e2e",
+        "timeline_events": len(timeline_data["timeline"]),
+        "issues": len(issues_data["issues"]),
+        "status": "PASS"
+    }
+    
+    print(json.dumps(report, indent=2, ensure_ascii=False))
+```
+
+## Checklist
+
+### E2E 테스트 작성 시
+- [ ] 실제 서버 실행 fixture 사용 (`test_server`)
+- [ ] `httpx.Client` 사용 (TestClient 금지)
+- [ ] 실제 입력 데이터 사용 (Mock 금지)
+- [ ] 정합성 검증 구현
+- [ ] 타당성 검증 구현
+- [ ] 결과 분석 및 리포트 생성
+- [ ] 로그 파일 저장
+
+### 테스트 실행 후
+- [ ] 자동으로 상세 보고 출력
+- [ ] 리포트 파일 저장
+- [ ] 문제 발견 시 원인 분석 포함
+- [ ] 정량적 데이터 제시
+
+## References
+- AGENTS.md: 테스트 관련 내용
+- E2E 테스트 입력: `docs/cursor_phase_6_3.md`
+- Backend API: `.cursor/rules/backend-api-design.mdc`

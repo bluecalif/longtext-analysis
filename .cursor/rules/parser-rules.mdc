@@ -1,0 +1,468 @@
+---
+alwaysApply: true
+description: 마크다운 파서 구현 규칙 및 정규식 패턴
+---
+
+# Parser Rules
+
+## Overview
+Cursor IDE export 마크다운 파일을 구조화된 데이터로 파싱하는 규칙. 포맷 변화에 견딜 수 있도록 규칙 기반 + fallback 전략을 사용합니다.
+
+## Domain Knowledge
+
+### 파싱 파이프라인
+1. **Normalize** - 텍스트 정규화 (줄바꿈, BOM, 공백)
+2. **Meta Extraction** - 세션 메타 추출 (phase, subphase, exported_at, cursor_version)
+3. **Turn Parsing** - Turn 블록 분할 및 파싱
+4. **Snippet Extraction** - 코드 블록 추출
+5. **Artifact Extraction** - 파일/경로 후보 추출
+
+### 입력 포맷 가정
+- 문서 상단: 메타 텍스트 (Phase/Exported at/Cursor version 등) - 없을 수도 있음
+- Turn 블록: `---` 구분선 또는 `**User**`/`**Cursor**` 라벨 기준
+- 코드 블록: ```lang ... ``` 펜스 (lang 누락 가능)
+- 파일/경로: 자연어 문장 중간에 등장
+
+## Standards & Conventions
+
+### 1. 파일 구조
+```
+backend/parser/
+├── normalize.py    # 텍스트 정규화
+├── meta.py         # 세션 메타 추출
+├── turns.py        # Turn 분할/파싱
+├── snippets.py     # 코드 블록 추출
+└── artifacts.py    # 파일/경로 추출
+```
+
+### 2. Normalize 규칙
+
+```python
+# backend/parser/normalize.py
+import re
+
+def normalize_text(text: str, preserve_code_blocks: bool = True) -> str:
+    """
+    텍스트 정규화
+    
+    Args:
+        text: 원본 텍스트
+        preserve_code_blocks: 코드 블록 내부 보존 여부
+    
+    Returns:
+        정규화된 텍스트
+    """
+    # 1. 줄바꿈 통일
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # 2. BOM 제거
+    text = text.lstrip('\ufeff')
+    
+    if preserve_code_blocks:
+        # 코드 블록 분리
+        code_blocks = []
+        pattern = r'```([a-zA-Z0-9_+-]+)?\n(.*?)```'
+        
+        def replace_code(match):
+            idx = len(code_blocks)
+            code_blocks.append(match.group(0))
+            return f'__CODE_BLOCK_{idx}__'
+        
+        text = re.sub(pattern, replace_code, text, flags=re.DOTALL)
+    
+    # 3. 트레일링 공백 제거
+    text = re.sub(r'[ \t]+$', '', text, flags=re.MULTILINE)
+    
+    # 4. 너무 긴 공백 축소 (3개 이상 → 2개)
+    text = re.sub(r' {3,}', '  ', text)
+    
+    if preserve_code_blocks:
+        # 코드 블록 복원
+        for idx, code in enumerate(code_blocks):
+            text = text.replace(f'__CODE_BLOCK_{idx}__', code)
+    
+    return text
+```
+
+### 3. Session Meta 추출 규칙
+
+```python
+# backend/parser/meta.py
+import re
+from typing import Optional
+from backend.core.models import SessionMeta
+
+# 정규식 패턴
+EXPORTED_AT_RE = re.compile(
+    r'(?i)Exported\s+(\d{4}-\d{2}-\d{2}[^,\n]*?(?:KST|UTC|GMT|[+\-]\d{2}:\d{2})?)',
+    re.MULTILINE
+)
+
+CURSOR_VERSION_RE = re.compile(
+    r'(?i)\bCursor\s+(\d+\.\d+\.\d+)\b',
+    re.MULTILINE
+)
+
+PHASE_RE = re.compile(
+    r'(?i)\bPhase\s+(\d+)\b',
+    re.MULTILINE
+)
+
+SUBPHASE_RE = re.compile(
+    r'(?i)\bSub\s*Phase\s+(\d+)\b',
+    re.MULTILINE
+)
+
+def extract_session_meta(text: str, source_doc: str) -> SessionMeta:
+    """
+    상단 2000~4000 chars 범위에서 best-effort로 메타 추출
+    
+    Args:
+        text: 원본 텍스트
+        source_doc: 소스 문서 경로
+    
+    Returns:
+        SessionMeta 객체
+    """
+    # 상단 범위 추출
+    header_text = text[:4000]
+    
+    # exported_at 추출
+    exported_at_match = EXPORTED_AT_RE.search(header_text)
+    exported_at = exported_at_match.group(1) if exported_at_match else None
+    
+    # cursor_version 추출
+    version_match = CURSOR_VERSION_RE.search(header_text)
+    cursor_version = version_match.group(1) if version_match else None
+    
+    # phase 추출
+    phase_match = PHASE_RE.search(header_text)
+    phase = int(phase_match.group(1)) if phase_match else None
+    
+    # subphase 추출
+    subphase_match = SUBPHASE_RE.search(header_text)
+    subphase = int(subphase_match.group(1)) if subphase_match else None
+    
+    # session_id 생성
+    if exported_at:
+        # 문자열 정규화: 공백 → _, : 제거
+        session_id_base = exported_at.replace(' ', '_').replace(':', '')
+        session_id = f"cursor_export_{session_id_base}"
+    else:
+        session_id = f"cursor_export_unknown_{hash(text) % 10000}"
+    
+    return SessionMeta(
+        session_id=session_id,
+        exported_at=exported_at,
+        cursor_version=cursor_version,
+        phase=phase,
+        subphase=subphase,
+        source_doc=source_doc
+    )
+```
+
+### 4. Turn 분할 규칙
+
+```python
+# backend/parser/turns.py
+import re
+from typing import List
+from backend.core.models import Turn
+
+# 구분선 패턴
+TURN_SPLIT_RE = re.compile(r'^\s*---\s*$', re.MULTILINE)
+
+# Speaker 라벨 패턴
+SPEAKER_RE = re.compile(
+    r'^\s*\*\*(User|Cursor)\*\*\s*:?\s*$',
+    re.MULTILINE
+)
+
+# Fallback: 굵게 누락된 경우
+SPEAKER_FALLBACK_RE = re.compile(
+    r'^\s*(User|Cursor)\s*:?\s*$',
+    re.MULTILINE
+)
+
+def split_to_turns(text: str) -> List[str]:
+    """
+    구분선 기준으로 Turn 블록 분할
+    
+    Args:
+        text: 정규화된 텍스트
+    
+    Returns:
+        Turn 블록 리스트
+    """
+    # 1차: 구분선 기준 분할
+    blocks = TURN_SPLIT_RE.split(text)
+    blocks = [b.strip() for b in blocks if b.strip()]
+    
+    # 구분선이 없거나 너무 적으면 fallback
+    if len(blocks) < 2:
+        return fallback_split_by_speaker(text)
+    
+    return blocks
+
+def fallback_split_by_speaker(text: str) -> List[str]:
+    """
+    Speaker 라벨 기준으로 분할 (fallback)
+    """
+    turns = []
+    current_turn = []
+    current_speaker = None
+    
+    for line in text.split('\n'):
+        speaker_match = SPEAKER_RE.match(line) or SPEAKER_FALLBACK_RE.match(line)
+        
+        if speaker_match:
+            # 새 Turn 시작
+            if current_turn:
+                turns.append('\n'.join(current_turn))
+            current_speaker = speaker_match.group(1)
+            current_turn = [line]
+        else:
+            current_turn.append(line)
+    
+    if current_turn:
+        turns.append('\n'.join(current_turn))
+    
+    return turns
+
+def parse_turn(block: str, turn_index: int) -> Turn:
+    """
+    Turn 블록 파싱
+    
+    Args:
+        block: Turn 블록 텍스트
+        turn_index: Turn 인덱스
+    
+    Returns:
+        Turn 객체
+    """
+    # Speaker 추출
+    speaker_match = SPEAKER_RE.search(block) or SPEAKER_FALLBACK_RE.search(block)
+    speaker = speaker_match.group(1) if speaker_match else "Unknown"
+    
+    # 코드 블록 제거한 body 추출
+    body = re.sub(r'```.*?```', '', block, flags=re.DOTALL)
+    body = re.sub(r'^\s*\*\*(User|Cursor)\*\*\s*:?\s*', '', body, flags=re.MULTILINE)
+    body = body.strip()
+    
+    # 코드 블록 추출 (별도 함수로)
+    from backend.parser.snippets import extract_code_blocks
+    code_blocks = extract_code_blocks(block)
+    
+    # 파일 경로 후보 추출 (별도 함수로)
+    from backend.parser.artifacts import extract_path_candidates
+    path_candidates = extract_path_candidates(block)
+    
+    return Turn(
+        turn_index=turn_index,
+        speaker=speaker,
+        body=body,
+        code_blocks=code_blocks,
+        path_candidates=path_candidates
+    )
+```
+
+### 5. 코드 블록 추출 규칙
+
+```python
+# backend/parser/snippets.py
+import re
+from typing import List, Optional
+from backend.core.models import CodeBlock
+
+CODE_FENCE_RE = re.compile(
+    r'```([a-zA-Z0-9_+-]+)?\n(.*?)```',
+    re.DOTALL
+)
+
+def extract_code_blocks(text: str) -> List[CodeBlock]:
+    """
+    코드 펜스 추출
+    
+    Args:
+        text: 텍스트
+    
+    Returns:
+        CodeBlock 리스트
+    """
+    blocks = []
+    matches = CODE_FENCE_RE.finditer(text)
+    
+    for idx, match in enumerate(matches):
+        lang = (match.group(1) or "").lower()
+        code = match.group(2)
+        
+        blocks.append(CodeBlock(
+            block_index=idx,
+            lang=lang,
+            code=code
+        ))
+    
+    return blocks
+```
+
+### 6. 파일/경로 추출 규칙
+
+```python
+# backend/parser/artifacts.py
+import re
+from typing import List
+
+# 파일 경로 패턴 (보수적)
+PATH_RE = re.compile(
+    r'(?:(?:[\w.-]+[/\\])+[\w.-]+\.(?:md|mdc|py|ts|tsx|sql|json)|'
+    r'TODOs\.md|[\w.-]+\.(?:md|mdc|py|ts|tsx|sql|json))',
+    re.IGNORECASE
+)
+
+def extract_path_candidates(text: str) -> List[str]:
+    """
+    파일/경로 후보 추출
+    
+    Args:
+        text: 텍스트
+    
+    Returns:
+        경로 후보 리스트 (중복 제거)
+    """
+    matches = PATH_RE.findall(text)
+    # 중복 제거 및 정규화
+    candidates = list(set(matches))
+    return candidates
+```
+
+## Implementation Patterns
+
+### Pattern 1: Parse Health Check
+
+```python
+def check_parse_health(turns: List[Turn]) -> dict:
+    """
+    파싱 품질 검사
+    
+    Returns:
+        {
+            "unknown_ratio": float,
+            "warnings": List[str]
+        }
+    """
+    total = len(turns)
+    unknown_count = sum(1 for t in turns if t.speaker == "Unknown")
+    unknown_ratio = unknown_count / total if total > 0 else 0.0
+    
+    warnings = []
+    if unknown_ratio > 0.2:
+        warnings.append(
+            f"High Unknown speaker ratio: {unknown_ratio:.1%}. "
+            "Format detection may have failed."
+        )
+    
+    return {
+        "unknown_ratio": unknown_ratio,
+        "warnings": warnings
+    }
+```
+
+### Pattern 2: Fallback 파서 체인
+
+```python
+def parse_with_fallback(text: str) -> dict:
+    """
+    규칙 기반 파싱 → Fallback 파서 체인
+    """
+    # 1차: 규칙 기반 파싱
+    try:
+        result = parse_markdown(text)
+        health = check_parse_health(result.turns)
+        
+        if health["unknown_ratio"] < 0.2:
+            return result
+    except Exception as e:
+        pass
+    
+    # 2차: Fallback 파서
+    result = fallback_parse(text)
+    return result
+```
+
+## Examples
+
+### 완전한 파서 예시
+
+```python
+# backend/parser/__init__.py
+from backend.parser.normalize import normalize_text
+from backend.parser.meta import extract_session_meta
+from backend.parser.turns import split_to_turns, parse_turn
+
+def parse_markdown(text: str, source_doc: str = "input.md") -> dict:
+    """
+    마크다운 파일 전체 파싱
+    
+    Returns:
+        {
+            "session_meta": SessionMeta,
+            "turns": List[Turn],
+            "code_blocks": List[CodeBlock],
+            "artifacts": List[Artifact]
+        }
+    """
+    # 1. 정규화
+    normalized = normalize_text(text)
+    
+    # 2. 메타 추출
+    session_meta = extract_session_meta(normalized, source_doc)
+    
+    # 3. Turn 분할
+    turn_blocks = split_to_turns(normalized)
+    
+    # 4. Turn 파싱
+    turns = []
+    for idx, block in enumerate(turn_blocks):
+        turn = parse_turn(block, idx)
+        turns.append(turn)
+    
+    # 5. 코드 블록 수집
+    from backend.parser.snippets import extract_code_blocks
+    all_code_blocks = []
+    for turn in turns:
+        all_code_blocks.extend(turn.code_blocks)
+    
+    # 6. Artifact 수집
+    from backend.parser.artifacts import extract_path_candidates
+    all_paths = []
+    for turn in turns:
+        all_paths.extend(turn.path_candidates)
+    
+    return {
+        "session_meta": session_meta,
+        "turns": turns,
+        "code_blocks": all_code_blocks,
+        "artifacts": list(set(all_paths))
+    }
+```
+
+## Checklist
+
+### 파서 구현 시
+- [ ] 정규식 패턴이 포맷 변형에 견디는지 확인
+- [ ] Fallback 파서 구현
+- [ ] Parse Health Check 구현
+- [ ] 코드 블록 내부 보존 로직 확인
+- [ ] 한글 파일명/경로 처리 확인
+
+### 테스트 케이스 준비
+- [ ] 정상 케이스 (구분선 + speaker + 코드펜스)
+- [ ] 구분선 없음 (speaker 라벨만)
+- [ ] Speaker 라벨 변형
+- [ ] 코드펜스 lang 누락
+- [ ] 파일 경로가 괄호/백틱 안에 존재
+
+## References
+- 상세 지침: `docs/instruction_detail.md`
+- 구체화 지침: `docs/instruction_moredetail.md`
+- 테스트: `tests/test_parser.py`
