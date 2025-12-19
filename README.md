@@ -171,9 +171,80 @@ E2E 테스트는 자동으로 다음을 저장합니다:
 - 실행 결과: `tests/results/`
 - 리포트: `tests/reports/`
 
+## 이벤트 정규화 모듈
+
+### 개요
+
+이벤트 정규화 모듈은 파싱된 Turn 데이터를 이벤트로 변환하여 Timeline과 Issue Cards 생성을 위한 기반을 제공합니다.
+
+### 이벤트 타입
+
+- `status_review`: 상태 리뷰 이벤트
+- `plan`: 계획 수립 이벤트
+- `artifact`: 파일/경로 관련 이벤트
+- `debug`: 디버깅 이벤트 (에러, 원인, 해결 등)
+- `completion`: 완료 이벤트
+- `next_step`: 다음 단계 이벤트
+- `turn`: 일반 Turn 이벤트 (기본값)
+
+### 이벤트 정규화 파이프라인
+
+1. **Turn → Event 변환** (`event_normalizer.py`)
+   - Turn 리스트를 Event 리스트로 변환
+   - Event 타입 분류 (규칙 기반)
+   - Artifact 연결 (파일 경로가 있는 경우)
+   - Snippet 참조 연결 (코드 블록이 있는 경우)
+
+2. **이벤트 타입 분류**
+   - 키워드 기반 분류 (status_review, plan, completion 등)
+   - Debug 트리거 패턴 매칭 (error, root_cause, fix, validation)
+   - Artifact 탐지 (path_candidates 존재 시)
+
+### 사용 예시
+
+```python
+from backend.parser import parse_markdown
+from backend.builders.event_normalizer import normalize_turns_to_events
+
+# 파싱 실행
+result = parse_markdown(text, source_doc="input.md")
+
+# 이벤트 정규화
+events = normalize_turns_to_events(result["turns"])
+
+# 결과 구조
+[
+    Event(
+        type=EventType.DEBUG,
+        turn_ref=5,
+        summary="There was an error...",
+        artifacts=[],
+        snippet_refs=["turn_5_block_0"]
+    ),
+    Event(
+        type=EventType.ARTIFACT,
+        turn_ref=10,
+        summary="Created new file...",
+        artifacts=[{"path": "backend/main.py", "action": "mention"}],
+        snippet_refs=[]
+    ),
+    ...
+]
+```
+
+### 테스트
+
+```powershell
+# 단위 테스트
+poetry run pytest tests/test_event_normalizer.py -v
+
+# E2E 테스트
+poetry run pytest tests/test_event_normalizer_e2e.py -v
+```
+
 ## 개발 가이드
 
 프로젝트는 Phase별로 진행됩니다. 자세한 내용은 [TODOs.md](TODOs.md)를 참고하세요.
 
-**현재 Phase**: Phase 2 완료, Phase 3 준비 중
+**현재 Phase**: Phase 3 완료, Phase 4 준비 중
 

@@ -6,6 +6,7 @@
 
 from pydantic import BaseModel
 from typing import Optional, List
+from enum import Enum
 
 
 class SessionMeta(BaseModel):
@@ -36,3 +37,25 @@ class Turn(BaseModel):
     body: str  # 본문 텍스트 (코드 블록 제외)
     code_blocks: List[CodeBlock] = []  # 코드 블록 리스트
     path_candidates: List[str] = []  # 파일/경로 후보 리스트
+
+
+class EventType(str, Enum):
+    """이벤트 타입 Enum"""
+
+    STATUS_REVIEW = "status_review"
+    PLAN = "plan"
+    ARTIFACT = "artifact"
+    DEBUG = "debug"
+    COMPLETION = "completion"
+    NEXT_STEP = "next_step"
+    TURN = "turn"
+
+
+class Event(BaseModel):
+    """이벤트 기본 모델 (정규화된 Turn)"""
+
+    type: EventType  # 이벤트 타입
+    turn_ref: int  # 원본 Turn 인덱스
+    summary: str  # 요약
+    artifacts: List[dict] = []  # 연결된 Artifact (파일 경로, 액션 등)
+    snippet_refs: List[str] = []  # 연결된 스니펫 ID (Phase 5에서 생성될 ID)

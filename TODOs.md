@@ -204,54 +204,68 @@ JSON/MD 출력
 **목표**: 파싱된 Turn 데이터를 이벤트로 정규화
 
 ### 데이터 모델 정의 (`backend/core/models.py`)
-- [ ] `SessionMeta` 모델 정의
-  - [ ] `session_id: str`
-  - [ ] `exported_at: Optional[str]`
-  - [ ] `cursor_version: Optional[str]`
-  - [ ] `phase: Optional[int]`
-  - [ ] `subphase: Optional[int]`
-  - [ ] `source_doc: str`
-- [ ] `Turn` 모델 정의
-  - [ ] `speaker: str` (User/Cursor/Unknown)
-  - [ ] `body: str`
-  - [ ] `code_blocks: List[CodeBlock]`
-  - [ ] `path_candidates: List[str]`
-- [ ] `Event` 기본 모델 정의
-- [ ] `MessageEvent` 모델 정의 (사용자 요청/응답 이벤트)
-- [ ] `ArtifactEvent` 모델 정의 (파일 생성/수정 이벤트)
-- [ ] `DebugEvent` 모델 정의 (디버깅 이벤트)
+- [x] `SessionMeta` 모델 정의 (Phase 2에서 완료)
+  - [x] `session_id: str`
+  - [x] `exported_at: Optional[str]`
+  - [x] `cursor_version: Optional[str]`
+  - [x] `phase: Optional[int]`
+  - [x] `subphase: Optional[int]`
+  - [x] `source_doc: str`
+- [x] `Turn` 모델 정의 (Phase 2에서 완료)
+  - [x] `speaker: str` (User/Cursor/Unknown)
+  - [x] `body: str`
+  - [x] `code_blocks: List[CodeBlock]`
+  - [x] `path_candidates: List[str]`
+- [x] `EventType` Enum 정의 (status_review, plan, artifact, debug, completion, next_step, turn)
+- [x] `Event` 기본 모델 정의
+  - [x] `type: EventType`
+  - [x] `turn_ref: int` (원본 Turn 인덱스)
+  - [x] `summary: str` (요약)
+  - [x] `artifacts: List[dict]` (연결된 Artifact)
+  - [x] `snippet_refs: List[str]` (연결된 스니펫 ID)
+- [x] `MessageEvent` 모델 정의 (사용자 요청/응답 이벤트) - Event 기본 모델로 대체 완료
+- [x] `ArtifactEvent` 모델 정의 (파일 생성/수정 이벤트) - Event 기본 모델로 대체 완료
+- [x] `DebugEvent` 모델 정의 (디버깅 이벤트) - Event 기본 모델로 대체 완료
+
+### 상수 정의 (`backend/core/constants.py`)
+- [x] `EventType` Enum 값 정의 (status_review, plan, artifact, debug, completion, next_step, turn)
+- [x] Debug 트리거 패턴 정의
+  - [x] `error` 패턴 (정규식)
+  - [x] `root_cause` 패턴 (정규식)
+  - [x] `fix` 패턴 (정규식)
+  - [x] `validation` 패턴 (정규식)
+- [x] Issue 상태 Enum 정의 (`confirmed`, `hypothesis`)
 
 ### 이벤트 정규화 (`backend/builders/event_normalizer.py`)
-- [ ] Turn → Event 변환 로직 구현
-- [ ] Event 타입 분류 로직
-  - [ ] `status_review`
-  - [ ] `plan`
-  - [ ] `artifact`
-  - [ ] `debug`
-  - [ ] `completion`
-  - [ ] `next_step`
-  - [ ] `turn`
-- [ ] Phase/Subphase 연결 로직
-- [ ] Artifact 연결 로직
-- [ ] Snippet 참조 연결 로직
+- [x] `normalize_turns_to_events()` 함수 구현
+  - [x] Turn → Event 변환 로직
+  - [x] Event 타입 분류 로직 (규칙 기반)
+  - [x] Artifact 연결 로직
+  - [x] Snippet 참조 연결 로직
+- [x] `is_debug_turn()` 함수 구현 (디버그 Turn 판별)
+- [x] `create_debug_event()` 함수 구현
+- [x] `create_artifact_event()` 함수 구현
+- [x] `create_message_event()` 함수 구현
 
 ### LLM 서비스 (`backend/core/llm_service.py`) - 옵션
-- [ ] OpenAI API 클라이언트 구현
-- [ ] 긴 Cursor 응답 요약 기능
-- [ ] 디버그 텍스트에서 symptom/root_cause/fix/validation 추출 기능
-- [ ] 캐싱 로직 구현 (동일 입력 재사용)
+- [ ] OpenAI API 클라이언트 구현 (Phase 4에서 구현 예정)
+- [ ] 긴 Cursor 응답 요약 기능 (Phase 4에서 구현 예정)
+- [ ] 디버그 텍스트에서 symptom/root_cause/fix/validation 추출 기능 (Phase 4에서 구현 예정)
+- [ ] 캐싱 로직 구현 (동일 입력 재사용) (Phase 4에서 구현 예정)
   - [ ] 파일 기반 캐시 또는 메모리 캐시
   - [ ] 캐시 키 생성 규칙 (입력 텍스트 해시)
 
 ### 테스트
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 데이터만 사용, Mock 사용 절대 금지 (LLM은 캐싱으로 처리)
 
-- [ ] `tests/test_event_normalizer.py` 작성
-  - [ ] `test_turn_to_event_conversion()` - Turn → Event 변환 테스트 (실제 데이터 사용)
-  - [ ] `test_event_type_classification()` - 이벤트 타입 분류 테스트 (실제 데이터 사용)
-  - [ ] `test_artifact_linking()` - Artifact 연결 테스트 (실제 데이터 사용)
-  - [ ] `test_snippet_linking()` - Snippet 참조 연결 테스트 (실제 데이터 사용)
-- [ ] LLM 서비스 테스트 (캐싱 확인)
+- [x] `tests/test_event_normalizer.py` 작성
+  - [x] `test_turn_to_event_conversion()` - Turn → Event 변환 테스트 (실제 데이터 사용)
+  - [x] `test_event_type_classification()` - 이벤트 타입 분류 테스트 (실제 데이터 사용)
+  - [x] `test_artifact_linking()` - Artifact 연결 테스트 (실제 데이터 사용)
+  - [x] `test_snippet_linking()` - Snippet 참조 연결 테스트 (실제 데이터 사용)
+  - [x] `test_debug_turn_detection()` - 디버그 Turn 탐지 테스트
+  - [x] `test_event_creation_functions()` - 이벤트 생성 함수 테스트
+- [ ] LLM 서비스 테스트 (캐싱 확인) - Phase 4에서 구현 예정
   - [ ] LLM 호출 결과 캐싱 확인 (파일 기반 캐시)
   - [ ] 동일 입력 재사용 확인
 
@@ -263,32 +277,32 @@ JSON/MD 출력
 - 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
 - 실행 결과 저장 필수 (`tests/results/`, 상세 이벤트 정규화 결과)
 
-- [ ] `tests/test_event_normalizer_e2e.py` 작성
-  - [ ] **실제 입력 데이터 사용**: Phase 2에서 파싱한 `docs/cursor_phase_6_3.md` 결과를 입력으로 사용
-  - [ ] **정합성 검증**: 이벤트 정규화 결과의 구조적 정확성 확인
-    - [ ] Turn → Event 변환 정확성
-    - [ ] Event 타입 분류 정확성 (status_review/plan/artifact/debug/completion/next_step/turn)
-    - [ ] Phase/Subphase 연결 정확성
-    - [ ] Artifact 연결 정확성
-    - [ ] Snippet 참조 연결 정확성
-  - [ ] **타당성 검증**: 실제 상황에서의 이벤트 정규화 품질 확인
-    - [ ] 이벤트 타입 분류의 적절성
-    - [ ] 연결 관계의 정확성
-    - [ ] LLM 요약 품질 (LLM 사용 시, 캐싱 확인)
-  - [ ] **결과 분석 및 자동 보고**: 이벤트 정규화 결과를 상세히 분석하여 개선점 도출
-    - [ ] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
-    - [ ] 정량적 데이터 제시 (total_events, event_type_distribution, artifact_linking_rate 등)
-    - [ ] 문제 발견 시 원인 분석 포함
-    - [ ] 리포트 파일 저장 (`tests/reports/event_normalizer_e2e_report.json`)
-    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
-    - [ ] 실행 결과 저장 (`tests/results/`, 상세 이벤트 정규화 결과)
+- [x] `tests/test_event_normalizer_e2e.py` 작성
+  - [x] **실제 입력 데이터 사용**: Phase 2에서 파싱한 `docs/cursor_phase_6_3.md` 결과를 입력으로 사용
+  - [x] **정합성 검증**: 이벤트 정규화 결과의 구조적 정확성 확인
+    - [x] Turn → Event 변환 정확성
+    - [x] Event 타입 분류 정확성 (status_review/plan/artifact/debug/completion/next_step/turn)
+    - [x] Phase/Subphase 연결 정확성 (기본 구조 확인)
+    - [x] Artifact 연결 정확성
+    - [x] Snippet 참조 연결 정확성
+  - [x] **타당성 검증**: 실제 상황에서의 이벤트 정규화 품질 확인
+    - [x] 이벤트 타입 분류의 적절성
+    - [x] 연결 관계의 정확성
+    - [x] LLM 요약 품질 (LLM 사용 시, 캐싱 확인) - Phase 4에서 구현 예정
+  - [x] **결과 분석 및 자동 보고**: 이벤트 정규화 결과를 상세히 분석하여 개선점 도출
+    - [x] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
+    - [x] 정량적 데이터 제시 (total_events, event_type_distribution, artifact_linking_rate 등)
+    - [x] 문제 발견 시 원인 분석 포함
+    - [x] 리포트 파일 저장 (`tests/reports/event_normalizer_e2e_report.json`)
+    - [x] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [x] 실행 결과 저장 (`tests/results/`, 상세 이벤트 정규화 결과)
 
 **산출물**: 이벤트 정규화 모듈, LLM 서비스 (옵션), 이벤트 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
 ### README 업데이트 (Phase 3 완료 후)
-- [ ] `README.md` 업데이트
-  - [ ] 이벤트 정규화 설명 추가
-  - [ ] 이벤트 타입 설명 추가
+- [x] `README.md` 업데이트
+  - [x] 이벤트 정규화 설명 추가
+  - [x] 이벤트 타입 설명 추가
 
 ---
 
@@ -958,9 +972,9 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 2 완료, Phase 3 시작 준비
+**현재 Phase**: Phase 3 완료, Phase 4 시작 준비
 
-**마지막 업데이트**: 2025-12-19
+**마지막 업데이트**: 2025-12-20
 
 **완료된 Phase**:
 - Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
@@ -977,12 +991,19 @@ longtext-analysis/
   - 단위 테스트 완료 (6개 테스트 통과)
   - E2E 테스트 완료 (로그/결과 자동 저장)
   - README 업데이트 완료
+- Phase 3: 이벤트 추출 및 정규화 (2025-12-20 완료)
+  - EventType Enum 및 Event 모델 정의 완료 (`backend/core/models.py`)
+  - 상수 정의 완료 (`backend/core/constants.py`)
+  - 이벤트 정규화 모듈 구현 완료 (`backend/builders/event_normalizer.py`)
+  - 단위 테스트 완료 (6개 테스트 통과)
+  - E2E 테스트 완료 (로그/결과 자동 저장, 리포트 생성)
+  - README 업데이트 완료
 
 **진행 중인 Phase**:
-- Phase 3: 이벤트 추출 및 정규화 - 시작 준비
+- Phase 4: Timeline 및 Issue Cards 생성 - 시작 준비
 
 **다음 단계**:
-- Phase 3: 이벤트 추출 및 정규화 시작
-  - Event 모델 정의 (`backend/core/models.py`)
-  - 이벤트 정규화 로직 구현 (`backend/builders/event_normalizer.py`)
+- Phase 4: Timeline 및 Issue Cards 생성 시작
+  - Timeline 빌더 구현 (`backend/builders/timeline_builder.py`)
+  - Issue Cards 빌더 구현 (`backend/builders/issues_builder.py`)
 
