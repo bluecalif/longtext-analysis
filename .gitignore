@@ -53,6 +53,7 @@ coverage.xml
 .hypothesis/
 tests/reports/
 tests/logs/
+tests/results/
 
 # IDEs
 .vscode/

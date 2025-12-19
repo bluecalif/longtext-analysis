@@ -6,15 +6,25 @@ description: 테스트 전략 및 E2E 테스트 규칙
 # Testing Strategy
 
 ## Overview
-프로젝트는 E2E 테스트 중심의 테스트 전략을 사용합니다. 실제 서버를 실행하여 프로덕션 플로우와 동일하게 검증합니다.
+프로젝트는 E2E 테스트 중심의 테스트 전략을 사용합니다. Phase별로 적절한 테스트 방식을 선택하여 프로덕션 플로우와 동일하게 검증합니다.
 
 ## Domain Knowledge
 
 ### 테스트 원칙
-1. **E2E 테스트 우선**: 모든 테스트는 실제 서버 실행 필수
+1. **E2E 테스트 우선**: 모든 테스트는 실제 데이터 사용 필수
 2. **실제 데이터 사용**: Mock 사용 절대 금지
 3. **프로덕션 플로우 동일**: 배포 후 문제가 없음을 보장
 4. **자동 보고 필수**: 테스트 실행 후 상세 분석 리포트
+5. **로그 파일 저장 필수**: 모든 E2E 테스트는 로그 파일 저장 (디버깅 필수)
+6. **실행 결과 저장 필수**: 파싱/추출 결과를 상세히 저장 (사용자 리뷰/피드백 필수)
+
+### Phase별 서버 실행 구분
+- **Phase 2-5**: 모듈 직접 호출 (서버 불필요)
+  - 파서, 이벤트 정규화, Timeline/Issues 빌더 등은 모듈 직접 호출
+  - 서버 시작 오버헤드 없이 빠른 테스트 가능
+- **Phase 6+**: 실제 서버 실행 (API 테스트 필수)
+  - API 엔드포인트 테스트는 실제 uvicorn 서버 실행 필수
+  - HTTP 레벨 통합 검증 필요
 
 ### 테스트 입력 데이터
 - 실제 Cursor export 파일: `docs/cursor_phase_6_3.md`
@@ -36,6 +46,15 @@ tests/
 │   ├── parser_expected.json
 │   ├── timeline_expected.json
 │   └── issues_expected.json
+├── logs/                        # 로그 파일 (자동 생성)
+│   ├── test_parser_e2e_20250101_120000.log
+│   └── ...
+├── results/                     # 실행 결과 (자동 생성)
+│   ├── parser_e2e_20250101_120000.json
+│   └── ...
+├── reports/                     # 리포트 파일 (자동 생성)
+│   ├── parser_e2e_report.json
+│   └── ...
 ├── conftest_e2e.py             # E2E 테스트 fixture
 ├── test_parser_e2e.py
 ├── test_event_normalizer_e2e.py
@@ -52,12 +71,15 @@ import pytest
 import subprocess
 import time
 import httpx
+import logging
 from pathlib import Path
+from datetime import datetime
 
+# Phase 6+ 전용: 실제 서버 실행 fixture
 @pytest.fixture(scope="session")
 def test_server():
     """
-    실제 uvicorn 서버 실행 fixture
+    실제 uvicorn 서버 실행 fixture (Phase 6+ API 테스트용)
     """
     # 서버 시작
     process = subprocess.Popen(
@@ -89,9 +111,46 @@ def test_server():
 @pytest.fixture
 def client(test_server):
     """
-    httpx.Client fixture (실제 HTTP 요청)
+    httpx.Client fixture (실제 HTTP 요청, Phase 6+ 전용)
     """
     return httpx.Client(base_url="http://localhost:8000", timeout=30.0)
+
+# 모든 E2E 테스트에 자동 적용: 로그 파일 저장
+@pytest.fixture(autouse=True)
+def setup_test_logging(request):
+    """
+    모든 E2E 테스트에 자동으로 로깅 설정 (필수)
+    """
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    test_name = request.node.name
+    log_file = log_dir / f"{test_name}_{timestamp}.log"
+    
+    # 기존 핸들러 제거 (중복 방지)
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler()
+        ],
+        force=True
+    )
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Test started: {test_name}")
+    logger.info(f"Log file: {log_file}")
+    
+    yield
+    
+    # 테스트 종료 후 로그 파일 경로 출력
+    logger.info(f"Test completed: {test_name}")
+    print(f"\n[LOG] Test log saved to: {log_file}")
 ```
 
 ### 3. E2E 테스트 패턴
@@ -307,33 +366,54 @@ def test_parser_golden_comparison():
         )
 ```
 
-### Pattern 2: 로그 파일 저장
+### Pattern 2: 로그 파일 저장 (필수)
+
+**⚠️ 중요**: 모든 E2E 테스트는 자동으로 로그 파일을 저장합니다. `conftest_e2e.py`의 `setup_test_logging` fixture가 자동 적용됩니다.
+
+로그 파일 위치: `tests/logs/{test_name}_{timestamp}.log`
+
+### Pattern 3: 실행 결과 저장 (필수)
+
+**⚠️ 중요**: 모든 E2E 테스트는 상세한 실행 결과를 저장해야 합니다.
 
 ```python
-# 테스트 실행 시 로그 파일로 저장
-import logging
+# tests/test_parser_e2e.py
+from datetime import datetime
 from pathlib import Path
+import json
 
-def setup_test_logging():
-    """
-    테스트용 로깅 설정
-    """
-    log_dir = Path(__file__).parent / "logs"
-    log_dir.mkdir(exist_ok=True)
+def test_parser_e2e():
+    # ... 테스트 실행 ...
     
-    log_file = log_dir / f"test_{time.strftime('%Y%m%d_%H%M%S')}.log"
+    # 상세 결과 저장 (필수)
+    results_dir = Path(__file__).parent / "results"
+    results_dir.mkdir(exist_ok=True)
     
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file, encoding='utf-8'),
-            logging.StreamHandler()
-        ]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_file = results_dir / f"parser_e2e_{timestamp}.json"
+    
+    # Pydantic 모델을 dict로 변환하여 저장
+    detailed_results = {
+        "session_meta": result["session_meta"].dict(),
+        "turns": [turn.dict() for turn in result["turns"]],
+        "code_blocks": [block.dict() for block in result["code_blocks"]],
+        "artifacts": result["artifacts"],
+        "test_metadata": {
+            "timestamp": timestamp,
+            "input_file": str(INPUT_FILE),
+            "test_name": "parser_e2e",
+        }
+    }
+    
+    results_file.write_text(
+        json.dumps(detailed_results, indent=2, ensure_ascii=False),
+        encoding="utf-8"
     )
     
-    return logging.getLogger(__name__)
+    print(f"\n[RESULTS] Detailed results saved to: {results_file}")
 ```
+
+**저장 위치**: `tests/results/{test_name}_{timestamp}.json`
 
 ## Examples
 
@@ -413,17 +493,22 @@ def test_full_pipeline_e2e(client: httpx.Client):
 ## Checklist
 
 ### E2E 테스트 작성 시
-- [ ] 실제 서버 실행 fixture 사용 (`test_server`)
-- [ ] `httpx.Client` 사용 (TestClient 금지)
-- [ ] 실제 입력 데이터 사용 (Mock 금지)
+- [ ] Phase별 적절한 테스트 방식 선택
+  - Phase 2-5: 모듈 직접 호출 (서버 불필요)
+  - Phase 6+: 실제 서버 실행 fixture 사용 (`test_server`)
+- [ ] Phase 6+에서만 `httpx.Client` 사용 (TestClient 금지)
+- [ ] 실제 입력 데이터 사용 (Mock 사용 절대 금지)
 - [ ] 정합성 검증 구현
 - [ ] 타당성 검증 구현
 - [ ] 결과 분석 및 리포트 생성
-- [ ] 로그 파일 저장
+- [ ] 로그 파일 저장 (자동 적용, `setup_test_logging` fixture)
+- [ ] 실행 결과 저장 (필수, `tests/results/` 디렉토리)
 
 ### 테스트 실행 후
 - [ ] 자동으로 상세 보고 출력
-- [ ] 리포트 파일 저장
+- [ ] 리포트 파일 저장 (`tests/reports/`)
+- [ ] 실행 결과 저장 (`tests/results/`, 상세 파싱/추출 결과)
+- [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
 - [ ] 문제 발견 시 원인 분석 포함
 - [ ] 정량적 데이터 제시
 

@@ -112,79 +112,90 @@ JSON/MD 출력
 **목표**: Cursor export 마크다운 파일을 구조화된 데이터로 파싱
 
 ### 텍스트 정규화 (`backend/parser/normalize.py`)
-- [ ] 줄바꿈 통일 (`\r\n` → `\n`, `\r` → `\n`)
-- [ ] BOM 제거 (`\ufeff`)
-- [ ] 공백 정리 (코드블록 제외 옵션)
-- [ ] 트레일링 공백 제거
-- [ ] 너무 긴 공백 축소 (3개 이상 → 2개, 코드블록 제외)
+- [x] 줄바꿈 통일 (`\r\n` → `\n`, `\r` → `\n`)
+- [x] BOM 제거 (`\ufeff`)
+- [x] 공백 정리 (코드블록 제외 옵션)
+- [x] 트레일링 공백 제거
+- [x] 너무 긴 공백 축소 (3개 이상 → 2개, 코드블록 제외)
 
 ### 세션 메타 추출 (`backend/parser/meta.py`)
-- [ ] Phase 추출 (정규식: `(?i)\bPhase\s+(\d+)\b`)
-- [ ] Subphase 추출 (정규식: `(?i)\bSub\s*Phase\s+(\d+)\b`)
-- [ ] Exported at 추출 (정규식: `(?i)Exported\s+(\d{4}-\d{2}-\d{2}[^,\n]*?(?:KST|UTC|GMT|[+\-]\d{2}:\d{2})?)`)
-- [ ] Cursor version 추출 (정규식: `(?i)\bCursor\s+(\d+\.\d+\.\d+)\b`)
-- [ ] Session ID 생성 규칙 구현 (`cursor_export_{exported_at_or_fallback}`)
-- [ ] 상단 2000~4000 chars 범위에서 best-effort 추출
+- [x] Phase 추출 (정규식: `(?i)\bPhase\s+(\d+)\b`)
+- [x] Subphase 추출 (정규식: `(?i)\bSub\s*Phase\s+(\d+)\b`)
+- [x] Exported at 추출 (정규식: `(?i)Exported\s+(\d{4}-\d{2}-\d{2}[^,\n]*?(?:KST|UTC|GMT|[+\-]\d{2}:\d{2})?)`)
+- [x] Cursor version 추출 (정규식: `(?i)\bCursor\s+(\d+\.\d+\.\d+)\b`)
+- [x] Session ID 생성 규칙 구현 (`cursor_export_{exported_at_or_fallback}`)
+- [x] 상단 2000~4000 chars 범위에서 best-effort 추출
 
 ### Turn 블록 파싱 (`backend/parser/turns.py`)
-- [ ] 구분선(`---`) 기준 분할 (정규식: `^\s*---\s*$`)
-- [ ] Speaker 추출 (정규식: `^\s*\*\*(User|Cursor)\*\*\s*$`)
-- [ ] Body 텍스트 추출 (코드블록 제외)
-- [ ] Fallback 파서 구현 (구분선 없을 때 `**User**`/`**Cursor**` 라벨 기준)
-- [ ] Parse Health Check (Unknown 비율 높으면 포맷 감지 실패 처리)
+- [x] 구분선(`---`) 기준 분할 (정규식: `^\s*---\s*$`)
+- [x] Speaker 추출 (정규식: `^\s*\*\*(User|Cursor)\*\*\s*$`)
+- [x] Body 텍스트 추출 (코드블록 제외)
+- [x] Fallback 파서 구현 (구분선 없을 때 `**User**`/`**Cursor**` 라벨 기준)
+- [x] Parse Health Check (Unknown 비율 높으면 포맷 감지 실패 처리)
 
 ### 코드 스니펫 추출 (`backend/parser/snippets.py`)
-- [ ] 코드펜스 추출 (정규식: ````(\w+)?\n(.*?)```)
-- [ ] 언어 판별 (lang 누락 시 빈 문자열 처리)
-- [ ] 스니펫 중복 제거 로직
-- [ ] 스니펫 ID 생성 규칙
+- [x] 코드펜스 추출 (정규식: ````(\w+)?\n(.*?)```)
+- [x] 언어 판별 (lang 누락 시 빈 문자열 처리)
+- [x] 스니펫 중복 제거 로직 (Phase 5에서 구현 예정)
+- [x] 스니펫 ID 생성 규칙 (Phase 5에서 구현 예정, `turn_index` 포함하여 고유 식별 가능)
 
 ### Artifact 추출 (`backend/parser/artifacts.py`)
-- [ ] 파일/경로 후보 추출 (정규식 기반)
-- [ ] 파일 타입 분류 (md/mdc/py/ts/tsx/sql 등)
-- [ ] Action 추정 (mention/create/modify/execute)
+- [x] 파일/경로 후보 추출 (정규식 기반)
+- [x] 파일 타입 분류 (md/mdc/py/ts/tsx/sql 등, 정규식으로 자동 분류)
+- [ ] Action 추정 (mention/create/modify/execute) - Phase 3에서 구현 예정
 
 ### 테스트
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 단위 테스트는 실제 데이터 사용, Mock 사용 절대 금지
 
-- [ ] `tests/test_parser.py` 작성
-  - [ ] `test_normalize()` - 정규화 테스트 (실제 데이터 사용)
-  - [ ] `test_meta_extraction()` - 메타 추출 테스트 (실제 데이터 사용)
-  - [ ] `test_turn_parsing()` - Turn 파싱 테스트 (실제 데이터 사용)
-  - [ ] `test_snippet_extraction()` - 스니펫 추출 테스트 (실제 데이터 사용)
-  - [ ] `test_artifact_extraction()` - Artifact 추출 테스트 (실제 데이터 사용)
-- [ ] `tests/fixtures/*.md` 샘플 마크다운 파일 준비
-  - [ ] `tests/fixtures/cursor_phase_6_3.md` (실제 입력 데이터 복사)
+- [x] `tests/test_parser.py` 작성
+  - [x] `test_normalize()` - 정규화 테스트 (실제 데이터 사용)
+  - [x] `test_meta_extraction()` - 메타 추출 테스트 (실제 데이터 사용)
+  - [x] `test_turn_parsing()` - Turn 파싱 테스트 (실제 데이터 사용)
+  - [x] `test_snippet_extraction()` - 스니펫 추출 테스트 (실제 데이터 사용)
+  - [x] `test_artifact_extraction()` - Artifact 추출 테스트 (실제 데이터 사용)
+  - [x] `test_parse_markdown_full()` - 전체 파서 파이프라인 테스트
+- [x] `tests/fixtures/*.md` 샘플 마크다운 파일 준비
+  - [x] `tests/fixtures/cursor_phase_6_3.md` (실제 입력 데이터 복사)
 - [ ] `tests/golden/*.json` 예상 결과 (Golden 파일) 준비
-  - [ ] Golden 파일 비교 테스트 구현 (회귀 테스트용)
+  - [ ] Golden 파일 비교 테스트 구현 (회귀 테스트용) - Phase 4에서 구현 예정
 
 ### E2E 테스트 (Phase 2 완료 검증)
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 데이터만 사용, Mock 사용 절대 금지
 
-- [ ] `tests/test_parser_e2e.py` 작성
-  - [ ] **실제 입력 데이터 사용**: `docs/cursor_phase_6_3.md` 파일로 전체 파서 파이프라인 테스트
-  - [ ] **정합성 검증**: 파싱 결과의 구조적 정확성 확인
-    - [ ] Session Meta 추출 정확성 (phase, subphase, exported_at, cursor_version)
-    - [ ] Turn 블록 분할 정확성 (User/Cursor 구분)
-    - [ ] 코드 스니펫 추출 정확성 (언어 판별, 중복 제거)
-    - [ ] Artifact 추출 정확성 (파일 경로, 타입 분류)
-  - [ ] **타당성 검증**: 실제 상황에서의 파싱 품질 확인
-    - [ ] 파싱 실패율 검증 (Unknown speaker 비율 < 20%)
-    - [ ] 누락된 정보 처리 확인
-    - [ ] 예외 케이스 처리 확인
-  - [ ] **결과 분석 및 자동 보고**: 파싱 결과를 상세히 분석하여 개선점 도출
-    - [ ] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
-    - [ ] 정량적 데이터 제시 (total_turns, user_turns, cursor_turns, unknown_ratio, code_blocks 수 등)
-    - [ ] 문제 발견 시 원인 분석 포함
-    - [ ] 리포트 파일 저장 (`tests/reports/parser_e2e_report.json`)
+**⚠️ E2E 테스트 필수 사항**:
+- Phase 2-5: 모듈 직접 호출 (서버 불필요)
+- 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
+- 실행 결과 저장 필수 (`tests/results/`, 상세 파싱/추출 결과)
+
+- [x] `tests/conftest_e2e.py` fixture 작성
+  - [x] 자동 로깅 설정 fixture (`setup_test_logging`)
+  - [x] Phase 6+용 서버 실행 fixture (`test_server`, `client`)
+- [x] `tests/test_parser_e2e.py` 작성
+  - [x] **실제 입력 데이터 사용**: `docs/cursor_phase_6_3.md` 파일로 전체 파서 파이프라인 테스트
+  - [x] **정합성 검증**: 파싱 결과의 구조적 정확성 확인
+    - [x] Session Meta 추출 정확성 (phase, subphase, exported_at, cursor_version)
+    - [x] Turn 블록 분할 정확성 (User/Cursor 구분)
+    - [x] 코드 스니펫 추출 정확성 (언어 판별, 중복 제거)
+    - [x] Artifact 추출 정확성 (파일 경로, 타입 분류)
+  - [x] **타당성 검증**: 실제 상황에서의 파싱 품질 확인
+    - [x] 파싱 실패율 검증 (Unknown speaker 비율 < 20%)
+    - [x] 누락된 정보 처리 확인
+    - [x] 예외 케이스 처리 확인
+  - [x] **결과 분석 및 자동 보고**: 파싱 결과를 상세히 분석하여 개선점 도출
+    - [x] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
+    - [x] 정량적 데이터 제시 (total_turns, user_turns, cursor_turns, unknown_ratio, code_blocks 수 등)
+    - [x] 문제 발견 시 원인 분석 포함
+    - [x] 리포트 파일 저장 (`tests/reports/parser_e2e_report.json`)
+    - [x] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [x] 실행 결과 저장 (`tests/results/`, 상세 파싱 결과)
 
 **산출물**: 완전한 파서 모듈, 단위 테스트 및 테스트 데이터, 파싱 결과 데이터 모델 (Pydantic), E2E 테스트 완료 및 검증 리포트
 
 ### README 업데이트 (Phase 2 완료 후)
-- [ ] `README.md` 업데이트
-  - [ ] 파서 모듈 설명 추가
-  - [ ] 파싱 예시 추가
-  - [ ] 프로젝트 구조 업데이트 (실제 디렉토리 구조 반영)
+- [x] `README.md` 업데이트
+  - [x] 파서 모듈 설명 추가
+  - [x] 파싱 예시 추가
+  - [x] 프로젝트 구조 업데이트 (실제 디렉토리 구조 반영)
 
 ---
 
@@ -247,6 +258,11 @@ JSON/MD 출력
 ### E2E 테스트 (Phase 3 완료 검증)
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 데이터만 사용, Mock 사용 절대 금지
 
+**⚠️ E2E 테스트 필수 사항**:
+- Phase 2-5: 모듈 직접 호출 (서버 불필요)
+- 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
+- 실행 결과 저장 필수 (`tests/results/`, 상세 이벤트 정규화 결과)
+
 - [ ] `tests/test_event_normalizer_e2e.py` 작성
   - [ ] **실제 입력 데이터 사용**: Phase 2에서 파싱한 `docs/cursor_phase_6_3.md` 결과를 입력으로 사용
   - [ ] **정합성 검증**: 이벤트 정규화 결과의 구조적 정확성 확인
@@ -264,6 +280,8 @@ JSON/MD 출력
     - [ ] 정량적 데이터 제시 (total_events, event_type_distribution, artifact_linking_rate 등)
     - [ ] 문제 발견 시 원인 분석 포함
     - [ ] 리포트 파일 저장 (`tests/reports/event_normalizer_e2e_report.json`)
+    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [ ] 실행 결과 저장 (`tests/results/`, 상세 이벤트 정규화 결과)
 
 **산출물**: 이벤트 정규화 모듈, LLM 서비스 (옵션), 이벤트 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
@@ -321,6 +339,11 @@ JSON/MD 출력
 ### E2E 테스트 (Phase 4 완료 검증)
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 데이터만 사용, Mock 사용 절대 금지
 
+**⚠️ E2E 테스트 필수 사항**:
+- Phase 2-5: 모듈 직접 호출 (서버 불필요)
+- 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
+- 실행 결과 저장 필수 (`tests/results/`, 상세 Timeline/Issues 생성 결과)
+
 - [ ] `tests/test_timeline_issues_e2e.py` 작성
   - [ ] **실제 입력 데이터 사용**: Phase 3에서 정규화한 이벤트를 입력으로 사용
   - [ ] **정합성 검증**: Timeline 및 Issue Cards 생성 결과의 구조적 정확성 확인
@@ -341,6 +364,8 @@ JSON/MD 출력
     - [ ] 정량적 데이터 제시 (timeline_events_count, issues_count, linking_completeness 등)
     - [ ] 문제 발견 시 원인 분석 포함
     - [ ] 리포트 파일 저장 (`tests/reports/timeline_issues_e2e_report.json`)
+    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [ ] 실행 결과 저장 (`tests/results/`, 상세 Timeline/Issues 생성 결과)
 
 **산출물**: Timeline 빌더 모듈, Issue Cards 빌더 모듈, Timeline/Issue Cards 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
@@ -399,6 +424,8 @@ JSON/MD 출력
     - [ ] 정량적 데이터 제시 (total_snippets, deduplication_rate, linking_completeness 등)
     - [ ] 문제 발견 시 원인 분석 포함
     - [ ] 리포트 파일 저장 (`tests/reports/snippet_e2e_report.json`)
+    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [ ] 실행 결과 저장 (`tests/results/`, 상세 스니펫 분리/저장 결과)
 
 **산출물**: 스니펫 관리 모듈, 스니펫 저장소 모듈, E2E 테스트 완료 및 검증 리포트
 
@@ -477,14 +504,21 @@ JSON/MD 출력
 ### E2E 테스트 (Phase 6 완료 검증 - 백엔드 서버 단계 최종 검증)
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 서버 실행 필수, TestClient 사용 금지, Mock 사용 절대 금지
 
-- [ ] `tests/conftest_e2e.py` fixture 작성
-  - [ ] `test_server` fixture: 실제 uvicorn 서버 실행
-    - [ ] 서버 시작 대기 로직 (최대 30회 재시도)
-    - [ ] 서버 종료 자동화
-  - [ ] `httpx.Client` fixture: 실제 HTTP 요청 클라이언트
-    - [ ] `TestClient` 사용 금지 (백그라운드 작업이 제대로 실행되지 않음)
-    - [ ] 타임아웃 설정 (30초)
-  - [ ] 서버 시작/종료 자동화
+**⚠️ E2E 테스트 필수 사항**:
+- Phase 6+: 실제 서버 실행 필수 (API 테스트)
+- 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
+- 실행 결과 저장 필수 (`tests/results/`, 상세 API 응답 결과)
+
+- [x] `tests/conftest_e2e.py` fixture 작성
+  - [x] `test_server` fixture: 실제 uvicorn 서버 실행 (Phase 6+ 전용)
+    - [x] 서버 시작 대기 로직 (최대 30회 재시도)
+    - [x] 서버 종료 자동화
+  - [x] `httpx.Client` fixture: 실제 HTTP 요청 클라이언트 (Phase 6+ 전용)
+    - [x] `TestClient` 사용 금지 (백그라운드 작업이 제대로 실행되지 않음)
+    - [x] 타임아웃 설정 (30초)
+  - [x] `setup_test_logging` fixture: 자동 로깅 설정 (모든 E2E 테스트에 자동 적용)
+    - [x] 로그 파일 저장 (`tests/logs/{test_name}_{timestamp}.log`)
+    - [x] DEBUG 레벨 로깅
 - [ ] `tests/test_api_e2e.py` 작성
   - [ ] **실제 입력 데이터 사용**: `docs/cursor_phase_6_3.md` 파일을 실제로 업로드하여 전체 파이프라인 테스트
   - [ ] **정합성 검증**: API 응답의 구조적 정확성 확인
@@ -524,6 +558,10 @@ JSON/MD 출력
     - [ ] 정량적 데이터 제시 (각 엔드포인트 응답 시간, 성공률, 에러 케이스 등)
     - [ ] 문제 발견 시 원인 분석 포함
     - [ ] 테스트 결과 리포트 생성 (`tests/reports/api_e2e_report.json`)
+    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [ ] 실행 결과 저장 (`tests/results/`, 상세 API 응답 결과)
+    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [ ] 실행 결과 저장 (`tests/results/`, 상세 API 응답 결과)
     - [ ] 발견된 문제점 및 개선 사항 문서화
   - [ ] **백엔드 서비스 완전성 검증 (프론트엔드 구현 전 필수)**
     - [ ] 모든 API 엔드포인트가 정상 동작하는지 확인
@@ -920,22 +958,31 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 1 완료, Phase 2 시작 준비
+**현재 Phase**: Phase 2 완료, Phase 3 시작 준비
 
-**마지막 업데이트**: 2025-01-XX
+**마지막 업데이트**: 2025-12-19
 
 **완료된 Phase**:
-- Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-01-XX 완료)
+- Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
   - Poetry 프로젝트 초기화 완료
   - 백엔드/프론트엔드 디렉토리 구조 생성 완료
   - FastAPI 앱 초기화 완료 (`backend/main.py`)
   - 기본 문서 및 설정 파일 생성 완료
+- Phase 2: 백엔드 파서 구현 (마크다운 파싱) (2025-12-19 완료)
+  - 텍스트 정규화 모듈 구현 완료
+  - 세션 메타데이터 추출 모듈 구현 완료
+  - Turn 블록 파싱 모듈 구현 완료
+  - 코드 스니펫 추출 모듈 구현 완료 (`turn_index` 포함)
+  - Artifact 추출 모듈 구현 완료
+  - 단위 테스트 완료 (6개 테스트 통과)
+  - E2E 테스트 완료 (로그/결과 자동 저장)
+  - README 업데이트 완료
 
 **진행 중인 Phase**:
-- Phase 2: 백엔드 파서 구현 (마크다운 파싱) - 시작 준비
+- Phase 3: 이벤트 추출 및 정규화 - 시작 준비
 
 **다음 단계**:
-- Phase 2: 백엔드 파서 구현 시작
-  - 텍스트 정규화 (`backend/parser/normalize.py`)
-  - 세션 메타 추출 (`backend/parser/meta.py`)
+- Phase 3: 이벤트 추출 및 정규화 시작
+  - Event 모델 정의 (`backend/core/models.py`)
+  - 이벤트 정규화 로직 구현 (`backend/builders/event_normalizer.py`)
 
