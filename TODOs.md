@@ -84,7 +84,14 @@ JSON/MD 출력
 - [ ] `.env` 파일 템플릿 생성 (OpenAI API 키 등)
 - [ ] `.env.example` 파일 생성
 - [ ] `.gitignore` 설정
-- [ ] `README.md` 작성
+- [ ] `README.md` 최초 작성
+  - [ ] 프로젝트 개요 (PRD 기반 간단한 설명)
+  - [ ] 기술 스택 (FastAPI, Next.js)
+  - [ ] 프로젝트 구조 (실제 생성된 디렉토리 구조 반영)
+  - [ ] 개발 환경 설정 (Poetry, Next.js 설치 방법)
+  - [ ] 환경 변수 설정 (`.env.example` 참조)
+  - [ ] 실행 방법 (백엔드/프론트엔드 서버 실행)
+  - [ ] 참고 문서 링크 (PRD, TODOs.md, AGENTS.md)
 - [ ] Cursor Rules 초기 설정 (`.cursor/rules/`)
   - [ ] `backend-api.mdc` (API 설계 규칙)
   - [ ] `parser-rules.mdc` (파서 규칙)
@@ -167,6 +174,12 @@ JSON/MD 출력
 
 **산출물**: 완전한 파서 모듈, 단위 테스트 및 테스트 데이터, 파싱 결과 데이터 모델 (Pydantic), E2E 테스트 완료 및 검증 리포트
 
+### README 업데이트 (Phase 2 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] 파서 모듈 설명 추가
+  - [ ] 파싱 예시 추가
+  - [ ] 프로젝트 구조 업데이트 (실제 디렉토리 구조 반영)
+
 ---
 
 ## Phase 3: 이벤트 추출 및 정규화
@@ -248,6 +261,11 @@ JSON/MD 출력
 
 **산출물**: 이벤트 정규화 모듈, LLM 서비스 (옵션), 이벤트 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
+### README 업데이트 (Phase 3 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] 이벤트 정규화 설명 추가
+  - [ ] 이벤트 타입 설명 추가
+
 ---
 
 ## Phase 4: Timeline 및 Issue Cards 생성
@@ -320,6 +338,12 @@ JSON/MD 출력
 
 **산출물**: Timeline 빌더 모듈, Issue Cards 빌더 모듈, Timeline/Issue Cards 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
+### README 업데이트 (Phase 4 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] Timeline/Issue Cards 생성 설명 추가
+  - [ ] 출력 예시 추가 (JSON 구조 예시)
+  - [ ] 프로젝트 구조 업데이트
+
 ---
 
 ## Phase 5: 코드 스니펫 분리 및 저장
@@ -371,6 +395,11 @@ JSON/MD 출력
     - [ ] 리포트 파일 저장 (`tests/reports/snippet_e2e_report.json`)
 
 **산출물**: 스니펫 관리 모듈, 스니펫 저장소 모듈, E2E 테스트 완료 및 검증 리포트
+
+### README 업데이트 (Phase 5 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] 스니펫 관리 설명 추가
+  - [ ] 스니펫 저장 구조 설명 추가
 
 ---
 
@@ -499,6 +528,13 @@ JSON/MD 출력
 
 **산출물**: 완전한 FastAPI 백엔드, API 문서 (OpenAPI/Swagger), E2E 테스트 완료 및 검증 리포트, 백엔드 서비스 완전성 검증 완료
 
+### README 업데이트 (Phase 6 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] API 엔드포인트 문서 추가
+  - [ ] API 사용 예시 추가 (curl 또는 코드 예시)
+  - [ ] OpenAPI/Swagger 문서 링크 추가
+  - [ ] 프로젝트 구조 업데이트
+
 ---
 
 ## Phase 7: 프론트엔드 UI 구현
@@ -576,6 +612,12 @@ JSON/MD 출력
 
 **산출물**: 완전한 Next.js 프론트엔드, 반응형 UI, API 연동 완료
 
+### README 업데이트 (Phase 7 완료 후)
+- [ ] `README.md` 업데이트
+  - [ ] UI 스크린샷 추가
+  - [ ] 사용자 가이드 추가
+  - [ ] 전체 사용 흐름 설명 추가
+
 ---
 
 ## Phase 8: 통합 테스트 및 QA
@@ -612,6 +654,13 @@ JSON/MD 출력
 - [ ] README.md 업데이트
 
 **산출물**: 통합 테스트 완료, 품질 보증 완료, 문서화 완료
+
+### README 최종 업데이트 (Phase 8 완료 후)
+- [ ] `README.md` 최종 업데이트
+  - [ ] 배포 가이드 추가
+  - [ ] 트러블슈팅 섹션 추가
+  - [ ] 전체 프로젝트 구조 최종 반영
+  - [ ] 변경 이력 섹션 추가 (Phase별 완료 사항)
 
 ---
 
