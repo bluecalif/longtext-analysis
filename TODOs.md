@@ -48,54 +48,54 @@ JSON/MD 출력
 **목표**: 프로젝트 기본 구조 생성 및 개발 환경 설정
 
 ### 백엔드 설정
-- [ ] Poetry 프로젝트 초기화 (`pyproject.toml`, `poetry.lock`)
-- [ ] 백엔드 의존성 패키지 설치
-  - [ ] `fastapi`
-  - [ ] `uvicorn`
-  - [ ] `pydantic`
-  - [ ] `python-dotenv`
-  - [ ] `openai`
-  - [ ] `regex`
-- [ ] 백엔드 디렉토리 구조 생성
-  - [ ] `backend/parser/` (마크다운 파서 모듈)
-  - [ ] `backend/builders/` (Timeline/Issue Cards 빌더)
-  - [ ] `backend/render/` (Markdown 렌더러)
-  - [ ] `backend/api/routes/` (FastAPI 라우터)
-  - [ ] `backend/core/` (상수, 유틸리티)
+- [x] Poetry 프로젝트 초기화 (`pyproject.toml`, `poetry.lock`)
+- [x] 백엔드 의존성 패키지 설치
+  - [x] `fastapi`
+  - [x] `uvicorn`
+  - [x] `pydantic`
+  - [x] `python-dotenv`
+  - [x] `openai`
+  - [x] `regex`
+- [x] 백엔드 디렉토리 구조 생성
+  - [x] `backend/parser/` (마크다운 파서 모듈)
+  - [x] `backend/builders/` (Timeline/Issue Cards 빌더)
+  - [x] `backend/render/` (Markdown 렌더러)
+  - [x] `backend/api/routes/` (FastAPI 라우터)
+  - [x] `backend/core/` (상수, 유틸리티)
 
 ### 프론트엔드 설정
-- [ ] Next.js 프로젝트 초기화 (`frontend/` 디렉토리)
-- [ ] 프론트엔드 의존성 패키지 설치
-  - [ ] `next`
-  - [ ] `react`
-  - [ ] `typescript`
-  - [ ] `tailwindcss`
+- [x] Next.js 프로젝트 초기화 (`frontend/` 디렉토리)
+- [x] 프론트엔드 의존성 패키지 설치
+  - [x] `next`
+  - [x] `react`
+  - [x] `typescript`
+  - [x] `tailwindcss`
   - [ ] `shadcn/ui` (선택)
-- [ ] 프론트엔드 디렉토리 구조 생성
-  - [ ] `frontend/app/` (App Router 페이지)
-  - [ ] `frontend/components/` (UI 컴포넌트)
-  - [ ] `frontend/lib/` (유틸리티, API 클라이언트)
-  - [ ] `frontend/types/` (TypeScript 타입 정의)
+- [x] 프론트엔드 디렉토리 구조 생성
+  - [x] `frontend/app/` (App Router 페이지)
+  - [x] `frontend/components/` (UI 컴포넌트)
+  - [x] `frontend/lib/` (유틸리티, API 클라이언트)
+  - [x] `frontend/types/` (TypeScript 타입 정의)
 
 ### 프로젝트 공통 설정
-- [ ] `tests/` 디렉토리 생성
-  - [ ] `tests/fixtures/` (샘플 마크다운 파일)
-  - [ ] `tests/golden/` (예상 결과)
+- [x] `tests/` 디렉토리 생성
+  - [x] `tests/fixtures/` (샘플 마크다운 파일)
+  - [x] `tests/golden/` (예상 결과)
 - [ ] `.env` 파일 템플릿 생성 (OpenAI API 키 등)
-- [ ] `.env.example` 파일 생성
-- [ ] `.gitignore` 설정
-- [ ] `README.md` 최초 작성
-  - [ ] 프로젝트 개요 (PRD 기반 간단한 설명)
-  - [ ] 기술 스택 (FastAPI, Next.js)
-  - [ ] 프로젝트 구조 (실제 생성된 디렉토리 구조 반영)
-  - [ ] 개발 환경 설정 (Poetry, Next.js 설치 방법)
-  - [ ] 환경 변수 설정 (`.env.example` 참조)
-  - [ ] 실행 방법 (백엔드/프론트엔드 서버 실행)
-  - [ ] 참고 문서 링크 (PRD, TODOs.md, AGENTS.md)
-- [ ] Cursor Rules 초기 설정 (`.cursor/rules/`)
-  - [ ] `backend-api.mdc` (API 설계 규칙)
-  - [ ] `parser-rules.mdc` (파서 규칙)
-  - [ ] `api-contract-sync.mdc` (API 계약 동기화)
+- [x] `.env.example` 파일 생성
+- [x] `.gitignore` 설정
+- [x] `README.md` 최초 작성
+  - [x] 프로젝트 개요 (PRD 기반 간단한 설명)
+  - [x] 기술 스택 (FastAPI, Next.js)
+  - [x] 프로젝트 구조 (실제 생성된 디렉토리 구조 반영)
+  - [x] 개발 환경 설정 (Poetry, Next.js 설치 방법)
+  - [x] 환경 변수 설정 (`.env.example` 참조)
+  - [x] 실행 방법 (백엔드/프론트엔드 서버 실행)
+  - [x] 참고 문서 링크 (PRD, TODOs.md, AGENTS.md)
+- [x] Cursor Rules 초기 설정 (`.cursor/rules/`)
+  - [x] `backend-api.mdc` (API 설계 규칙)
+  - [x] `parser-rules.mdc` (파서 규칙)
+  - [x] `api-contract-sync.mdc` (API 계약 동기화)
 
 **산출물**: 프로젝트 기본 구조, 개발 환경 설정 완료, 기본 README 및 문서
 
