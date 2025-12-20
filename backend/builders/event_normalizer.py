@@ -51,9 +51,7 @@ def is_debug_turn(turn: Turn) -> bool:
         return False
 
     text = turn.body.lower()
-    return any(
-        trigger.search(text) for trigger in DEBUG_TRIGGERS.values()
-    )
+    return any(trigger.search(text) for trigger in DEBUG_TRIGGERS.values())
 
 
 def create_debug_event(turn: Turn) -> Event:
@@ -69,8 +67,7 @@ def create_debug_event(turn: Turn) -> Event:
     # 스니펫 참조 생성 (Phase 5에서 실제 ID로 대체될 예정)
     # 현재는 turn_index와 block_index를 조합하여 임시 ID 생성
     snippet_refs = [
-        f"turn_{turn.turn_index}_block_{block.block_index}"
-        for block in turn.code_blocks
+        f"turn_{turn.turn_index}_block_{block.block_index}" for block in turn.code_blocks
     ]
 
     return Event(
@@ -178,4 +175,3 @@ def summarize_turn(turn: Turn) -> str:
 
     # 첫 200자 + "..."
     return body[:200] + "..."
-

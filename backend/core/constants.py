@@ -17,15 +17,9 @@ DEBUG_TRIGGERS = {
     "error": re.compile(
         r"(?i)\b(error|exception|stack trace|violates check constraint|constraint)\b"
     ),
-    "root_cause": re.compile(
-        r"(?i)\b(원인|Root cause|because|due to)\b"
-    ),
-    "fix": re.compile(
-        r"(?i)\b(해결|조치|수정|patch|fix|ALTER TABLE|UPDATE|script)\b"
-    ),
-    "validation": re.compile(
-        r"(?i)\b(검증|확인|테스트|scenario|check)\b"
-    ),
+    "root_cause": re.compile(r"(?i)\b(원인|Root cause|because|due to)\b"),
+    "fix": re.compile(r"(?i)\b(해결|조치|수정|patch|fix|ALTER TABLE|UPDATE|script)\b"),
+    "validation": re.compile(r"(?i)\b(검증|확인|테스트|scenario|check)\b"),
 }
 
 
@@ -34,4 +28,3 @@ class IssueStatus(str, Enum):
 
     CONFIRMED = "confirmed"  # 원인 확인됨
     HYPOTHESIS = "hypothesis"  # 가설 (미확정)
-
