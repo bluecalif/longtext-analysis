@@ -365,6 +365,30 @@ JSON/MD 출력
   - 영향: Artifact 연결은 정상 작동하지만, 타입 통계에서만 `artifact` 타입이 0%로 표시
   - 개선 방안: Phase 3.3 평가 후 LLM 프롬프트 개선 또는 하이브리드 접근 검토
 
+#### Phase 3.2.1: LLM 병렬 처리 리팩토링 (진행 중)
+
+**목표**: LLM 처리 시간 단축을 위해 순차 처리에서 병렬 처리로 리팩토링
+
+**⚠️ 중요**: max_workers=5 사용
+
+- [ ] 병렬 처리 로직 구현 (`backend/builders/event_normalizer.py`)
+  - [ ] `_normalize_turns_to_events_parallel()` 함수 구현
+    - [ ] `ThreadPoolExecutor` 사용 (max_workers=5)
+    - [ ] Turn 리스트를 병렬로 처리
+    - [ ] turn_index 기준으로 순서 유지
+    - [ ] 에러 처리 및 fallback 로직 구현
+  - [ ] `normalize_turns_to_events()` 함수 수정
+    - [ ] `use_llm=True`일 때 병렬 처리 로직 호출
+- [ ] E2E 테스트 실행 및 검증 (`tests/test_event_normalizer_e2e.py`)
+  - [ ] 병렬 처리 후 결과 일치 확인 (이벤트 순서, 내용 검증)
+  - [ ] 성능 측정 및 비교 (병렬 처리 전후 실행 시간 기록)
+  - [ ] 에러 케이스 테스트 (네트워크 오류 등)
+
+**예상 효과**:
+- 순차 처리: 67개 Turn × 평균 3.3초 = 약 221초 (3분 41초)
+- 병렬 처리 (max_workers=5): 67개 Turn ÷ 5 × 평균 3.3초 = 약 44초
+- **예상 속도 향상: 약 5배**
+
 ---
 
 ### Phase 3.3: 결과 평가 방법 구축
