@@ -54,8 +54,13 @@ class EventType(str, Enum):
 class Event(BaseModel):
     """이벤트 기본 모델 (정규화된 Turn)"""
 
-    type: EventType  # 이벤트 타입
+    seq: int = 0  # 시퀀스 번호 (normalize_turns_to_events에서 부여)
+    session_id: str = ""  # 세션 ID
     turn_ref: int  # 원본 Turn 인덱스
+    phase: Optional[int] = None  # Phase 번호
+    subphase: Optional[int] = None  # Subphase 번호
+    type: EventType  # 이벤트 타입
     summary: str  # 요약
     artifacts: List[dict] = []  # 연결된 Artifact (파일 경로, 액션 등)
     snippet_refs: List[str] = []  # 연결된 스니펫 ID (Phase 5에서 생성될 ID)
+    processing_method: str = "regex"  # "regex" 또는 "llm" (결과 파일에 기록)

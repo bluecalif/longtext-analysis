@@ -33,11 +33,13 @@ def test_turn_to_event_conversion():
     result = parse_markdown(text, source_doc=str(INPUT_FILE))
 
     # 이벤트 정규화
-    events = normalize_turns_to_events(result["turns"])
+    session_meta = result["session_meta"]
+    events = normalize_turns_to_events(result["turns"], session_meta=session_meta)
 
     # 검증
     assert len(events) > 0, "이벤트가 생성되지 않음"
-    assert len(events) >= len(result["turns"]), "이벤트 수가 Turn 수보다 적음"
+    # 우선순위 기반 단일 이벤트 생성이므로 이벤트 수는 Turn 수와 같아야 함
+    assert len(events) == len(result["turns"]), f"이벤트 수({len(events)})가 Turn 수({len(result['turns'])})와 일치하지 않음"
 
     # 모든 이벤트가 Event 객체인지 확인
     from backend.core.models import Event
@@ -58,7 +60,8 @@ def test_event_type_classification():
     result = parse_markdown(text, source_doc=str(INPUT_FILE))
 
     # 이벤트 정규화
-    events = normalize_turns_to_events(result["turns"])
+    session_meta = result["session_meta"]
+    events = normalize_turns_to_events(result["turns"], session_meta=session_meta)
 
     # 이벤트 타입 분포 확인
     event_types = [event.type for event in events]
@@ -171,12 +174,12 @@ def test_event_creation_functions():
         path_candidates=["test.py"],
     )
 
-    # ArtifactEvent 생성 테스트
+    # ArtifactEvent 생성 테스트 (session_meta 없이도 동작)
     artifact_event = create_artifact_event(turn)
     assert artifact_event.type == EventType.ARTIFACT, "ArtifactEvent 타입이 올바르지 않음"
     assert len(artifact_event.artifacts) > 0, "Artifact가 연결되지 않음"
 
-    # MessageEvent 생성 테스트
+    # MessageEvent 생성 테스트 (session_meta 없이도 동작)
     message_event = create_message_event(turn)
     assert message_event.type in EventType, "MessageEvent 타입이 유효하지 않음"
     assert message_event.turn_ref == turn.turn_index, "turn_ref가 올바르지 않음"

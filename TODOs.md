@@ -319,35 +319,51 @@ JSON/MD 출력
 
 ---
 
-### Phase 3.2: LLM 선택적 적용 (gpt-4.1-mini)
+### Phase 3.2: LLM 선택적 적용 (gpt-4.1-mini) - 완료 (2025-12-20)
 
 **목표**: LLM을 사용하여 타입 분류 및 Summary 품질 향상
 
 **⚠️ 중요**: 모델명은 반드시 `"gpt-4.1-mini"` 사용 (사용자 지시)
 
-- [ ] Event 모델 확장 (`backend/core/models.py`)
-  - [ ] `processing_method: str` 필드 추가 ("regex" 또는 "llm")
-- [ ] LLM 서비스 구현 (`backend/core/llm_service.py`)
-  - [ ] gpt-4.1-mini API 클라이언트 구현
-  - [ ] `classify_and_summarize_with_llm()` 함수 구현
-    - [ ] 타입 분류 및 요약 생성 통합 함수
-    - [ ] 응답 파싱 로직 (TYPE, SUMMARY)
-  - [ ] 파일 기반 캐싱 로직 구현
-    - [ ] 캐시 키 생성 규칙 (텍스트 해시)
-    - [ ] 캐시 저장/로드 함수
-- [ ] 이벤트 정규화 모듈에 LLM 옵션 추가 (`backend/builders/event_normalizer.py`)
-  - [ ] `normalize_turns_to_events()` 함수에 `use_llm` 파라미터 추가
-  - [ ] `create_event_with_llm()` 함수 구현
-  - [ ] LLM/정규식 선택 로직 구현
-- [ ] LLM 서비스 테스트 작성 (`tests/test_llm_service.py`)
-  - [ ] LLM 호출 결과 캐싱 확인 (파일 기반 캐시)
-  - [ ] 동일 입력 재사용 확인
-  - [ ] 타입 분류 정확도 테스트
-  - [ ] Summary 품질 테스트
-- [ ] E2E 테스트에 LLM 옵션 추가 (`tests/test_event_normalizer_e2e.py`)
-  - [ ] `use_llm=True` 옵션 테스트 추가
-  - [ ] `processing_method` 필드 검증
-  - [ ] LLM/정규식 결과 비교 분석
+- [x] Event 모델 확장 (`backend/core/models.py`)
+  - [x] `processing_method: str` 필드 추가 ("regex" 또는 "llm")
+- [x] LLM 서비스 구현 (`backend/core/llm_service.py`)
+  - [x] gpt-4.1-mini API 클라이언트 구현
+  - [x] `classify_and_summarize_with_llm()` 함수 구현
+    - [x] 타입 분류 및 요약 생성 통합 함수
+    - [x] 응답 파싱 로직 (TYPE, SUMMARY)
+  - [x] 파일 기반 캐싱 로직 구현
+    - [x] 캐시 키 생성 규칙 (텍스트 해시)
+    - [x] 캐시 저장/로드 함수
+  - [x] `.env` 파일 자동 로드 설정 (`load_dotenv()`)
+- [x] 이벤트 정규화 모듈에 LLM 옵션 추가 (`backend/builders/event_normalizer.py`)
+  - [x] `normalize_turns_to_events()` 함수에 `use_llm` 파라미터 추가
+  - [x] `create_event_with_llm()` 함수 구현
+  - [x] LLM/정규식 선택 로직 구현
+- [x] LLM 서비스 테스트 작성 (`tests/test_llm_service.py`)
+  - [x] LLM 호출 결과 캐싱 확인 (파일 기반 캐시)
+  - [x] 동일 입력 재사용 확인
+  - [x] 타입 분류 정확도 테스트
+  - [x] Summary 품질 테스트
+- [x] E2E 테스트에 LLM 옵션 추가 (`tests/test_event_normalizer_e2e.py`)
+  - [x] `use_llm=True` 옵션 테스트 추가
+  - [x] `processing_method` 필드 검증
+  - [x] LLM/정규식 결과 비교 분석
+  - [x] `.env` 파일 자동 로드 설정 (`load_dotenv()`)
+  - [x] E2E 테스트 실행 및 결과 분석 완료
+    - [x] 리포트 생성: `tests/reports/event_normalizer_e2e_llm_report.json`
+    - [x] 결과 저장: `tests/results/event_normalizer_e2e_llm_20251220_160031.json`
+    - [x] 분석 문서: `docs/phase3_2_e2e_analysis.md`
+
+**E2E 테스트 결과 요약**:
+- 총 Turn: 67개, 총 Event: 67개 (1:1 매핑 달성 ✅)
+- 이벤트 타입 분포: status_review 25개, plan 21개, next_step 4개, completion 5개, debug 7개, turn 5개
+- LLM이 정규식 대비 더 세밀한 타입 분류 제공 (status_review, plan 등)
+- Summary 품질 개선 (간결하고 의미 있는 요약)
+- **남은 이슈**: LLM 기반에서 `artifact` 타입 이벤트가 0개로 분류됨 (하지만 `artifacts` 배열에는 파일 경로 포함됨)
+  - 원인: LLM이 파일 경로를 인식하지만, 이벤트 타입은 텍스트의 주요 목적을 우선시하여 분류
+  - 영향: Artifact 연결은 정상 작동하지만, 타입 통계에서만 `artifact` 타입이 0%로 표시
+  - 개선 방안: Phase 3.3 평가 후 LLM 프롬프트 개선 또는 하이브리드 접근 검토
 
 ---
 
@@ -1055,7 +1071,7 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 3.0 완료, Phase 3.1 진행 중
+**현재 Phase**: Phase 3.2 완료, Phase 3.3 대기 중
 
 **마지막 업데이트**: 2025-12-20
 
@@ -1083,13 +1099,22 @@ longtext-analysis/
   - 문제점 발견: 이벤트 중복 생성, Summary 품질, 타입 분류 정확도
 
 **진행 중인 Phase**:
-- Phase 3.1: 즉시 개선 (정규식 기반) - 진행 중
-  - 이벤트 중복 생성 방지
-  - Summary 품질 개선
-  - 타입 분류 엄격화
+- Phase 3.1: 즉시 개선 (정규식 기반) - 완료 (2025-12-20)
+  - ✅ 이벤트 중복 생성 방지 (117개 → 67개, 1:1 매핑 달성)
+  - ✅ Summary 품질 개선 (줄바꿈 정리, 의미 있는 위치에서 자르기)
+  - ✅ 타입 분류 엄격화 (구체적인 패턴 사용)
+  - 대략적 평가 완료: [docs/phase3_1_evaluation.md](docs/phase3_1_evaluation.md)
+  - **참고**: Phase 3.3에서 평가 로직 구축 후 재평가 예정
+- Phase 3.2: LLM 선택적 적용 (gpt-4.1-mini) - 완료 (2025-12-20)
+  - ✅ Event 모델에 `processing_method` 필드 추가
+  - ✅ LLM 서비스 구현 (gpt-4.1-mini, 파일 기반 캐싱, `.env` 자동 로드)
+  - ✅ 이벤트 정규화 모듈에 LLM 옵션 추가 (`use_llm` 파라미터)
+  - ✅ LLM 서비스 테스트 작성 (API 키 있으면 자동 실행)
+  - ✅ LLM 기반 E2E 테스트 완료 (67개 Turn → 67개 Event, 1:1 매핑 달성)
+  - ✅ E2E 테스트 결과 분석 완료: [docs/phase3_2_e2e_analysis.md](docs/phase3_2_e2e_analysis.md)
+  - ⚠️ 남은 이슈: LLM 기반에서 `artifact` 타입 이벤트가 0개로 분류됨 (artifacts 배열에는 포함됨)
 
 **다음 단계**:
-- Phase 3.1 완료 후 Phase 3.2 진행 (LLM 선택적 적용)
-- Phase 3.2 완료 후 Phase 3.3 진행 (결과 평가 방법 구축)
+- Phase 3.3 진행 (결과 평가 방법 구축)
 - Phase 3 전체 완료 후 Phase 4 진행 (Timeline 및 Issue Cards 생성)
 
