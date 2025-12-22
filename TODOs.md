@@ -365,29 +365,49 @@ JSON/MD 출력
   - 영향: Artifact 연결은 정상 작동하지만, 타입 통계에서만 `artifact` 타입이 0%로 표시
   - 개선 방안: Phase 3.3 평가 후 LLM 프롬프트 개선 또는 하이브리드 접근 검토
 
-#### Phase 3.2.1: LLM 병렬 처리 리팩토링 (진행 중)
+#### Phase 3.2.1: LLM 병렬 처리 리팩토링 및 캐시 시스템 개선 (완료)
 
-**목표**: LLM 처리 시간 단축을 위해 순차 처리에서 병렬 처리로 리팩토링
+**목표**: LLM 처리 시간 단축을 위해 순차 처리에서 병렬 처리로 리팩토링 및 캐시 시스템 개선
 
 **⚠️ 중요**: max_workers=5 사용
 
-- [ ] 병렬 처리 로직 구현 (`backend/builders/event_normalizer.py`)
-  - [ ] `_normalize_turns_to_events_parallel()` 함수 구현
-    - [ ] `ThreadPoolExecutor` 사용 (max_workers=5)
-    - [ ] Turn 리스트를 병렬로 처리
-    - [ ] turn_index 기준으로 순서 유지
-    - [ ] 에러 처리 및 fallback 로직 구현
-  - [ ] `normalize_turns_to_events()` 함수 수정
-    - [ ] `use_llm=True`일 때 병렬 처리 로직 호출
-- [ ] E2E 테스트 실행 및 검증 (`tests/test_event_normalizer_e2e.py`)
-  - [ ] 병렬 처리 후 결과 일치 확인 (이벤트 순서, 내용 검증)
-  - [ ] 성능 측정 및 비교 (병렬 처리 전후 실행 시간 기록)
-  - [ ] 에러 케이스 테스트 (네트워크 오류 등)
+- [x] 병렬 처리 로직 구현 (`backend/builders/event_normalizer.py`)
+  - [x] `_normalize_turns_to_events_parallel()` 함수 구현
+    - [x] `ThreadPoolExecutor` 사용 (max_workers=5)
+    - [x] Turn 리스트를 병렬로 처리
+    - [x] turn_index 기준으로 순서 유지
+    - [x] 에러 처리 및 fallback 로직 구현
+  - [x] `normalize_turns_to_events()` 함수 수정
+    - [x] `use_llm=True`일 때 병렬 처리 로직 호출
+- [x] E2E 테스트 실행 및 검증 (`tests/test_event_normalizer_e2e.py`)
+  - [x] 병렬 처리 후 결과 일치 확인 (이벤트 순서, 내용 검증)
+  - [x] 성능 측정 및 비교 (병렬 처리 전후 실행 시간 기록)
+    - [x] 성능 향상 확인: 224초 → 44.99초 (약 5배 향상)
+  - [x] 로그 파일 생성 문제 해결 (fixture 개선 완료, 실제 생성 확인 완료)
+  - [ ] 에러 케이스 테스트 (네트워크 오류 등) - 선택적
+- [x] 캐시 시스템 개선 (`backend/core/cache.py`, `backend/core/llm_service.py`)
+  - [x] 결정적 해시 함수 구현 (SHA-256, `hash()` 사용 금지)
+  - [x] 원자적 파일 저장 구현 (임시 파일 + 원자적 이동, Race Condition 방지)
+  - [x] 텍스트 해시 검증 구현 (캐시 키 충돌 감지)
+  - [x] Fallback 캐시 저장 구현 (재시도 실패 시에도 결과 저장)
+  - [x] 캐시 메타데이터 추가 (검증 및 디버깅용)
+  - [x] 캐시 통계 개선 (히트율, 디렉토리 통계 포함)
+- [x] 커서룰 업데이트 (`.cursor/rules/llm-service.mdc`)
+  - [x] 캐싱 규칙 섹션 개선 (SHA-256, 원자적 저장, 텍스트 해시 검증)
+  - [x] Pattern 1 업데이트 (개선된 LLM 호출 함수 예시)
+  - [x] Common Pitfalls 섹션 확장 (비결정적 해시, Race Condition, Fallback 캐시)
+  - [x] 캐시 시스템 개선 사항 섹션 추가 (성능 개선 결과 포함)
 
-**예상 효과**:
-- 순차 처리: 67개 Turn × 평균 3.3초 = 약 221초 (3분 41초)
-- 병렬 처리 (max_workers=5): 67개 Turn ÷ 5 × 평균 3.3초 = 약 44초
-- **예상 속도 향상: 약 5배**
+**실제 효과**:
+- 병렬 처리: 224초 → 44.99초 (약 5배 향상) ✅
+- 캐시 시스템 개선: 첫 실행 56.01초 → 두 번째 실행 0.26초 (약 215배 향상) ✅
+- 캐시 히트율: 0% → 100% (두 번째 실행 기준) ✅
+- 비용 절감: LLM 호출 100% 감소 (두 번째 실행 기준) ✅
+
+**검증 완료**:
+- 로그 파일 생성 정상 작동 (fixture 개선 완료, 테스트로 검증)
+- 캐시 시스템 정상 작동 (SHA-256 해시, 원자적 저장, 텍스트 해시 검증)
+- 성능 개선 검증 완료 (캐시 히트율 100%, 실행 시간 215배 향상)
 
 ---
 
@@ -1095,9 +1115,9 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 3.2 완료, Phase 3.3 대기 중
+**현재 Phase**: Phase 3.2.1 완료, Phase 3.3 준비 중
 
-**마지막 업데이트**: 2025-12-20
+**마지막 업데이트**: 2025-12-22
 
 **완료된 Phase**:
 - Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
@@ -1137,8 +1157,26 @@ longtext-analysis/
   - ✅ LLM 기반 E2E 테스트 완료 (67개 Turn → 67개 Event, 1:1 매핑 달성)
   - ✅ E2E 테스트 결과 분석 완료: [docs/phase3_2_e2e_analysis.md](docs/phase3_2_e2e_analysis.md)
   - ⚠️ 남은 이슈: LLM 기반에서 `artifact` 타입 이벤트가 0개로 분류됨 (artifacts 배열에는 포함됨)
+- Phase 3.2.1: LLM 병렬 처리 리팩토링 및 캐시 시스템 개선 - 완료 (2025-12-22)
+  - ✅ 병렬 처리 로직 구현 완료 (`ThreadPoolExecutor`, max_workers=5)
+  - ✅ 성능 향상 확인: 224초 → 44.99초 (약 5배 향상)
+  - ✅ 로그 파일 fixture 개선 완료 (디버깅 로직 추가, FileHandler flush 처리, 테스트로 검증)
+  - ✅ 캐시 시스템 개선 완료
+    - ✅ 결정적 해시 함수 (SHA-256) 구현
+    - ✅ 원자적 파일 저장 (임시 파일 + 원자적 이동) 구현
+    - ✅ 텍스트 해시 검증 구현
+    - ✅ Fallback 캐시 저장 구현
+    - ✅ 캐시 메타데이터 추가
+    - ✅ 캐시 통계 개선 (히트율, 디렉토리 통계)
+  - ✅ 캐시 성능 검증: 첫 실행 56.01초 → 두 번째 실행 0.26초 (약 215배 향상)
+  - ✅ 캐시 히트율 100% 달성 (두 번째 실행 기준)
+  - ✅ 커서룰 업데이트 완료 (`.cursor/rules/llm-service.mdc`)
+  - [ ] 에러 케이스 테스트 추가 (선택적, Phase 3.3 이후 진행 가능)
 
 **다음 단계**:
 - Phase 3.3 진행 (결과 평가 방법 구축)
+  - 정성적 평가 도구 구현
+  - Golden 파일 관리 도구 구현
+  - E2E 테스트에 평가 도구 통합
 - Phase 3 전체 완료 후 Phase 4 진행 (Timeline 및 Issue Cards 생성)
 
