@@ -6,6 +6,7 @@
 
 import re
 from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from backend.core.models import Turn, Event, EventType, SessionMeta
 from backend.core.constants import DEBUG_TRIGGERS
 
@@ -16,29 +17,69 @@ def normalize_turns_to_events(
     """
     Turn 리스트를 Event 리스트로 변환 (우선순위 기반 단일 이벤트, LLM 옵션)
 
+    LLM 사용 시 병렬 처리 (max_workers=5)
+
     Args:
         turns: 파싱된 Turn 리스트
         session_meta: 세션 메타데이터 (Phase/Subphase 연결용, 선택)
-        use_llm: LLM 사용 여부 (기본값: False, True 시 일괄 적용)
+        use_llm: LLM 사용 여부 (기본값: False, True 시 일괄 적용, 병렬 처리)
 
     Returns:
         정규화된 Event 리스트
     """
-    events = []
-
-    for turn in turns:
-        if use_llm:
-            # LLM 기반 이벤트 생성
-            event = create_event_with_llm(turn, session_meta)
-        else:
-            # 정규식 기반 이벤트 생성
+    if use_llm:
+        # 병렬 처리 (ThreadPoolExecutor)
+        events = _normalize_turns_to_events_parallel(turns, session_meta)
+    else:
+        # 순차 처리 (기존 로직)
+        events = []
+        for turn in turns:
             event = create_single_event_with_priority(turn, session_meta)
-        events.append(event)
+            events.append(event)
 
     # 시퀀스 번호 부여
     for i, event in enumerate(events):
         event.seq = i + 1
 
+    return events
+
+
+def _normalize_turns_to_events_parallel(
+    turns: List[Turn], session_meta: Optional[SessionMeta] = None
+) -> List[Event]:
+    """
+    LLM 기반 이벤트 생성 (병렬 처리)
+
+    Args:
+        turns: Turn 리스트
+        session_meta: 세션 메타데이터
+
+    Returns:
+        Event 리스트 (turn_index 순서 유지)
+    """
+    events_dict = {}  # turn_index -> Event 매핑
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        # 각 Turn을 병렬로 처리
+        future_to_turn = {
+            executor.submit(create_event_with_llm, turn, session_meta): turn
+            for turn in turns
+        }
+
+        # 완료된 작업부터 처리 (순서 보장을 위해 turn_index 저장)
+        for future in as_completed(future_to_turn):
+            turn = future_to_turn[future]
+            try:
+                event = future.result()
+                events_dict[turn.turn_index] = event
+            except Exception as e:
+                # 에러 발생 시 기본 이벤트 생성 (fallback)
+                # 로깅은 선택적 (필요시 추가)
+                event = create_single_event_with_priority(turn, session_meta)
+                events_dict[turn.turn_index] = event
+
+    # turn_index 순서로 정렬
+    events = [events_dict[turn.turn_index] for turn in turns]
     return events
 
 

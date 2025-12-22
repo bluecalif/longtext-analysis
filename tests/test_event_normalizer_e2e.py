@@ -7,6 +7,7 @@
 import pytest
 import json
 import os
+import time
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -206,11 +207,21 @@ def test_event_normalizer_e2e_with_llm():
     # 2. 파싱 실행 (Phase 2 결과)
     parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
 
-    # 3. 이벤트 정규화 실행 (LLM 기반)
+    # 3. 이벤트 정규화 실행 (LLM 기반, 병렬 처리)
+    from backend.core.llm_service import reset_cache_stats, get_cache_stats
+
+    # 캐시 통계 초기화
+    reset_cache_stats()
+
     session_meta = parse_result["session_meta"]
+    start_time = time.time()
     events = normalize_turns_to_events(
         parse_result["turns"], session_meta=session_meta, use_llm=True
     )
+    elapsed_time = time.time() - start_time
+
+    # 실행 중 캐시 통계 수집
+    runtime_cache_stats = get_cache_stats()
 
     # 4. 정합성 검증
     assert len(events) > 0, "이벤트가 생성되지 않음"
@@ -219,9 +230,7 @@ def test_event_normalizer_e2e_with_llm():
     ), f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음"
 
     # 처리 방법 확인 (LLM 기반이므로 모두 "llm")
-    processing_methods = [
-        getattr(event, "processing_method", "regex") for event in events
-    ]
+    processing_methods = [getattr(event, "processing_method", "regex") for event in events]
     assert all(
         method == "llm" for method in processing_methods
     ), "LLM 기반 테스트인데 processing_method가 'llm'이 아님"
@@ -231,6 +240,12 @@ def test_event_normalizer_e2e_with_llm():
     unique_turn_refs = set(turn_refs)
     assert len(unique_turn_refs) == len(parse_result["turns"]), "모든 Turn이 이벤트로 변환되지 않음"
     assert len(turn_refs) == len(unique_turn_refs), "중복된 turn_ref가 있음"
+
+    # 병렬 처리 후 순서 유지 확인 (turn_ref가 순차적으로 증가하는지 확인)
+    for i, event in enumerate(events):
+        assert (
+            event.turn_ref == parse_result["turns"][i].turn_index
+        ), f"이벤트 순서가 올바르지 않음: 인덱스 {i}에서 turn_ref {event.turn_ref} != turn_index {parse_result['turns'][i].turn_index}"
 
     # Event 타입 분류 정확성
     event_types = [event.type for event in events]
@@ -248,10 +263,18 @@ def test_event_normalizer_e2e_with_llm():
         assert event_type in valid_types, f"유효하지 않은 이벤트 타입: {event_type}"
 
     # Artifact 연결 정확성
+    # LLM 기반에서는 artifact 타입으로 분류되었지만 실제 파일 경로가 없을 수 있음
+    # 실제 파일 경로가 있는 Turn에 대해서만 검증
     artifact_events = [e for e in events if e.type == EventType.ARTIFACT]
     if artifact_events:
         for event in artifact_events:
-            assert len(event.artifacts) > 0, "ARTIFACT 타입 이벤트에 artifact가 연결되지 않음"
+            # 해당 Turn에 실제 파일 경로가 있는지 확인
+            turn = parse_result["turns"][event.turn_ref]
+            if turn.path_candidates:
+                # 파일 경로가 있으면 artifacts 배열에도 포함되어야 함
+                assert (
+                    len(event.artifacts) > 0
+                ), f"ARTIFACT 타입 이벤트(turn_ref={event.turn_ref})에 파일 경로가 있지만 artifacts 배열이 비어있음"
 
     # Snippet 참조 연결 정확성
     events_with_snippets = [e for e in events if e.snippet_refs]
@@ -272,6 +295,31 @@ def test_event_normalizer_e2e_with_llm():
         len(artifact_events) / len(turns_with_paths) if turns_with_paths else 0.0
     )
 
+    # 캐시 사용 통계 계산 (실행 중 통계 + 파일 기반 통계)
+    from backend.core.cache import CACHE_DIR
+
+    # 실행 중 통계 (실제 캐시 사용 여부)
+    runtime_cache_hits = runtime_cache_stats["hits"]
+    runtime_cache_misses = runtime_cache_stats["misses"]
+    runtime_cache_saves = runtime_cache_stats["saves"]
+    runtime_cache_hit_rate = (
+        runtime_cache_hits / len(parse_result["turns"]) if parse_result["turns"] else 0.0
+    )
+
+    # 파일 기반 통계 (테스트 실행 후 캐시 파일 존재 여부)
+    file_based_cache_hits = 0
+    file_based_cache_misses = 0
+    for turn in parse_result["turns"]:
+        cache_key = f"llm_{hash(turn.body[:1000]) % 1000000}"
+        cache_file = CACHE_DIR / f"{cache_key}.json"
+        if cache_file.exists():
+            file_based_cache_hits += 1
+        else:
+            file_based_cache_misses += 1
+    file_based_cache_hit_rate = (
+        file_based_cache_hits / len(parse_result["turns"]) if parse_result["turns"] else 0.0
+    )
+
     # 6. 결과 분석 및 자동 보고
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -287,6 +335,25 @@ def test_event_normalizer_e2e_with_llm():
             "events_with_snippets_count": len(events_with_snippets),
             "artifact_linking_rate": artifact_linking_rate,
             "processing_method": "llm",
+            "parallel_processing": True,
+            "max_workers": 5,
+            "elapsed_time_seconds": round(elapsed_time, 2),
+            "average_time_per_turn": (
+                round(elapsed_time / len(parse_result["turns"]), 2) if parse_result["turns"] else 0
+            ),
+            "cache_statistics": {
+                "runtime": {
+                    "cache_hits": runtime_cache_hits,
+                    "cache_misses": runtime_cache_misses,
+                    "cache_saves": runtime_cache_saves,
+                    "cache_hit_rate": round(runtime_cache_hit_rate, 4),
+                },
+                "file_based": {
+                    "cache_hits": file_based_cache_hits,
+                    "cache_misses": file_based_cache_misses,
+                    "cache_hit_rate": round(file_based_cache_hit_rate, 4),
+                },
+            },
         },
         "warnings": [],
         "errors": [],

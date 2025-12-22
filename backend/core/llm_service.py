@@ -4,6 +4,8 @@ LLM 서비스 모듈
 gpt-4.1-mini를 사용하여 이벤트 타입 분류 및 요약 생성
 """
 
+import logging
+import threading
 from typing import Dict
 from dotenv import load_dotenv
 
@@ -11,8 +13,29 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from backend.core.models import Turn, EventType
-from backend.core.cache import get_cached_result, save_cached_result
+from backend.core.cache import get_cached_result, save_cached_result, CACHE_DIR
 from backend.builders.event_normalizer import summarize_turn
+
+# 로거 설정
+logger = logging.getLogger(__name__)
+
+# 실행 중 캐시 통계 추적 (thread-safe)
+_cache_stats = {"hits": 0, "misses": 0, "saves": 0}
+_cache_stats_lock = threading.Lock()
+
+
+def get_cache_stats() -> dict:
+    """현재 캐시 통계 반환 (thread-safe)"""
+    with _cache_stats_lock:
+        return _cache_stats.copy()
+
+
+def reset_cache_stats() -> None:
+    """캐시 통계 초기화"""
+    with _cache_stats_lock:
+        _cache_stats["hits"] = 0
+        _cache_stats["misses"] = 0
+        _cache_stats["saves"] = 0
 
 
 def classify_and_summarize_with_llm(turn: Turn) -> Dict[str, any]:
@@ -38,14 +61,24 @@ def classify_and_summarize_with_llm(turn: Turn) -> Dict[str, any]:
     """
     # 캐시 키 생성 (텍스트 해시 기반)
     cache_key = f"llm_{hash(turn.body[:1000]) % 1000000}"
+    cache_file = CACHE_DIR / f"{cache_key}.json"
+
+    logger.debug(f"[CACHE] Turn {turn.turn_index}: cache_key={cache_key}, file_exists={cache_file.exists()}")
 
     # 캐시 확인
     cached = get_cached_result(cache_key)
     if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.info(f"[CACHE HIT] Turn {turn.turn_index}: cache_key={cache_key}")
         return {
             "event_type": EventType(cached["event_type"]),
             "summary": cached["summary"],
         }
+
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Turn {turn.turn_index}: cache_key={cache_key}, calling LLM")
 
     # LLM 호출
     from openai import OpenAI
@@ -110,6 +143,9 @@ SUMMARY: [1-2문장 요약]""",
 
     # 캐시 저장
     save_cached_result(cache_key, result)
+    with _cache_stats_lock:
+        _cache_stats["saves"] += 1
+    logger.info(f"[CACHE SAVE] Turn {turn.turn_index}: cache_key={cache_key}")
 
     return {
         "event_type": event_type,
