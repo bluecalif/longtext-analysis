@@ -415,30 +415,96 @@ JSON/MD 출력
 
 **목표**: 품질 개선 효과를 평가할 수 있는 도구 구축
 
-- [ ] 정성적 평가 도구 구현 (`backend/builders/evaluation.py`)
-  - [ ] `create_manual_review_dataset()` 함수 구현
-    - [ ] 다양한 타입 균등 샘플링 로직
-    - [ ] 수동 검증용 JSON 파일 생성
-    - [ ] 검증 가이드라인 포함
-  - [ ] `evaluate_manual_review()` 함수 구현
-    - [ ] 수동 검증 결과 로드 및 분석
-    - [ ] 타입 분류 정확도 계산
-    - [ ] Summary 정확도 계산
-    - [ ] 혼동 행렬 생성
-    - [ ] 처리 방법별 정확도 비교 (regex vs llm)
-- [ ] Golden 파일 관리 도구 구현 (`backend/builders/evaluation.py`)
-  - [ ] `create_golden_file()` 함수 구현
-    - [ ] 개선 사이클 완료 후 Golden 파일 생성
-    - [ ] 회귀 테스트용 데이터 저장
-  - [ ] `compare_with_golden()` 함수 구현
-    - [ ] Golden 파일과 현재 결과 비교
-    - [ ] 회귀 감지 로직 (95% 미만 시 회귀)
-- [ ] E2E 테스트에 평가 도구 통합 (`tests/test_event_normalizer_e2e.py`)
-  - [ ] 정성적 평가 데이터셋 생성 옵션 추가
-  - [ ] Golden 파일 비교 옵션 추가
-- [ ] 수동 검증 프로세스 실행
-  - [ ] 수동 검증용 데이터셋 생성 및 제공
-  - [ ] 사용자 라벨링 완료 후 정확도 계산
+- [x] 정성적 평가 도구 구현 (`backend/builders/evaluation.py`)
+  - [x] `create_manual_review_dataset()` 함수 구현
+    - [x] 다양한 타입 균등 샘플링 로직
+    - [x] 수동 검증용 JSON 파일 생성
+    - [x] 검증 가이드라인 포함
+  - [x] `evaluate_manual_review()` 함수 구현
+    - [x] 수동 검증 결과 로드 및 분석
+    - [x] 타입 분류 정확도 계산
+    - [x] Summary 정확도 계산
+    - [x] 혼동 행렬 생성
+    - [x] 처리 방법별 정확도 비교 (regex vs llm)
+- [x] Golden 파일 관리 도구 구현 (`backend/builders/evaluation.py`)
+  - [x] `create_golden_file()` 함수 구현
+    - [x] 개선 사이클 완료 후 Golden 파일 생성
+    - [x] 회귀 테스트용 데이터 저장
+  - [x] `compare_with_golden()` 함수 구현
+    - [x] Golden 파일과 현재 결과 비교
+    - [x] 회귀 감지 로직 (95% 미만 시 회귀)
+- [x] E2E 테스트에 평가 도구 통합 (`tests/test_event_normalizer_e2e.py`)
+  - [x] 정성적 평가 데이터셋 생성 옵션 추가
+  - [x] Golden 파일 비교 옵션 추가
+- [x] 수동 검증 프로세스 실행
+  - [x] 수동 검증용 데이터셋 생성 및 제공
+  - [x] 사용자 라벨링 완료 후 정확도 계산
+- [ ] Golden 파일 생성: **보류** (Phase 4 완료 후 Timeline/Issue Cards 생성 결과를 반영하여 이벤트 정규화 품질 재평가 후 작성 예정)
+
+**⚠️ 중요: 이벤트 정규화 품질 재평가 계획**
+- Phase 3에서 수동 검증을 통해 이벤트 정규화 품질을 평가했으나, 최종 품질 평가는 Phase 4 완료 후 진행 예정
+- Phase 4에서 Timeline 및 Issue Cards 생성 결과를 분석하여 이벤트 정규화 품질의 실제 효과를 검증
+- Timeline/Issue Cards 품질이 낮다면 이벤트 정규화 로직 개선 필요
+- Phase 4 완료 후 재평가 결과를 바탕으로 Golden 파일 생성 및 최종 품질 확정
+
+---
+
+### Phase 3.4: 이벤트 정규화 품질 개선
+
+**목표**: Phase 4 E2E 테스트 결과를 바탕으로 이벤트 정규화 품질 개선
+
+**발견된 문제점**:
+- Timeline: 이벤트 타입 분류가 부정확 (예: 메타데이터가 "turn" 타입으로 분류됨)
+- Timeline: Summary가 단순 텍스트 자르기만 수행하여 의미 있는 요약이 아님
+- Issue Cards: 이벤트 Summary 품질 문제로 인해 핵심 내용 추출 실패
+- Issue Cards: Root cause, Fix, Validation 추출이 중간 과정 텍스트를 그대로 포함
+
+- [x] 수동 검증 파일 재작성 (2025-12-23 완료)
+  - [x] Phase 4 E2E 테스트 결과를 반영한 새로운 수동 검증 데이터셋 생성
+    - [x] HTML 형식으로 모든 이벤트 추출 (67개 이벤트 전체 포함)
+    - [x] `create_all_events_html_review_dataset()` 함수 구현 및 실행
+    - [x] 파일 위치: `tests/manual_review/all_events_html_review_20251223_212658/manual_review.html`
+  - [x] 사용자 수동 검증 완료
+    - [x] HTML 파일에서 각 이벤트의 correct_type, type_accuracy, summary_quality, summary_completeness, notes 입력
+    - [x] 검증 결과 텍스트 파일로 기록: `docs/수동검증_html에 기록.txt`
+  - [x] 텍스트 파일 파싱 스크립트 작성 및 실행
+    - [x] `scripts/parse_text_review_to_json.py` 스크립트 작성
+    - [x] 텍스트 파일에서 수동 검증 데이터 추출 및 JSON 변환
+    - [x] 결과 파일 생성: `tests/manual_review/all_events_html_review_20251223_212658/manual_review_updated.json`
+    - [x] 67개 이벤트의 검증 데이터 추출 완료 (100% 검증 완료)
+    - [x] 타입별 검증 완료 수: debug 23개, plan 17개, status_review 12개, artifact 4개, completion 4개, next_step 4개, turn 3개
+- [ ] 원인 분석 (with 사용자)
+  - [ ] 타입 분류 부정확 원인 분석
+    - [ ] LLM 프롬프트 문제 분석
+    - [ ] 정규식 패턴 문제 분석
+    - [ ] 메타데이터 처리 로직 문제 분석
+  - [ ] Summary 품질 문제 원인 분석
+    - [ ] LLM Summary 생성 로직 문제 분석
+    - [ ] 정규식 기반 Summary 생성 로직 문제 분석
+    - [ ] 텍스트 자르기 로직 문제 분석
+  - [ ] 사용자와 함께 원인 분석 및 개선 방향 결정
+- [ ] Type 추출 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
+  - [ ] 메타데이터 Turn 처리 로직 개선 (메타데이터는 별도 타입으로 분류 또는 제외)
+  - [ ] LLM 프롬프트 개선 (타입 분류 정확도 향상)
+  - [ ] 정규식 패턴 개선 (타입 분류 정확도 향상)
+  - [ ] 타입 분류 우선순위 로직 개선
+- [ ] Summary 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
+  - [ ] LLM Summary 생성 프롬프트 개선 (핵심 내용만 추출)
+  - [ ] 정규식 기반 Summary 생성 로직 개선 (의미 있는 요약 생성)
+  - [ ] 텍스트 자르기 로직 개선 (문장/문단 단위로 의미 있는 위치에서 자르기)
+  - [ ] 중간 과정 텍스트 필터링 로직 추가
+- [ ] E2E 재평가 (`tests/test_event_normalizer_e2e.py`)
+  - [ ] 개선된 이벤트 정규화 로직으로 E2E 테스트 재실행
+  - [ ] 타입 분류 정확도 재측정
+  - [ ] Summary 품질 재평가
+  - [ ] Timeline/Issue Cards 품질 재검증 (Phase 4 E2E 테스트 재실행)
+  - [ ] 개선 전후 비교 분석
+- [ ] 결과 피드백
+  - [ ] 개선 결과 사용자에게 보고
+  - [ ] 추가 개선 필요 여부 판단
+  - [ ] Golden 파일 생성 (품질이 충분히 개선된 경우)
+
+**산출물**: 개선된 이벤트 정규화 모듈, E2E 테스트 재평가 리포트, Golden 파일 (품질 개선 완료 시)
 
 ---
 
@@ -454,41 +520,52 @@ JSON/MD 출력
 **목표**: 정규화된 이벤트로부터 Timeline과 Issue Cards 생성
 
 ### 상수 정의 (`backend/core/constants.py`)
-- [ ] Event 타입 Enum 정의
-- [ ] Issue 상태 Enum 정의 (`confirmed`, `hypothesis`)
-- [ ] 파일 타입 목록 정의
+- [x] Event 타입 Enum 정의 (이미 `backend/core/models.py`에 정의됨)
+- [x] Issue 상태 Enum 정의 (`confirmed`, `hypothesis`) (이미 정의됨)
+- [x] 파일 타입 목록 정의 (`md`, `mdc`, `py`, `ts`, `tsx`, `sql`, `json`)
 
 ### Timeline 생성 (`backend/builders/timeline_builder.py`)
-- [ ] 이벤트 시퀀스 번호 부여 로직
-- [ ] Phase/Subphase별 그룹화 로직
-- [ ] 요약 생성 (LLM 옵션)
-- [ ] Artifact 연결 로직
-- [ ] Snippet 참조 연결 로직
-- [ ] Timeline JSON 구조 생성
+- [x] TimelineEvent 모델 정의 (`backend/core/models.py`)
+- [x] 기본 Timeline 빌더 구현 (`build_timeline()` 함수)
+  - [x] 이벤트 시퀀스 번호 부여 로직 (Event.seq 사용)
+  - [x] Phase/Subphase 연결 로직 (Event 또는 SessionMeta에서 가져옴)
+  - [x] Artifact 연결 로직 (Event.artifacts 사용)
+  - [x] Snippet 참조 연결 로직 (Event.snippet_refs 사용)
+  - [x] Timeline JSON 구조 생성 (TimelineEvent 리스트)
+- [ ] 요약 생성 (LLM 옵션) - 선택적 개선 사항 (현재는 Event.summary 사용)
+- [ ] Phase/Subphase별 그룹화 로직 - 선택적 개선 사항 (현재는 순차 리스트)
 
 ### Issue Cards 생성 (`backend/builders/issues_builder.py`)
-- [ ] DebugEvent 기반 이슈 탐지 로직
-- [ ] 이슈 그룹화 로직 (트리거 기반)
-- [ ] Symptom 추출 (주로 User 발화)
-- [ ] Root cause 추출 (주로 Cursor 발화, LLM 옵션)
-- [ ] Fix 추출
-- [ ] Validation 추출
-- [ ] 관련 Artifact 연결 로직
-- [ ] Snippet 참조 연결 로직
-- [ ] Issue Cards JSON 구조 생성
+- [x] IssueCard 모델 정의 (`backend/core/models.py`)
+- [x] 기본 Issue Cards 빌더 구현 (`build_issue_cards()` 함수)
+  - [x] DebugEvent 기반 이슈 탐지 로직 (symptom seed 탐지)
+  - [x] 이슈 그룹화 로직 (슬라이딩 윈도우, 최근 10개 Turn)
+  - [x] Symptom 추출 (주로 User 발화, 패턴 기반)
+  - [x] Root cause 추출 (주로 Cursor 발화, 패턴 기반, confirmed/hypothesis 구분)
+  - [x] Fix 추출 (DebugEvent에서 snippet_refs 또는 fix 트리거)
+  - [x] Validation 추출 (validation 트리거 패턴)
+  - [x] 관련 Artifact 연결 로직 (윈도우 내 Event.artifacts 수집)
+  - [x] Snippet 참조 연결 로직 (윈도우 내 Event.snippet_refs 수집)
+  - [x] Issue Cards JSON 구조 생성 (IssueCard 리스트)
+- [ ] Root cause 추출 (LLM 옵션) - 선택적 개선 사항 (현재는 패턴 기반)
 
 ### 테스트
 **⚠️ 중요**: AGENTS.md 규칙 준수 - 실제 데이터만 사용, Mock 사용 절대 금지
 
-- [ ] `tests/test_timeline_builder.py` 작성
-  - [ ] `test_timeline_sequence()` - 시퀀스 번호 부여 테스트 (실제 데이터 사용)
-  - [ ] `test_timeline_grouping()` - Phase/Subphase 그룹화 테스트 (실제 데이터 사용)
-  - [ ] `test_timeline_artifact_linking()` - Artifact 연결 테스트 (실제 데이터 사용)
-- [ ] `tests/test_issues_builder.py` 작성
-  - [ ] `test_issue_detection()` - 이슈 탐지 테스트 (실제 데이터 사용)
-  - [ ] `test_issue_grouping()` - 이슈 그룹화 테스트 (실제 데이터 사용)
-  - [ ] `test_symptom_extraction()` - Symptom 추출 테스트 (실제 데이터 사용)
-  - [ ] `test_root_cause_extraction()` - Root cause 추출 테스트 (실제 데이터 사용)
+- [x] `tests/test_timeline_builder.py` 작성
+  - [x] `test_timeline_sequence()` - 시퀀스 번호 부여 테스트 (실제 데이터 사용)
+  - [x] `test_timeline_grouping()` - Phase/Subphase 그룹화 테스트 (실제 데이터 사용)
+  - [x] `test_timeline_artifact_linking()` - Artifact 연결 테스트 (실제 데이터 사용)
+  - [x] `test_timeline_snippet_linking()` - Snippet 참조 연결 테스트 (실제 데이터 사용)
+  - [x] `test_timeline_event_type_preservation()` - 이벤트 타입 보존 테스트 (실제 데이터 사용)
+- [x] `tests/test_issues_builder.py` 작성
+  - [x] `test_issue_detection()` - 이슈 탐지 테스트 (실제 데이터 사용)
+  - [x] `test_issue_grouping()` - 이슈 그룹화 테스트 (실제 데이터 사용)
+  - [x] `test_symptom_extraction()` - Symptom 추출 테스트 (실제 데이터 사용)
+  - [x] `test_root_cause_extraction()` - Root cause 추출 테스트 (실제 데이터 사용)
+  - [x] `test_fix_extraction()` - Fix 추출 테스트 (실제 데이터 사용)
+  - [x] `test_validation_extraction()` - Validation 추출 테스트 (실제 데이터 사용)
+  - [x] `test_issue_card_completeness()` - Issue Card 완전성 테스트 (실제 데이터 사용)
 - [ ] Golden 파일 비교 테스트 작성
   - [ ] Timeline Golden 파일 비교
   - [ ] Issues Golden 파일 비교
@@ -501,30 +578,55 @@ JSON/MD 출력
 - 로그 파일 저장 필수 (`tests/logs/`, 자동 적용)
 - 실행 결과 저장 필수 (`tests/results/`, 상세 Timeline/Issues 생성 결과)
 
-- [ ] `tests/test_timeline_issues_e2e.py` 작성
-  - [ ] **실제 입력 데이터 사용**: Phase 3에서 정규화한 이벤트를 입력으로 사용
-  - [ ] **정합성 검증**: Timeline 및 Issue Cards 생성 결과의 구조적 정확성 확인
-    - [ ] Timeline 시퀀스 번호 부여 정확성
-    - [ ] Timeline Phase/Subphase 그룹화 정확성
-    - [ ] Timeline Artifact/Snippet 연결 정확성
-    - [ ] Issue Cards 탐지 정확성 (DebugEvent 기반)
-    - [ ] Issue Cards 그룹화 정확성
-    - [ ] Issue Cards symptom/root_cause/fix/validation 추출 정확성
-    - [ ] Issue Cards Artifact/Snippet 연결 정확성
-  - [ ] **타당성 검증**: 실제 상황에서의 Timeline/Issue Cards 품질 확인
-    - [ ] Timeline 요약의 적절성
-    - [ ] Issue Cards 탐지의 적절성 (과다/과소 탐지 확인)
-    - [ ] Issue Cards 내용의 완전성 (symptom/root_cause/fix/validation)
-  - [ ] **JSON Schema 검증**: 생성된 Timeline/Issue Cards JSON이 스키마를 준수하는지 확인
-  - [ ] **결과 분석 및 자동 보고**: Timeline/Issue Cards 생성 결과를 상세히 분석하여 개선점 도출
-    - [ ] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
-    - [ ] 정량적 데이터 제시 (timeline_events_count, issues_count, linking_completeness 등)
-    - [ ] 문제 발견 시 원인 분석 포함
-    - [ ] 리포트 파일 저장 (`tests/reports/timeline_issues_e2e_report.json`)
-    - [ ] 로그 파일 저장 (`tests/logs/`, 자동 적용)
-    - [ ] 실행 결과 저장 (`tests/results/`, 상세 Timeline/Issues 생성 결과)
+**⚠️ 중요: E2E 테스트 상태**
+- 현재 E2E 테스트는 **구조적 정합성 검증만 완료** (테스트 통과)
+- **실제 내용 품질 검증은 미완료** (Timeline 요약, Issue Cards 내용의 실제 적절성 등)
+- 결과 파일 위치: `tests/results/timeline_issues_e2e_YYYYMMDD_HHMMSS.json`
+- 리포트 파일 위치: `tests/reports/timeline_issues_e2e_report.json`
+- **다음 단계**: Phase 4 완료 후 Phase 3 이벤트 정규화 품질 재평가 시 실제 내용 품질 검증 예정
+
+- [x] `tests/test_timeline_issues_e2e.py` 작성
+  - [x] **실제 입력 데이터 사용**: Phase 3에서 정규화한 이벤트를 입력으로 사용
+  - [x] **정합성 검증 (구조적)**: Timeline 및 Issue Cards 생성 결과의 구조적 정확성 확인
+    - [x] Timeline 시퀀스 번호 부여 정확성
+    - [x] Timeline Phase/Subphase 그룹화 정확성
+    - [x] Timeline Artifact/Snippet 연결 정확성
+    - [x] Issue Cards 탐지 정확성 (DebugEvent 기반)
+    - [x] Issue Cards 그룹화 정확성
+    - [x] Issue Cards symptom/root_cause/fix/validation 추출 정확성
+    - [x] Issue Cards Artifact/Snippet 연결 정확성
+  - [ ] **타당성 검증 (내용 품질)**: 실제 상황에서의 Timeline/Issue Cards 품질 확인
+    - [ ] Timeline 요약의 실제 적절성 검증 (요약이 Turn 내용을 잘 반영하는지)
+    - [ ] Issue Cards 탐지의 실제 적절성 검증 (과다/과소 탐지, 실제 symptom/root_cause/fix 연결의 정확성)
+    - [ ] Issue Cards 내용의 실제 완전성 검증 (symptom/root_cause/fix/validation이 실제로 의미 있는지)
+    - **참고**: 이 검증은 Phase 4 완료 후 Phase 3 이벤트 정규화 품질 재평가 시 함께 진행 예정
+  - [ ] **JSON Schema 검증**: 생성된 Timeline/Issue Cards JSON이 스키마를 준수하는지 확인 (선택적)
+  - [x] **결과 분석 및 자동 보고**: Timeline/Issue Cards 생성 결과를 상세히 분석하여 개선점 도출
+    - [x] 테스트 실행 후 자동으로 상세 보고 출력 (사용자 질문 없이)
+    - [x] 정량적 데이터 제시 (timeline_events_count, issues_count, linking_completeness 등)
+    - [x] 문제 발견 시 원인 분석 포함
+    - [x] 리포트 파일 저장 (`tests/reports/timeline_issues_e2e_report.json`)
+    - [x] 로그 파일 저장 (`tests/logs/`, 자동 적용)
+    - [x] 실행 결과 저장 (`tests/results/timeline_issues_e2e_YYYYMMDD_HHMMSS.json`, 상세 Timeline/Issues 생성 결과)
 
 **산출물**: Timeline 빌더 모듈, Issue Cards 빌더 모듈, Timeline/Issue Cards 데이터 모델, E2E 테스트 완료 및 검증 리포트
+
+### Phase 3 이벤트 정규화 품질 재평가 (Phase 4 완료 후)
+
+**목표**: Phase 4의 Timeline/Issue Cards 생성 결과를 반영하여 Phase 3의 이벤트 정규화 품질을 재평가
+
+- [ ] Timeline/Issue Cards 품질 분석
+  - [ ] Timeline 이벤트의 적절성 검증 (이벤트 타입 분류가 Timeline 생성에 적합한지)
+  - [ ] Issue Cards 탐지 정확도 검증 (DebugEvent 기반 이슈 탐지가 효과적인지)
+  - [ ] 이벤트 Summary 품질이 Timeline/Issue Cards에 미치는 영향 분석
+- [ ] 이벤트 정규화 품질 재평가
+  - [ ] Phase 4 결과를 바탕으로 이벤트 정규화 품질 재검토
+  - [ ] Timeline/Issue Cards 품질이 낮은 경우 이벤트 정규화 로직 개선 필요 여부 판단
+  - [ ] 개선이 필요한 경우 Phase 3 이벤트 정규화 로직 수정
+- [ ] Golden 파일 생성 (재평가 완료 후)
+  - [ ] 재평가 결과가 양호한 경우 Golden 파일 생성
+  - [ ] 수동 검증 데이터셋과 Phase 4 결과를 종합하여 최종 Golden 파일 작성
+  - [ ] 회귀 테스트 기준으로 설정
 
 ### README 업데이트 (Phase 4 완료 후)
 - [ ] `README.md` 업데이트
@@ -1115,9 +1217,9 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 3.2.1 완료, Phase 3.3 준비 중
+**현재 Phase**: Phase 3.4 진행 중 (이벤트 정규화 품질 개선)
 
-**마지막 업데이트**: 2025-12-22
+**마지막 업데이트**: 2025-12-23
 
 **완료된 Phase**:
 - Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
@@ -1171,12 +1273,37 @@ longtext-analysis/
   - ✅ 캐시 성능 검증: 첫 실행 56.01초 → 두 번째 실행 0.26초 (약 215배 향상)
   - ✅ 캐시 히트율 100% 달성 (두 번째 실행 기준)
   - ✅ 커서룰 업데이트 완료 (`.cursor/rules/llm-service.mdc`)
-  - [ ] 에러 케이스 테스트 추가 (선택적, Phase 3.3 이후 진행 가능)
+  - [ ] 에러 케이스 테스트 추가 (선택적, Phase 4 이후 진행 가능)
+- Phase 3.3: 결과 평가 방법 구축 - 완료 (2025-12-23)
+  - ✅ 정성적 평가 도구 구현 완료 (`backend/builders/evaluation.py`)
+  - ✅ Golden 파일 관리 도구 구현 완료
+  - ✅ E2E 테스트에 평가 도구 통합 완료
+  - ✅ 수동 검증 프로세스 실행 완료 (수동 검증 데이터셋 생성 및 검증 완료)
+  - ⏸️ Golden 파일 생성: 보류 (Phase 3.4 이벤트 정규화 품질 개선 완료 후 작성 예정)
+  - **수동 검증 결과**: 전체적으로 크게 나쁘지 않음, Phase 4 진행 후 재평가 예정
+- Phase 3.4: 이벤트 정규화 품질 개선 - 진행 중 (2025-12-23 시작)
+  - Phase 4 E2E 테스트 결과 분석 완료 (Timeline/Issue Cards 품질 문제 발견)
+  - ✅ 수동 검증 파일 재작성 완료 (2025-12-23)
+    - ✅ HTML 형식으로 모든 이벤트 추출 (67개 이벤트)
+    - ✅ 사용자 수동 검증 완료 (텍스트 파일 기록)
+    - ✅ 텍스트 파일 파싱 스크립트 작성 및 실행 완료
+    - ✅ manual_review_updated.json 생성 완료 (67개 이벤트 검증 데이터 포함)
+  - 이벤트 정규화 품질 개선 작업 진행 예정
+    - [ ] 수동 검증 결과 평가 (`evaluate_manual_review()` 실행)
+    - [ ] 원인 분석 (with 사용자)
+    - [ ] Type 추출 로직 수정
+    - [ ] Summary 로직 수정
+    - [ ] E2E 재평가
+    - [ ] 결과 피드백
 
 **다음 단계**:
-- Phase 3.3 진행 (결과 평가 방법 구축)
-  - 정성적 평가 도구 구현
-  - Golden 파일 관리 도구 구현
-  - E2E 테스트에 평가 도구 통합
-- Phase 3 전체 완료 후 Phase 4 진행 (Timeline 및 Issue Cards 생성)
+- Phase 3.4 진행 (이벤트 정규화 품질 개선)
+  - ✅ 수동 검증 파일 재작성 (완료)
+  - [ ] 수동 검증 결과 평가 (`evaluate_manual_review()` 실행)
+  - [ ] 원인 분석 (with 사용자)
+  - [ ] Type 추출 로직 수정
+  - [ ] Summary 로직 수정
+  - [ ] E2E 재평가
+  - [ ] 결과 피드백
+- Phase 3.4 완료 후 Phase 4 재진행 (Timeline 및 Issue Cards 생성 품질 재검증)
 
