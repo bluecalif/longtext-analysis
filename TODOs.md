@@ -473,33 +473,100 @@ JSON/MD 출력
     - [x] 결과 파일 생성: `tests/manual_review/all_events_html_review_20251223_212658/manual_review_updated.json`
     - [x] 67개 이벤트의 검증 데이터 추출 완료 (100% 검증 완료)
     - [x] 타입별 검증 완료 수: debug 23개, plan 17개, status_review 12개, artifact 4개, completion 4개, next_step 4개, turn 3개
-- [ ] 원인 분석 (with 사용자)
-  - [ ] 타입 분류 부정확 원인 분석
-    - [ ] LLM 프롬프트 문제 분석
-    - [ ] 정규식 패턴 문제 분석
-    - [ ] 메타데이터 처리 로직 문제 분석
-  - [ ] Summary 품질 문제 원인 분석
-    - [ ] LLM Summary 생성 로직 문제 분석
-    - [ ] 정규식 기반 Summary 생성 로직 문제 분석
-    - [ ] 텍스트 자르기 로직 문제 분석
-  - [ ] 사용자와 함께 원인 분석 및 개선 방향 결정
-- [ ] Type 추출 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
-  - [ ] 메타데이터 Turn 처리 로직 개선 (메타데이터는 별도 타입으로 분류 또는 제외)
-  - [ ] LLM 프롬프트 개선 (타입 분류 정확도 향상)
-  - [ ] 정규식 패턴 개선 (타입 분류 정확도 향상)
-  - [ ] 타입 분류 우선순위 로직 개선
-- [ ] Summary 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
-  - [ ] LLM Summary 생성 프롬프트 개선 (핵심 내용만 추출)
-  - [ ] 정규식 기반 Summary 생성 로직 개선 (의미 있는 요약 생성)
-  - [ ] 텍스트 자르기 로직 개선 (문장/문단 단위로 의미 있는 위치에서 자르기)
-  - [ ] 중간 과정 텍스트 필터링 로직 추가
-- [ ] E2E 재평가 (`tests/test_event_normalizer_e2e.py`)
-  - [ ] 개선된 이벤트 정규화 로직으로 E2E 테스트 재실행
-  - [ ] 타입 분류 정확도 재측정
-  - [ ] Summary 품질 재평가
-  - [ ] Timeline/Issue Cards 품질 재검증 (Phase 4 E2E 테스트 재실행)
-  - [ ] 개선 전후 비교 분석
-- [ ] 결과 피드백
+
+- [x] HTML 수동 검증 스크립트 개선 (2025-12-25 완료)
+  - [x] 스크립트 분리 완료 (비용 절감)
+    - [x] `scripts/create_html_review.py` 생성 (HTML만 생성, 비용 없음, 반복 실행 가능)
+    - [x] `scripts/create_events_for_review.py` 생성 (이벤트 정규화만, LLM 사용, 선택적)
+    - [x] `scripts/create_all_events_html_review.py` 삭제 (deprecated, 혼선 방지)
+  - [x] 워크플로우 명확화
+    - [x] 일반적인 경우: E2E 테스트 실행 → `create_html_review.py` 실행 (비용 없음)
+    - [x] 특수한 경우: `create_events_for_review.py` 실행 (LLM 사용, 비용 발생)
+  - [x] 스크립트 설명 업데이트 (사용 시나리오 명확화)
+
+- [x] 1단계: 정량적 평가 실행 (2025-12-24 완료)
+  - [x] `evaluate_manual_review()` 함수 실행
+  - [x] 타입 분류 정확도 계산 (62.69%)
+  - [x] 혼동 행렬 생성 및 분석
+  - [x] 처리 방법별 정확도 비교 (LLM vs Regex)
+  - [x] Summary 품질 점수 통계 분석 (평균 3.95점)
+  - [x] 평가 결과 리포트 생성 및 저장 (`tests/reports/manual_review_evaluation_20251224_182554.json`)
+
+- [x] 2단계: 정성적 분석 - Notes 내용 확인 (2025-12-24 완료)
+  - [x] **⚠️ 중요**: 휴리스틱 기반 평가의 한계를 보완하기 위해 notes 내용을 하나씩 확인
+  - [x] `manual_review_updated.json`의 모든 샘플(67개) 순회
+  - [x] 각 샘플의 `notes` 필드 내용 확인
+  - [x] `correct_type`과 `current_event.type`이 다른 경우 notes 확인
+  - [x] `summary_quality` 또는 `summary_completeness`가 3점 이하인 경우 notes 확인
+  - [x] `type_accuracy`가 3점 이하인 경우 notes 확인
+  - [x] notes 내용을 바탕으로 문제 패턴 분류:
+    - [x] 타입 분류 오류 패턴 (예: "status_review로 분류되었지만 실제로는 plan")
+    - [x] Summary 품질 문제 패턴 (예: "요약이 너무 길다", "핵심 내용 누락")
+    - [x] LLM 프롬프트 문제 (예: "LLM이 잘못 이해함")
+    - [x] 정규식 패턴 문제 (예: "패턴이 너무 엄격함")
+    - [x] 맥락 부족 문제 (예: "이전 Turn의 맥락이 없어서 어려움")
+    - [x] 타입 정의 부족 문제 (예: "새로운 type 정의 필요")
+  - [x] Notes 분석 결과 리포트 생성 및 저장 (`tests/reports/manual_review_notes_analysis_20251224_182712.json`, `tests/reports/manual_review_direct_analysis.md`)
+
+- [x] 3단계: 문제 원인 분석 및 개선 방안 도출 (2025-12-24 완료)
+  - [x] Notes 분석 결과를 바탕으로 문제 원인 도출:
+    - [x] 타입 분류 오류 원인 (LLM 프롬프트, 정규식 패턴, 우선순위 로직, 맥락 부족 등)
+    - [x] Summary 품질 문제 원인 (요약 길이, 핵심 내용 추출 실패, 중간 과정 텍스트 포함 등)
+  - [x] 개선 방안 도출:
+    - [x] Type 추출 로직 개선 방안 (맥락 기반 타입 분류, Artifact 정보 포함)
+    - [x] Summary 로직 개선 방안 (LLM 프롬프트 개선, max_tokens 증가)
+    - [x] LLM 프롬프트 개선 방안 (요약 규칙, 특수 기호 의미 명시)
+    - [x] 맥락 처리 개선 방안 (이전 Turn 정보 활용)
+  - [x] 개선 방안 우선순위화
+  - [x] 개선 계획 문서 생성 (`tests/reports/phase_3_4_comprehensive_analysis.md`, `tests/reports/root_cause_analysis_20251224_183215.json`)
+
+- [x] 4단계: 개선 방안 검토 및 승인 (2025-12-25 완료)
+  - [x] 사용자와 개선 방안 검토
+  - [x] 우선순위 조정 (HIGH: 맥락 기반 타입 분류, Summary 품질 개선)
+  - [x] 개선 작업 범위 결정 (Artifact 정보 포함, 맥락 정보 활용, 프롬프트 개선)
+
+- [x] 5단계: 개선 작업 실행 (2025-12-25 완료)
+  - [x] Type 추출 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
+    - [x] LLM 서비스에 Artifact 정보 포함 (code_blocks, path_candidates)
+    - [x] 캐시 키 생성 시 Artifact 정보 포함
+    - [x] 맥락 정보 수집 함수 구현 (_collect_context_info, _collect_context_info_with_events)
+    - [x] 이벤트 정규화 함수에 맥락 정보 전달
+    - [x] Artifact 타입 분류 강화 (path_candidates 우선 고려)
+  - [x] Summary 로직 수정 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
+    - [x] LLM Summary 생성 프롬프트 개선 (요약 규칙, 특수 기호 의미 명시)
+    - [x] max_tokens 증가 (150 → 200)
+    - [x] 맥락 기반 Summary 생성 로직 개선 (이전 Turn 정보 활용)
+
+- [x] 6단계: E2E 재평가 (2025-12-25 완료)
+  - [x] 개선된 이벤트 정규화 로직으로 E2E 테스트 재실행 완료
+  - [x] 결과 파일 생성: `tests/results/event_normalizer_e2e_llm_20251225_183334.json`
+  - [x] 결과 확인: HTML 수동 검증 데이터셋 생성 및 검토 (2025-12-25 생성 완료)
+    - [x] HTML 수동 검증 데이터셋 생성 완료: `tests\manual_review\all_events_html_review_20251225_211525\manual_review.html`
+    - [x] 사용자 수동 검증 완료 (2025-12-25)
+    - [x] 타입 체계 개선 계획 수립 완료 (2025-12-25)
+      - [x] **⚠️ 중요**: `artifact` 타입의 근본적 문제 발견 및 개선 방안 도출
+      - [x] 새로운 타입 체계 설계 완료 (`code_generation` 추가, `artifact` 제거)
+      - [x] 상세 개선 계획 문서 작성: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md)
+      - [x] **다음 세션 시작 가이드**: 위 문서 참조
+    - [ ] ⚠️ **중요**: 결과 확인 시 문제가 발견되면 **3단계(문제 원인 분석 및 개선 방안 도출)**로 돌아가서 재분석 및 개선 작업 진행
+  - [ ] 개선 전후 비교 분석 (타입 체계 개선 구현 후 진행)
+  - [ ] 비교 리포트 생성 (`tests/reports/improvement_comparison_YYYYMMDD_HHMMSS.json`)
+
+- [ ] 7단계: 타입 체계 개선 구현 (다음 세션 시작)
+  - [ ] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
+  - [ ] Step 1: EventType Enum 수정 (`backend/core/models.py`)
+  - [ ] Step 2: Artifact Action 타입 추가 (선택적)
+  - [ ] Step 3: 분류 로직 개선 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
+  - [ ] Step 4: LLM 프롬프트 수정 (`backend/core/llm_service.py`)
+  - [ ] Step 5: 수동 검증 결과 재분류 (기존 `artifact` 타입 이벤트 재분류)
+  - [ ] Step 6: E2E 테스트 재실행 및 검증
+
+- [ ] 8단계: Phase 완료 작업
+  - [ ] TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
+  - [ ] Git commit 실행 (`feat: Phase 3.4 완료 - 이벤트 정규화 품질 개선 및 타입 체계 개선`)
+  - [ ] 사용자 피드백 요청
+
+- [ ] 결과 피드백 (선택적)
   - [ ] 개선 결과 사용자에게 보고
   - [ ] 추가 개선 필요 여부 판단
   - [ ] Golden 파일 생성 (품질이 충분히 개선된 경우)
@@ -1217,7 +1284,7 @@ longtext-analysis/
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 3.4 진행 중 (이벤트 정규화 품질 개선)
+**현재 Phase**: Phase 3.4 진행 중 (이벤트 정규화 품질 개선 및 타입 체계 개선)
 
 **마지막 업데이트**: 2025-12-23
 
@@ -1281,20 +1348,41 @@ longtext-analysis/
   - ✅ 수동 검증 프로세스 실행 완료 (수동 검증 데이터셋 생성 및 검증 완료)
   - ⏸️ Golden 파일 생성: 보류 (Phase 3.4 이벤트 정규화 품질 개선 완료 후 작성 예정)
   - **수동 검증 결과**: 전체적으로 크게 나쁘지 않음, Phase 4 진행 후 재평가 예정
-- Phase 3.4: 이벤트 정규화 품질 개선 - 진행 중 (2025-12-23 시작)
+- Phase 3.4: 이벤트 정규화 품질 개선 및 타입 체계 개선 - 진행 중 (2025-12-23 시작)
   - Phase 4 E2E 테스트 결과 분석 완료 (Timeline/Issue Cards 품질 문제 발견)
   - ✅ 수동 검증 파일 재작성 완료 (2025-12-23)
     - ✅ HTML 형식으로 모든 이벤트 추출 (67개 이벤트)
     - ✅ 사용자 수동 검증 완료 (텍스트 파일 기록)
     - ✅ 텍스트 파일 파싱 스크립트 작성 및 실행 완료
     - ✅ manual_review_updated.json 생성 완료 (67개 이벤트 검증 데이터 포함)
-  - 이벤트 정규화 품질 개선 작업 진행 예정
-    - [ ] 수동 검증 결과 평가 (`evaluate_manual_review()` 실행)
-    - [ ] 원인 분석 (with 사용자)
-    - [ ] Type 추출 로직 수정
-    - [ ] Summary 로직 수정
-    - [ ] E2E 재평가
-    - [ ] 결과 피드백
+  - ✅ HTML 수동 검증 스크립트 개선 완료 (2025-12-25)
+    - ✅ 스크립트 분리: `create_html_review.py` (HTML만, 비용 없음), `create_events_for_review.py` (이벤트 정규화만, 선택적)
+    - ✅ 기존 스크립트 삭제: `create_all_events_html_review.py` (혼선 방지)
+    - ✅ 워크플로우 명확화: E2E 테스트 → HTML 생성 (비용 없음)
+  - 이벤트 정규화 품질 개선 작업 진행 중
+    - [x] 1단계: 정량적 평가 실행 (`evaluate_manual_review()` 실행) - 완료
+    - [x] 2단계: 정성적 분석 - Notes 내용 확인 (67개 샘플 순회, notes 필드 하나씩 확인) - 완료
+    - [x] 3단계: 문제 원인 분석 및 개선 방안 도출 - 완료
+    - [x] 4단계: 개선 방안 검토 및 승인 (with 사용자) - 완료
+    - [x] 5단계: 개선 작업 실행 (Type 추출 로직, Summary 로직 수정) - 완료
+      - [x] LLM 서비스에 Artifact 정보 포함 (code_blocks, path_candidates)
+      - [x] 캐시 키 생성 시 Artifact 정보 포함
+      - [x] 맥락 정보 수집 함수 구현 (_collect_context_info, _collect_context_info_with_events)
+      - [x] 이벤트 정규화 함수에 맥락 정보 전달
+      - [x] Artifact 타입 분류 강화
+      - [x] LLM 프롬프트 개선 (요약 규칙, 특수 기호 의미 명시, max_tokens 증가)
+    - [x] 6단계: E2E 재평가 (개선 전후 비교) - 완료
+      - [x] 개선된 이벤트 정규화 로직으로 E2E 테스트 재실행 완료
+      - [x] 결과 파일 생성: `tests/results/event_normalizer_e2e_llm_20251225_183334.json`
+      - [x] 결과 확인: HTML 수동 검증 데이터셋 생성 및 검토 - 완료
+        - [x] 사용자 수동 검증 완료 (2025-12-25)
+        - [x] 타입 체계 개선 계획 수립 완료
+        - [x] 상세 개선 계획 문서 작성: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md)
+      - [ ] 개선 전후 비교 분석 (타입 체계 개선 구현 후 진행)
+    - [ ] 7단계: 타입 체계 개선 구현 (다음 세션 시작)
+      - [ ] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
+      - [ ] Step 1-6 순차 진행 (상세 내용은 위 문서 참조)
+    - [ ] 8단계: Phase 완료 작업 (TODOs.md 업데이트, Git commit)
 
 **다음 단계**:
 - Phase 3.4 진행 (이벤트 정규화 품질 개선)
