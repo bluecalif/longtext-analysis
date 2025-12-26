@@ -8,8 +8,8 @@ import pytest
 from pathlib import Path
 from backend.parser import parse_markdown
 from backend.builders.event_normalizer import normalize_turns_to_events
-from backend.builders.timeline_builder import build_timeline
-from backend.core.models import TimelineEvent, EventType
+from backend.builders.timeline_builder import build_timeline, build_structured_timeline
+from backend.core.models import TimelineEvent, TimelineSection, EventType
 
 
 # 실제 입력 데이터 경로
@@ -171,4 +171,117 @@ def test_timeline_event_type_preservation():
         )
         if timeline_event:
             assert timeline_event.type == event.type, f"이벤트 타입이 보존되지 않음: {timeline_event.type} != {event.type}"
+
+
+def test_structured_timeline_pattern_based():
+    """구조화된 Timeline 생성 테스트 (패턴 기반, 실제 데이터 사용)"""
+    if not INPUT_FILE.exists():
+        pytest.skip(f"Input file not found: {INPUT_FILE}")
+
+    # 파싱 실행
+    text = INPUT_FILE.read_text(encoding="utf-8")
+    parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
+
+    # 이벤트 정규화
+    session_meta = parse_result["session_meta"]
+    events = normalize_turns_to_events(
+        parse_result["turns"], session_meta=session_meta, use_llm=False
+    )
+
+    # Issue Cards 생성
+    from backend.builders.issues_builder import build_issue_cards
+    issue_cards = build_issue_cards(parse_result["turns"], events, session_meta)
+
+    # 구조화된 Timeline 생성 (패턴 기반)
+    structured_result = build_structured_timeline(
+        events, session_meta, issue_cards=issue_cards, use_llm=False
+    )
+
+    # 검증
+    assert "sections" in structured_result, "sections 키가 없음"
+    assert "events" in structured_result, "events 키가 없음"
+
+    sections = structured_result["sections"]
+    timeline_events = structured_result["events"]
+
+    # Sections 검증
+    assert len(sections) > 0, "Sections가 생성되지 않음"
+    for section in sections:
+        assert isinstance(section, TimelineSection), "TimelineSection 객체가 아님"
+        assert section.section_id, "section_id가 비어있음"
+        assert section.title, "title이 비어있음"
+        assert section.summary, "summary가 비어있음"
+        assert len(section.events) > 0, "events가 비어있음"
+        # event_seqs는 실제 Event seq와 일치해야 함
+        for event_seq in section.events:
+            assert any(e.seq == event_seq for e in events), f"event_seq {event_seq}가 실제 Event에 없음"
+
+    # Events 검증 (하위 호환성)
+    assert len(timeline_events) == len(events), "Timeline events 수가 일치하지 않음"
+
+    # 모든 Event가 최소한 하나의 Section에 포함되어야 함
+    all_section_event_seqs = set()
+    for section in sections:
+        all_section_event_seqs.update(section.events)
+    
+    # 대부분의 이벤트가 포함되어야 함 (DEBUG 타입은 Issue Card로 처리되므로 제외 가능)
+    event_seqs = set(e.seq for e in events)
+    debug_event_seqs = set(e.seq for e in events if e.type == EventType.DEBUG)
+    non_debug_event_seqs = event_seqs - debug_event_seqs
+    
+    # DEBUG가 아닌 이벤트 중 대부분이 포함되어야 함
+    covered_ratio = (
+        len(all_section_event_seqs & non_debug_event_seqs) / len(non_debug_event_seqs)
+        if non_debug_event_seqs
+        else 1.0
+    )
+    assert covered_ratio > 0.8, f"Section에 포함된 이벤트 비율이 너무 낮음: {covered_ratio:.1%} (DEBUG 제외)"
+
+
+def test_structured_timeline_llm_based():
+    """구조화된 Timeline 생성 테스트 (LLM 기반, 실제 데이터 사용, 선택적)"""
+    import os
+    if not os.getenv("OPENAI_API_KEY"):
+        pytest.skip("OPENAI_API_KEY not set, skipping LLM test")
+
+    if not INPUT_FILE.exists():
+        pytest.skip(f"Input file not found: {INPUT_FILE}")
+
+    # 파싱 실행
+    text = INPUT_FILE.read_text(encoding="utf-8")
+    parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
+
+    # 이벤트 정규화 (LLM 사용)
+    session_meta = parse_result["session_meta"]
+    events = normalize_turns_to_events(
+        parse_result["turns"], session_meta=session_meta, use_llm=True
+    )
+
+    # Issue Cards 생성
+    from backend.builders.issues_builder import build_issue_cards
+    issue_cards = build_issue_cards(parse_result["turns"], events, session_meta)
+
+    # 구조화된 Timeline 생성 (LLM 기반)
+    structured_result = build_structured_timeline(
+        events, session_meta, issue_cards=issue_cards, use_llm=True
+    )
+
+    # 검증 (패턴 기반 테스트와 동일)
+    assert "sections" in structured_result, "sections 키가 없음"
+    assert "events" in structured_result, "events 키가 없음"
+
+    sections = structured_result["sections"]
+    timeline_events = structured_result["events"]
+
+    # Sections 검증
+    assert len(sections) > 0, "Sections가 생성되지 않음"
+    for section in sections:
+        assert isinstance(section, TimelineSection), "TimelineSection 객체가 아님"
+        assert section.section_id, "section_id가 비어있음"
+        assert section.title, "title이 비어있음"
+        assert section.summary, "summary가 비어있음"
+        assert len(section.events) > 0, "events가 비어있음"
+
+    # Events 검증 (하위 호환성)
+    assert len(timeline_events) == len(events), "Timeline events 수가 일치하지 않음"
 

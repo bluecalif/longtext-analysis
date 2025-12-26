@@ -8,13 +8,13 @@ import logging
 import threading
 import time
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from dotenv import load_dotenv
 
 # .env 파일 자동 로드
 load_dotenv()
 
-from backend.core.models import Turn, EventType
+from backend.core.models import Turn, EventType, Event
 from backend.core.cache import (
     get_cached_result,
     save_cached_result,
@@ -23,6 +23,7 @@ from backend.core.cache import (
     get_cache_stats as get_cache_dir_stats
 )
 from backend.builders.event_normalizer import summarize_turn
+import json
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -381,3 +382,286 @@ SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
 
     # 모든 재시도 실패 시 마지막 오류를 다시 발생시킴 (fallback 후에는 도달하지 않음)
     raise last_error
+
+
+def extract_main_tasks_with_llm(
+    events: List[Event],
+    phase: Optional[int] = None,
+    subphase: Optional[int] = None,
+) -> List[Dict[str, any]]:
+    """
+    LLM을 사용하여 이벤트 그룹에서 주요 작업 항목 추출 (Phase 4.5)
+
+    이벤트 리스트를 분석하여 주요 작업 항목들을 식별하고, 각 항목의 제목과 요약을 생성합니다.
+
+    Args:
+        events: 이벤트 리스트 (같은 Phase/Subphase 그룹)
+        phase: Phase 번호 (선택적, 캐시 키 생성용)
+        subphase: Subphase 번호 (선택적, 캐시 키 생성용)
+
+    Returns:
+        [
+            {
+                "title": str,  # 작업 항목 제목
+                "summary": str,  # 작업 내용 요약
+                "event_seqs": List[int],  # 관련 Event seq 리스트
+            },
+            ...
+        ]
+
+    비용 분석:
+    - 입력: 평균 10개 이벤트 → 약 5000자 → 약 1250 tokens
+    - 출력: 평균 3개 작업 항목 → 약 300 tokens
+    - 비용: (1250 * 0.40 + 300 * 1.60) / 1M = $0.00098 per 그룹
+    - 캐싱 적용 시: 70-80% 절감
+    """
+    if not events:
+        return []
+
+    # 1. 캐시 키 생성 (이벤트 시퀀스 번호 기반)
+    event_seqs = sorted([e.seq for e in events])
+    # 이벤트 요약 텍스트를 결합하여 해시 생성
+    event_texts = [f"{e.seq}:{e.type.value}:{e.summary[:200]}" for e in events]
+    combined_text = "\n".join(event_texts)
+    text_hash = _generate_text_hash(combined_text, max_length=5000)
+    cache_key = f"main_tasks_{text_hash}"
+    cache_file = CACHE_DIR / f"{cache_key}.json"
+
+    logger.debug(
+        f"[CACHE] Extract main tasks: cache_key={cache_key}, "
+        f"phase={phase}, subphase={subphase}, events_count={len(events)}"
+    )
+
+    # 2. 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.info(
+            f"[CACHE HIT] Extract main tasks: cache_key={cache_key}, "
+            f"tasks_count={len(cached.get('tasks', []))}"
+        )
+        return cached.get("tasks", [])
+
+    # 3. 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(
+        f"[CACHE MISS] Extract main tasks: cache_key={cache_key}, calling LLM"
+    )
+
+    # 4. LLM 호출 (재시도 로직 포함)
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not found, using fallback")
+        return _extract_main_tasks_fallback(events)
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 이벤트 정보 정리
+    event_info_list = []
+    for event in events:
+        event_info = {
+            "seq": event.seq,
+            "type": event.type.value,
+            "summary": event.summary,
+        }
+        if event.artifacts:
+            event_info["artifacts"] = [
+                {
+                    "path": a.get("path", ""),
+                    "action": a.get("action", ""),
+                }
+                for a in event.artifacts[:3]  # 최대 3개만
+            ]
+        if event.snippet_refs:
+            event_info["snippet_refs"] = event.snippet_refs[:3]  # 최대 3개만
+        event_info_list.append(event_info)
+
+    system_prompt = """당신은 소프트웨어 개발 세션의 이벤트 로그를 분석하여 주요 작업 항목을 추출하는 전문가입니다.
+
+## 역할
+이벤트 리스트를 분석하여 논리적으로 연결된 이벤트들을 그룹화하고, 각 그룹을 하나의 주요 작업 항목으로 식별합니다.
+
+## 입력 데이터
+각 이벤트는 다음과 같은 정보를 포함합니다:
+- seq: 이벤트 시퀀스 번호
+- type: 이벤트 타입 (status_review, plan, code_generation, debug, completion, next_step, turn)
+- summary: 이벤트 요약
+- artifacts: 관련 파일 (선택적)
+- snippet_refs: 관련 코드 스니펫 (선택적)
+
+## 작업 항목 추출 규칙
+
+1. **논리적 그룹화**: 관련된 이벤트들을 하나의 작업 항목으로 그룹화
+   - 같은 파일/컴포넌트에 대한 작업
+   - 같은 목적을 가진 작업
+   - 순차적으로 진행되는 작업
+
+2. **제목 생성 규칙**:
+   - 작업의 핵심 내용을 간결하게 표현 (20-50자)
+   - 동작 중심으로 작성 (예: "프론트엔드 컴포넌트 생성", "데이터베이스 스키마 수정")
+   - 파일명이나 컴포넌트명 포함 권장
+
+3. **요약 생성 규칙**:
+   - 작업의 전체적인 흐름과 목적을 설명 (100-200자)
+   - 주요 변경사항이나 결과 포함
+   - 단순히 이벤트 요약을 나열하지 말고, 전체 맥락을 설명
+
+4. **그룹화 제외 이벤트**:
+   - DEBUG 타입 이벤트는 별도로 Issue Card에서 처리되므로 작업 항목에서 제외 가능
+   - 하지만 작업의 일부로 포함되어야 할 경우 포함 가능
+
+5. **작업 항목 개수**:
+   - 이벤트 수가 적으면 (3개 이하) 1개 작업 항목으로 통합 가능
+   - 이벤트 수가 많으면 (10개 이상) 3-5개 작업 항목으로 분리 권장
+
+## 응답 형식
+
+JSON 형식으로 반환하세요:
+
+```json
+{
+  "tasks": [
+    {
+      "title": "작업 항목 제목",
+      "summary": "작업 내용 요약",
+      "event_seqs": [1, 2, 3]
+    },
+    ...
+  ]
+}
+```
+
+주의사항:
+- event_seqs는 반드시 입력 이벤트의 seq 값이어야 함
+- 모든 이벤트가 최소한 하나의 작업 항목에 포함되어야 함
+- 작업 항목은 1개 이상이어야 함"""
+
+    user_content = json.dumps(
+        {
+            "phase": phase,
+            "subphase": subphase,
+            "events": event_info_list,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+                max_tokens=1000,
+                temperature=0.3,
+            )
+
+            result_text = response.choices[0].message.content.strip()
+
+            # JSON 파싱 (코드 블록 제거)
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0].strip()
+
+            result = json.loads(result_text)
+            tasks = result.get("tasks", [])
+
+            # 검증: 모든 이벤트 seq가 포함되어야 함
+            input_seqs = set(event_seqs)
+            output_seqs = set()
+            for task in tasks:
+                output_seqs.update(task.get("event_seqs", []))
+
+            # 누락된 이벤트가 있으면 fallback
+            missing_seqs = input_seqs - output_seqs
+            if missing_seqs:
+                logger.warning(
+                    f"[WARNING] Missing event seqs in LLM response: {missing_seqs}, "
+                    f"using fallback"
+                )
+                return _extract_main_tasks_fallback(events)
+
+            # 결과 캐시 저장
+            cache_result = {
+                "tasks": tasks,
+            }
+            save_cached_result(
+                cache_key,
+                cache_result,
+                text_hash=text_hash,
+                turn_index=None,  # 이벤트 그룹이므로 turn_index 없음
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(
+                f"[CACHE SAVE] Extract main tasks: cache_key={cache_key}, "
+                f"tasks_count={len(tasks)}"
+            )
+
+            return tasks
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] LLM call attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] LLM call failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based task extraction")
+                return _extract_main_tasks_fallback(events)
+
+    # 모든 재시도 실패 시 fallback
+    return _extract_main_tasks_fallback(events)
+
+
+def _extract_main_tasks_fallback(events: List[Event]) -> List[Dict[str, any]]:
+    """
+    패턴 기반 작업 항목 추출 (Fallback)
+
+    LLM 호출 실패 시 사용하는 기본 방법입니다.
+    """
+    if not events:
+        return []
+
+    # 간단한 방법: 이벤트 타입별로 그룹화
+    task_groups = {}
+    for event in events:
+        task_key = event.type.value
+        if task_key not in task_groups:
+            task_groups[task_key] = []
+        task_groups[task_key].append(event)
+
+    tasks = []
+    for task_key, task_events in task_groups.items():
+        event_seqs = sorted([e.seq for e in task_events])
+        title = f"{task_key} 작업"
+        summary = " ".join([e.summary[:100] for e in task_events[:3]])
+        summary = summary[:200].strip()
+
+        tasks.append(
+            {
+                "title": title,
+                "summary": summary,
+                "event_seqs": event_seqs,
+            }
+        )
+
+    # Fallback 결과도 캐시 저장 (선택적, 여기서는 생략)
+    return tasks

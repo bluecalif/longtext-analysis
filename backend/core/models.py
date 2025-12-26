@@ -96,6 +96,31 @@ class TimelineEvent(BaseModel):
     snippet_refs: List[str] = []  # 연결된 스니펫 ID
 
 
+class TimelineSection(BaseModel):
+    """Timeline 섹션 모델 (주요 작업 항목)
+
+    Phase/Subphase별로 주요 작업을 항목화하여 구조화된 Timeline을 생성합니다.
+    각 섹션은 하나의 주요 작업 항목을 나타내며, 관련 Event들을 그룹화합니다.
+    """
+
+    section_id: str  # 섹션 ID (예: "6.7-main-task-1")
+    title: str  # 작업 항목 제목
+    summary: str  # 작업 내용 요약
+    phase: Optional[int] = None  # Phase 번호
+    subphase: Optional[int] = None  # Subphase 번호
+    events: List[int] = []  # 관련 Event seq 리스트
+    has_issues: bool = False  # 이슈 발생 여부
+    issue_refs: List[str] = []  # 관련 Issue Card ID 리스트
+    detailed_results: dict = {}  # 작업 결과 연결 정보
+    # detailed_results 구조 예시:
+    # {
+    #   "code_snippets": ["snippet_id_1", "snippet_id_2"],  # 관련 코드 스니펫
+    #   "files": ["path/to/file1.py", "path/to/file2.ts"],  # 관련 파일
+    #   "artifacts": [{"path": "...", "action": "create"}],  # Artifact 정보
+    #   "git_commit": "abc123def456",  # Git commit 해시 (선택적)
+    # }
+
+
 class IssueCard(BaseModel):
     """Issue Card 모델"""
 
