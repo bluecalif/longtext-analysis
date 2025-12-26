@@ -2,11 +2,54 @@
 
 > **프로젝트 개요**: Cursor IDE에서 export된 세션 대화 마크다운 파일을 파싱하여 Timeline, Issue Cards, 코드 스니펫을 생성하는 웹 애플리케이션
 
-**기술 스택**: Python FastAPI (Poetry), Next.js 14+ (App Router, TypeScript), OpenAI API (옵션)
+**기술 스택**: Python FastAPI (Poetry), Next.js 14+ (App Router, TypeScript), OpenAI API (필수)
 
 **참고 문서**: [PRD](docs/PRD_longtext.md), [상세 지침](docs/instruction_detail.md), [구체화 지침](docs/instruction_moredetail.md)
 
 **E2E 테스트 입력 데이터**: `docs/cursor_phase_6_3.md`
+
+---
+
+## ⚠️ 중요: LLM 사용 규칙 (프로젝트 전역)
+
+**기본 원칙**: 모든 빌더 함수는 기본적으로 LLM을 사용합니다.
+
+### 핵심 규칙
+
+1. **기본값**: 모든 빌더 함수의 `use_llm` 파라미터 기본값은 `USE_LLM_BY_DEFAULT = True`입니다.
+   - `normalize_turns_to_events(..., use_llm=USE_LLM_BY_DEFAULT)`
+   - `build_structured_timeline(..., use_llm=USE_LLM_BY_DEFAULT)`
+   - `build_issue_cards(..., use_llm=USE_LLM_BY_DEFAULT)`
+
+2. **패턴 기반(REGEX) vs LLM 기반**:
+   - **LLM 기반 (기본값)**: 모든 빌더 함수는 기본적으로 LLM을 사용합니다.
+   - **패턴 기반 (Fallback)**: LLM 실패 시에만 패턴 기반으로 fallback합니다.
+   - **명시적 패턴 기반**: 테스트에서 패턴 기반을 사용하려면 명시적으로 `use_llm=False`를 전달하세요.
+
+3. **테스트 규칙**:
+   - `test_*_with_llm()`: LLM 사용 (명시적)
+   - `test_*_pattern()` 또는 `test_*_no_llm()`: 패턴 기반 (명시적)
+   - 그 외: 기본값 사용 (LLM)
+
+4. **API 규칙** (Phase 6+):
+   - 모든 API 엔드포인트도 기본적으로 LLM을 사용합니다.
+   - 클라이언트가 명시적으로 `use_llm=false`를 전달하지 않는 한 LLM 사용.
+
+5. **주의사항**:
+   - **다음 세션에서 코드를 작성할 때도 이 규칙을 따라야 합니다.**
+   - 새로운 빌더 함수를 추가할 때도 `use_llm=True`를 기본값으로 설정하세요.
+   - 이 규칙은 `.cursor/rules/llm-default-rule.mdc`에도 문서화되어 있습니다.
+   - 상수 정의: `backend/core/constants.py`의 `USE_LLM_BY_DEFAULT = True`
+
+### 다층 방어선
+
+1. **코드 레벨**: 모든 함수의 기본값이 `USE_LLM_BY_DEFAULT = True`
+2. **상수 정의**: `backend/core/constants.py`에 명시적 상수 정의
+3. **문서화**: 이 문서와 `.cursor/rules/llm-default-rule.mdc`에 규칙 명시
+4. **테스트 Fixture**: 테스트 함수 이름에서 자동 감지 (`_with_llm`, `_pattern`, `_no_llm`)
+5. **타입 힌트**: 모든 함수에 명확한 타입 힌트와 문서화
+
+---
 
 ---
 
@@ -213,6 +256,34 @@
   - Symptom이 핵심이 아닌 경우 발생
 - 각 컴포넌트(symptom, root_cause, fix, validation)가 독립적으로 작동하여 컨텍스트 부족
 
+**⚠️ Phase 4.7 완료 후 발견된 심각한 문제점 (2025-12-26)**:
+- **Issue Card 결과가 완전히 엉망**: 사용자 평가 "100점 만점에 -100점"
+- **핵심 문제**:
+  1. **`extract_issue_with_llm()` 함수가 구현되어 있지만 사용되지 않음**
+     - `build_issue_card_from_cluster()` 함수가 각 컴포넌트를 개별적으로 추출
+     - 통합 컨텍스트를 활용하지 못함
+  2. **Fix 항목이 20개나 생성됨** (각 이벤트마다 하나씩)
+     - `extract_fix_with_llm()` 함수가 각 DEBUG 이벤트마다 개별 호출됨
+     - 각 fix가 매우 길고 반복적인 템플릿 문구 포함 ("이벤트 요약에 기반하여 구체적인 해결 방법을 추출하고 설명하겠습니다.")
+  3. **Symptom이 너무 짧고 구체적이지 않음**
+     - "다음 단계" 같은 의미 없는 텍스트만 추출됨
+  4. **Title이 잘림**
+     - 제목 생성 로직에 문제가 있거나 길이 제한이 너무 짧음
+  5. **LLM은 사용되었지만 프롬프트/로직 문제**
+     - 캐시 파일 확인 결과 LLM 호출은 정상적으로 이루어짐
+     - 하지만 프롬프트가 각 컴포넌트를 개별적으로 요청하여 컨텍스트 부족
+     - `extract_issue_with_llm()` 함수가 구현되어 있지만 실제로 호출되지 않음
+- **확인된 사항**:
+  - LLM 캐시 파일 존재: `cache/issue_*.json` (92개 파일)
+  - LLM 호출은 정상적으로 이루어짐 (캐시 히트율 32.84%)
+  - 문제는 로직 구조: 통합 컨텍스트를 활용하지 않고 각 컴포넌트를 개별 추출
+- **필요한 개선**:
+  1. `build_issue_card_from_cluster()` 함수를 `extract_issue_with_llm()` 사용하도록 수정
+  2. 각 이벤트마다 개별 fix 추출 대신, 클러스터 전체에 대한 통합 fix 추출
+  3. Symptom 추출 프롬프트 개선 (핵심만 추출하도록)
+  4. Title 생성 로직 개선 (길이 제한 확대 또는 더 나은 요약)
+  5. 통합 컨텍스트(TimelineSection + Events + Turns)를 활용한 일관성 있는 추출
+
 **개선 방향**:
 1. **파이프라인 데이터 관리**: 하이브리드 방식 (Fixture + 파일 캐싱)
    - pytest Fixture로 메모리 기반 공유 (빠른 접근)
@@ -245,15 +316,39 @@
   - `build_issue_cards()` 함수 시그니처 변경: `timeline_sections` 파라미터 추가
   - DEBUG 이벤트 클러스터링 로직 구현 (논리적 이슈 단위로 그룹화)
   - Timeline Section과 Issue Card 매칭 로직 구현
-  - 각 클러스터별로 통합 컨텍스트 구성 (Section + Events + Turns)
+  - **`build_issue_card_from_cluster()` 함수 수정**:
+    - 개별 추출 함수 호출 제거 (`extract_symptom_with_llm`, `extract_root_cause_with_llm`, `extract_fix_with_llm`, `extract_validation_with_llm`)
+    - `extract_issue_with_llm()` 한 번 호출로 통합 (통합 컨텍스트 기반)
+    - 모든 필드에 fallback 적용 (일관성):
+      - `title`: `generate_issue_title_from_cluster()` 사용
+      - `symptom`: 첫 번째 User Turn 사용
+      - `root_cause`: 패턴 기반 추출
+      - `fix`: 패턴 기반 추출
+      - `validation`: 패턴 기반 추출
+  - **`build_issue_card_from_window()` 함수 수정**:
+    - window를 클러스터로 변환하여 `extract_issue_with_llm()` 사용
+    - 개별 추출 함수 호출 제거
+    - 모든 필드에 fallback 적용 (동일한 전략)
 
-**Phase 4.7.4: LLM 프롬프트 및 출력 구조 개선**
-- [ ] `backend/core/llm_service.py`에 새로운 함수 추가
-  - `extract_issue_with_llm()` 함수 구현
-    - 입력: TimelineSection + 관련 Events + 관련 Turns (통합 컨텍스트)
-    - 프롬프트: 구조화된 출력 요청 (현상-원인-개선내용)
-    - 출력: 구조화된 JSON (symptom, root_cause, fix, validation)
-  - 기존 개별 추출 함수는 유지 (하위 호환성)
+**Phase 4.7.4: LLM 서비스 리팩토링 및 통합**
+- [ ] `backend/core/constants.py` 수정
+  - `LLM_MODEL = "gpt-4o-mini"` 상수 추가 (또는 커서룰에 맞춰 `gpt-4.1-mini`로 통일)
+- [ ] `backend/core/llm_service.py` 수정
+  - **공통 LLM 호출 함수 추출**: `_call_llm_with_retry()` 함수 생성
+    - 캐시 확인/저장 로직 통합
+    - 재시도 로직 (지수 백오프) 통합
+    - 예외 처리 및 fallback 통합
+  - **모든 함수에서 `LLM_MODEL` 상수 사용**: 하드코딩된 모델명 제거
+  - **`extract_issue_with_llm()` 함수 개선**:
+    - 반환값에 `title` 필드 추가 (필수)
+    - 프롬프트에 title 생성 규칙 추가
+    - 반환 구조: `{"title": str, "symptom": str, "root_cause": dict, "fix": dict, "validation": str}`
+  - **개별 추출 함수 제거**:
+    - `extract_symptom_with_llm()` 제거
+    - `extract_root_cause_with_llm()` 제거
+    - `extract_fix_with_llm()` 제거
+    - `extract_validation_with_llm()` 제거
+  - 모든 LLM 호출 함수에서 `_call_llm_with_retry()` 사용
 
 **Phase 4.7.5: IssueCard 모델 확장**
 - [ ] `backend/core/models.py` 수정
