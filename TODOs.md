@@ -165,25 +165,127 @@
 
 **산출물**: 구조화된 Timeline 모델, Timeline 구조화 빌더, E2E 테스트 완료 및 검증 리포트, Timeline 품질 평가 리포트
 
-### Phase 4.6: Issue Card 품질 개선
+### Phase 4.6: Issue Card 품질 개선 (완료)
 
 **목표**: Issue Card의 symptom → root_cause → fix → validation 체인을 LLM 기반으로 개선하여 내용 품질 향상
 
-**발견된 문제점**:
+**발견된 문제점** (개선 전):
 - Symptom: 단순히 Turn body 처음 500자 잘라내기
 - Root cause: 패턴 매칭으로 텍스트 잘라내기 (중간 과정 텍스트 포함)
 - Fix: DebugEvent의 summary만 사용 (구체적이지 않음)
 - Validation: 패턴 매칭으로 텍스트 잘라내기 (불완전한 텍스트)
+
+**개선 결과** (2025-12-26):
+- Symptom: 평균 길이 82.5자 → 23.5자 (약 3.5배 개선, 핵심만 추출)
+- Fix: 2개 → 12개 (6배 증가, 구체적이고 상세한 해결 방법)
+- Validation: 명확하고 구체적인 검증 방법 추출
+- Root cause: 프롬프트 개선 완료 (중간 과정 텍스트 제거 지시 추가)
+- 품질 점수: 94/100
 - 디버그 부분을 각 이슈로 나누는 로직 점검 필요
 
 **구현 계획**:
-- [ ] LLM 기반 추출 함수 구현 (`extract_symptom_with_llm`, `extract_root_cause_with_llm`, `extract_fix_with_llm`, `extract_validation_with_llm`)
+- [x] LLM 기반 추출 함수 구현 (`extract_symptom_with_llm`, `extract_root_cause_with_llm`, `extract_fix_with_llm`, `extract_validation_with_llm`) (2025-12-26 완료)
   - 각 함수는 캐싱 로직 적용 (SHA-256 해시 기반)
   - Fallback 로직 유지 (LLM 실패 시 패턴 기반)
-- [ ] Issue Builder에 LLM 기반 추출 통합 (`build_issue_cards()` 함수에 `use_llm` 파라미터 추가)
-- [ ] 디버그 이슈 분리 로직 개선 (논리적 이슈 단위로 클러스터링) (선택적)
-- [ ] 단위 테스트 작성 (`tests/test_issues_builder.py`)
-- [ ] E2E 테스트 업데이트 (`tests/test_timeline_issues_e2e.py`)
+  - 재시도 로직 적용 (최대 3회, 지수 백오프)
+- [x] Issue Builder에 LLM 기반 추출 통합 (`build_issue_cards()` 함수에 `use_llm` 파라미터 추가) (2025-12-26 완료)
+- [x] E2E 테스트 업데이트 및 실행 완료 (2025-12-26 완료)
+  - LLM 기반 Issue Card 생성 검증 완료
+  - 품질 분석 완료 (품질 점수: 94/100)
+- [x] Root cause 프롬프트 개선 (중간 과정 텍스트 제거) (2025-12-26 완료)
+- [ ] 디버그 이슈 분리 로직 개선 (논리적 이슈 단위로 클러스터링) (선택적, 추후 개선)
+- [ ] 단위 테스트 작성 (`tests/test_issues_builder.py`) (선택적, 추후 개선)
+
+### Phase 4.7: 파이프라인 데이터 관리 개선 및 Issue Card 로직 전면 재검토 (진행 중)
+
+**목표**: 
+1. 파이프라인 중간 결과를 Fixture와 파일 캐싱으로 관리하여 중복 실행 제거
+2. Timeline Section을 Issue Card 생성에 활용
+3. Issue Card 생성 로직 전면 재검토 및 개선
+
+**발견된 문제점**:
+- 각 테스트가 독립적으로 파싱/이벤트 정규화 재실행 (비효율)
+- Timeline Section 생성이 Issue Card 생성 이후에 실행됨
+- Timeline Section을 Issue Card에 활용할 수 없음
+- Issue Card 품질 문제: LLM이 제대로 적용되지 않은 것으로 보임
+  - Root cause에 중간 과정 텍스트 포함
+  - Fix summary가 형식적이고 부자연스러움
+  - Symptom이 핵심이 아닌 경우 발생
+- 각 컴포넌트(symptom, root_cause, fix, validation)가 독립적으로 작동하여 컨텍스트 부족
+
+**개선 방향**:
+1. **파이프라인 데이터 관리**: 하이브리드 방식 (Fixture + 파일 캐싱)
+   - pytest Fixture로 메모리 기반 공유 (빠른 접근)
+   - 파일 기반 캐싱으로 영구 저장 (디버깅, 수동 검증)
+2. **Issue Card 생성 로직 전면 재검토**:
+   - 입력: TimelineSection + 관련 Events + 관련 Turns (통합 컨텍스트)
+   - LLM 프롬프트: 구조화된 출력 (현상-원인-개선내용)
+   - 출력: 구조화된 IssueCard (Timeline Section과 연결)
+3. **이슈 클러스터링**: DEBUG 타입 이벤트 주변 Turn들을 논리적 이슈 단위로 클러스터링
+
+**구현 계획**:
+
+**Phase 4.7.1: 중간 결과 캐싱 모듈 생성**
+- [ ] `backend/core/pipeline_cache.py` 생성
+  - 파싱 결과 캐싱 (파일 기반)
+  - 이벤트 정규화 결과 캐싱 (파일 기반)
+  - Timeline Section 결과 캐싱 (파일 기반)
+  - 캐시 키 생성 (입력 파일 해시 + use_llm 플래그)
+  - 캐시 무효화 전략 (입력 파일 변경 감지)
+
+**Phase 4.7.2: pytest Fixture 추가**
+- [ ] `tests/conftest.py`에 Fixture 추가
+  - `parsed_data` fixture (세션 스코프)
+  - `normalized_events` fixture (세션 스코프, use_llm 파라미터)
+  - `timeline_sections` fixture (세션 스코프, use_llm 파라미터)
+  - 각 Fixture는 pipeline_cache 모듈 사용
+
+**Phase 4.7.3: Issue Card 생성 로직 개선**
+- [ ] `backend/builders/issues_builder.py` 수정
+  - `build_issue_cards()` 함수 시그니처 변경: `timeline_sections` 파라미터 추가
+  - DEBUG 이벤트 클러스터링 로직 구현 (논리적 이슈 단위로 그룹화)
+  - Timeline Section과 Issue Card 매칭 로직 구현
+  - 각 클러스터별로 통합 컨텍스트 구성 (Section + Events + Turns)
+
+**Phase 4.7.4: LLM 프롬프트 및 출력 구조 개선**
+- [ ] `backend/core/llm_service.py`에 새로운 함수 추가
+  - `extract_issue_with_llm()` 함수 구현
+    - 입력: TimelineSection + 관련 Events + 관련 Turns (통합 컨텍스트)
+    - 프롬프트: 구조화된 출력 요청 (현상-원인-개선내용)
+    - 출력: 구조화된 JSON (symptom, root_cause, fix, validation)
+  - 기존 개별 추출 함수는 유지 (하위 호환성)
+
+**Phase 4.7.5: IssueCard 모델 확장**
+- [ ] `backend/core/models.py` 수정
+  - `IssueCard` 모델에 필드 추가:
+    - `section_id: Optional[str]` - 연결된 Timeline Section ID
+    - `section_title: Optional[str]` - 연결된 Timeline Section 제목
+    - `related_events: List[str]` - 관련 Event ID 리스트
+    - `related_turns: List[int]` - 관련 Turn 인덱스 리스트
+    - `confidence_score: Optional[float]` - 추출 신뢰도 점수
+
+**Phase 4.7.6: 테스트 코드 수정**
+- [ ] `tests/test_timeline_issues_e2e.py` 수정
+  - Fixture 사용으로 변경 (parsed_data, normalized_events, timeline_sections)
+  - 실행 순서 변경: Timeline Section 생성 → Issue Card 생성
+  - 새로운 Issue Card 생성 로직 검증
+
+**Phase 4.7.7: 캐시 무효화 전략 구현**
+- [ ] `backend/core/pipeline_cache.py`에 무효화 로직 추가
+  - 입력 파일 변경 감지 (파일 해시 비교)
+  - 자동 무효화 (캐시 키 기반)
+  - 수동 무효화 옵션 (테스트용)
+
+**검증 계획**:
+- [ ] E2E 테스트 실행 및 검증
+  - 캐시 동작 확인 (파일 저장/로드)
+  - 실행 순서 확인 (Timeline → Issue)
+  - 성능 개선 확인 (중복 실행 제거)
+  - 하위 호환성 확인 (기존 테스트 통과)
+- [ ] Issue Card 품질 평가
+  - 새로운 로직으로 생성된 Issue Card 품질 분석
+  - Timeline Section 연결 정확성 검증
+  - LLM 적용 여부 확인
 
 ---
 
@@ -221,7 +323,7 @@
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 4.6 진행 준비 (Issue Card 품질 개선)
+**현재 Phase**: Phase 4.7 진행 중 (파이프라인 데이터 관리 개선 및 Issue Card 로직 전면 재검토)
 
 **마지막 업데이트**: 2025-12-26
 
@@ -233,18 +335,20 @@
   - 타입 체계 개선 완료 (CODE_GENERATION 추가, ARTIFACT 제거)
 - Phase 4: Timeline 및 Issue Cards 생성 기본 구현 (2025-12-26)
   - LLM 기반 E2E 테스트 완료
+- Phase 4.5: Timeline 구조화 개선 및 품질 평가 (2025-12-26)
+  - Timeline 품질 평가 완료 (품질 점수: 45/100)
+- Phase 4.6: Issue Card 품질 개선 (2025-12-26)
+  - LLM 기반 추출 함수 구현 완료
+  - E2E 테스트 완료 (품질 점수: 94/100, 하지만 실제 품질 문제 발견)
 
 **진행 중인 Phase**:
-- Phase 4.5: Timeline 구조화 개선 (완료)
-  - [x] TimelineSection 모델 정의 완료
-  - [x] Timeline 구조화 빌더 구현 완료 (패턴 기반, LLM 옵션 포함)
-  - [x] LLM 기반 작업 항목 추출 구현 완료 (extract_main_tasks_with_llm)
-  - [x] E2E 테스트 업데이트 및 실행 완료
-  - [x] Timeline 품질 평가 및 수동 검증 완료 (2025-12-26)
+- Phase 4.7: 파이프라인 데이터 관리 개선 및 Issue Card 로직 전면 재검토 (2025-12-26 시작)
+  - 목표: 중복 실행 제거, Timeline Section 활용, Issue Card 로직 전면 재검토
+  - 7개 서브 Phase로 구성 (4.7.1 ~ 4.7.7)
 
 **다음 단계**:
-- Phase 4.6: Issue Card 품질 개선 (LLM 기반 symptom/root_cause/fix/validation 추출)
-  - Phase 4.5 완료 후 사용자 피드백 대기 중
+- Phase 4.7 완료 후 Phase 5 진행 예정
+  - Phase 4.7 완료 후 사용자 피드백 대기
 
 ---
 

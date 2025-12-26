@@ -20,7 +20,7 @@ from backend.core.cache import (
     save_cached_result,
     CACHE_DIR,
     _generate_text_hash,
-    get_cache_stats as get_cache_dir_stats
+    get_cache_stats as get_cache_dir_stats,
 )
 from backend.builders.event_normalizer import summarize_turn
 import json
@@ -70,8 +70,7 @@ def reset_cache_stats() -> None:
 
 
 def classify_and_summarize_with_llm(
-    turn: Turn,
-    context_info: Optional[Dict[str, any]] = None
+    turn: Turn, context_info: Optional[Dict[str, any]] = None
 ) -> Dict[str, any]:
     """
     LLM으로 타입 분류 및 요약 생성 (개선 버전: Artifact 정보 및 맥락 포함)
@@ -126,13 +125,13 @@ def classify_and_summarize_with_llm(
 
 최근 {context_info.get('recent_turn_count', 0)}개 Turn의 요약:
 """
-        for i, summary in enumerate(context_info.get('recent_summaries', []), 1):
+        for i, summary in enumerate(context_info.get("recent_summaries", []), 1):
             context_prompt += f"- Turn {i}: {summary}\n"
 
-        if context_info.get('is_debug_context'):
+        if context_info.get("is_debug_context"):
             context_prompt += "\n⚠️ 중요: 이전 Turn들에서 debug 과정이 진행 중입니다. 현재 Turn도 debug 맥락 안에서 이루어질 가능성이 높습니다.\n"
 
-        if context_info.get('is_plan_context'):
+        if context_info.get("is_plan_context"):
             context_prompt += "\n⚠️ 중요: 이전 Turn들에서 계획 수립이 진행 중입니다.\n"
 
     # 3. 결정적 캐시 키 생성 (SHA-256 사용, Artifact 정보 포함)
@@ -317,12 +316,7 @@ SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
             }
 
             # 5. 캐시 저장 (텍스트 해시 포함)
-            save_cached_result(
-                cache_key,
-                result,
-                text_hash=text_hash,
-                turn_index=turn.turn_index
-            )
+            save_cached_result(cache_key, result, text_hash=text_hash, turn_index=turn.turn_index)
             with _cache_stats_lock:
                 _cache_stats["saves"] += 1
             logger.info(f"[CACHE SAVE] Turn {turn.turn_index}: cache_key={cache_key}")
@@ -364,10 +358,7 @@ SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
 
                 # ✅ Fallback 결과도 캐시 저장 (중요!)
                 save_cached_result(
-                    cache_key,
-                    result,
-                    text_hash=text_hash,
-                    turn_index=turn.turn_index
+                    cache_key, result, text_hash=text_hash, turn_index=turn.turn_index
                 )
                 with _cache_stats_lock:
                     _cache_stats["saves"] += 1
@@ -446,9 +437,7 @@ def extract_main_tasks_with_llm(
     # 3. 캐시 미스
     with _cache_stats_lock:
         _cache_stats["misses"] += 1
-    logger.info(
-        f"[CACHE MISS] Extract main tasks: cache_key={cache_key}, calling LLM"
-    )
+    logger.info(f"[CACHE MISS] Extract main tasks: cache_key={cache_key}, calling LLM")
 
     # 4. LLM 호출 (재시도 로직 포함)
     from openai import OpenAI
@@ -594,7 +583,9 @@ def extract_main_tasks_with_llm(
                 if missing_keys:
                     raise ValueError(f"task[{idx}] missing keys: {missing_keys}")
                 if not isinstance(task.get("event_seqs"), list):
-                    raise ValueError(f"task[{idx}]['event_seqs'] is not a list: {type(task.get('event_seqs'))}")
+                    raise ValueError(
+                        f"task[{idx}]['event_seqs'] is not a list: {type(task.get('event_seqs'))}"
+                    )
 
             # 검증: 모든 이벤트 seq가 포함되어야 함
             input_seqs = set(event_seqs)
@@ -645,7 +636,9 @@ def extract_main_tasks_with_llm(
                     f"[ERROR] LLM JSON decode failed after {LLM_MAX_RETRIES} attempts: "
                     f"{str(e)[:200]}"
                 )
-                logger.debug(f"[DEBUG] Failed JSON text (first 500 chars): {result_text[:500] if 'result_text' in locals() else 'N/A'}")
+                logger.debug(
+                    f"[DEBUG] Failed JSON text (first 500 chars): {result_text[:500] if 'result_text' in locals() else 'N/A'}"
+                )
                 logger.info("[FALLBACK] Using pattern-based task extraction")
                 return _extract_main_tasks_fallback(events)
         except (ValueError, KeyError, TypeError) as e:
@@ -724,3 +717,523 @@ def _extract_main_tasks_fallback(events: List[Event]) -> List[Dict[str, any]]:
 
     # Fallback 결과도 캐시 저장 (선택적, 여기서는 생략)
     return tasks
+
+
+def extract_symptom_with_llm(seed_turn: Turn) -> str:
+    """
+    LLM으로 Symptom 추출 (User 발화에서 핵심 증상만 추출)
+
+    Args:
+        seed_turn: Symptom seed Turn (User 발화)
+
+    Returns:
+        추출된 Symptom 텍스트
+    """
+    # 캐시 키 생성
+    text_content = seed_turn.body[:2000]
+    text_hash = _generate_text_hash(text_content, max_length=2000)
+    cache_key = f"issue_symptom_{text_hash}"
+
+    # 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(f"[CACHE HIT] Symptom extraction: cache_key={cache_key}")
+        return cached.get("symptom", "")
+
+    # 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Symptom extraction: cache_key={cache_key}, calling LLM")
+
+    # LLM 호출
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set, using fallback")
+        return seed_turn.body[:500]  # Fallback
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "사용자가 제기한 문제의 핵심 증상만 추출하세요. 중간 과정이나 설명은 제외하고, 실제 문제 상황만 간결하게 추출하세요.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"다음 사용자 발화에서 핵심 증상만 추출하세요:\n\n{seed_turn.body[:1500]}",
+                    },
+                ],
+                max_tokens=200,
+                temperature=0.3,
+            )
+
+            symptom = response.choices[0].message.content.strip()
+
+            # 결과 캐시 저장
+            cache_result = {"symptom": symptom}
+            save_cached_result(
+                cache_key, cache_result, text_hash=text_hash, turn_index=seed_turn.turn_index
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(f"[CACHE SAVE] Symptom extraction: cache_key={cache_key}")
+
+            return symptom
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] Symptom extraction attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] Symptom extraction failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based symptom extraction")
+                # Fallback: 처음 500자만
+                fallback_result = seed_turn.body[:500]
+                # Fallback 결과도 캐시 저장
+                cache_result = {"symptom": fallback_result}
+                save_cached_result(
+                    cache_key, cache_result, text_hash=text_hash, turn_index=seed_turn.turn_index
+                )
+                with _cache_stats_lock:
+                    _cache_stats["saves"] += 1
+                return fallback_result
+
+    # 모든 재시도 실패 시 fallback
+    return seed_turn.body[:500]
+
+
+def extract_root_cause_with_llm(
+    turn: Turn, error_context: Optional[str] = None
+) -> Optional[Dict[str, str]]:
+    """
+    LLM으로 Root cause 추출 (Cursor 발화에서 실제 원인 분석 내용만 추출)
+
+    Args:
+        turn: Cursor Turn (원인 분석이 포함된)
+        error_context: 에러 메시지 또는 컨텍스트 (선택적)
+
+    Returns:
+        {
+            "status": "confirmed" | "hypothesis",
+            "text": str
+        } 또는 None
+    """
+    # 캐시 키 생성
+    text_content = turn.body[:2000]
+    if error_context:
+        text_content = f"{text_content}\n{error_context[:500]}"
+    text_hash = _generate_text_hash(text_content, max_length=2000)
+    cache_key = f"issue_root_cause_{text_hash}"
+
+    # 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(f"[CACHE HIT] Root cause extraction: cache_key={cache_key}")
+        result = cached.get("root_cause")
+        if result:
+            return result
+        return None  # None도 유효한 결과
+
+    # 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Root cause extraction: cache_key={cache_key}, calling LLM")
+
+    # LLM 호출
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set, using fallback")
+        # Fallback: 패턴 기반 추출
+        from backend.core.constants import DEBUG_TRIGGERS
+
+        if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+            return {"status": "confirmed", "text": turn.body[:300]}
+        return None
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            prompt_text = turn.body[:1500]
+            if error_context:
+                prompt_text = f"{prompt_text}\n\n에러 컨텍스트:\n{error_context[:500]}"
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "다음 텍스트에서 실제 원인 분석 결과만 추출하세요. 반드시 제외해야 할 텍스트:\n- '원인 분석 중입니다...'\n- '분석 중입니다...'\n- '확인합니다...'\n- '정리합니다...'\n- '원인 분석 결과를 정리합니다...'\n\n실제 원인 분석 결과(예: '## 원인 분석 결과' 섹션 이후의 내용)만 추출하세요. 원인이 확실하면 'confirmed', 추정이면 'hypothesis'로 판단하세요. JSON 형식으로 반환하세요: {\"status\": \"confirmed\" 또는 \"hypothesis\", \"text\": \"실제 원인 분석 결과만\"}",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"다음 텍스트에서 실제 원인 분석 결과만 추출하세요 (중간 과정 텍스트 제외):\n\n{prompt_text}",
+                    },
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=300,
+                temperature=0.3,
+            )
+
+            result_text = response.choices[0].message.content.strip()
+            result_data = json.loads(result_text)
+
+            # 결과 검증
+            status = result_data.get("status", "hypothesis")
+            if status not in ["confirmed", "hypothesis"]:
+                status = "hypothesis"
+
+            text = result_data.get("text", "").strip()
+            if not text:
+                # 텍스트가 없으면 None 반환
+                result = None
+            else:
+                result = {"status": status, "text": text[:500]}  # 최대 500자
+
+            # 결과 캐시 저장 (None도 저장)
+            cache_result = {"root_cause": result}
+            save_cached_result(
+                cache_key, cache_result, text_hash=text_hash, turn_index=turn.turn_index
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(f"[CACHE SAVE] Root cause extraction: cache_key={cache_key}")
+
+            return result
+
+        except json.JSONDecodeError as e:
+            last_error = e
+            logger.warning(
+                f"[WARNING] Root cause extraction JSON decode failed (attempt {attempt + 1}/{LLM_MAX_RETRIES}): "
+                f"{str(e)[:200]}"
+            )
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                time.sleep(wait_time)
+            else:
+                logger.info("[FALLBACK] Using pattern-based root cause extraction")
+                # Fallback: 패턴 기반 추출
+                from backend.core.constants import DEBUG_TRIGGERS
+
+                if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+                    fallback_result = {"status": "confirmed", "text": turn.body[:300]}
+                else:
+                    fallback_result = None
+                # Fallback 결과도 캐시 저장
+                cache_result = {"root_cause": fallback_result}
+                save_cached_result(
+                    cache_key, cache_result, text_hash=text_hash, turn_index=turn.turn_index
+                )
+                with _cache_stats_lock:
+                    _cache_stats["saves"] += 1
+                return fallback_result
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] Root cause extraction attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] Root cause extraction failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based root cause extraction")
+                # Fallback: 패턴 기반 추출
+                from backend.core.constants import DEBUG_TRIGGERS
+
+                if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+                    fallback_result = {"status": "confirmed", "text": turn.body[:300]}
+                else:
+                    fallback_result = None
+                # Fallback 결과도 캐시 저장
+                cache_result = {"root_cause": fallback_result}
+                save_cached_result(
+                    cache_key, cache_result, text_hash=text_hash, turn_index=turn.turn_index
+                )
+                with _cache_stats_lock:
+                    _cache_stats["saves"] += 1
+                return fallback_result
+
+    # 모든 재시도 실패 시 fallback
+    from backend.core.constants import DEBUG_TRIGGERS
+
+    if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+        return {"status": "confirmed", "text": turn.body[:300]}
+    return None
+
+
+def extract_fix_with_llm(
+    event: Event, code_snippets: Optional[List[str]] = None
+) -> Optional[Dict[str, any]]:
+    """
+    LLM으로 Fix 추출 (코드 스니펫과 함께 구체적 해결 방법 추출)
+
+    Args:
+        event: DebugEvent
+        code_snippets: 관련 코드 스니펫 리스트 (선택적)
+
+    Returns:
+        {
+            "summary": str,
+            "snippet_refs": List[str]
+        } 또는 None
+    """
+    # 캐시 키 생성
+    text_content = event.summary[:1500]
+    if code_snippets:
+        text_content = f"{text_content}\n코드:\n" + "\n".join(code_snippets[:3])[:1000]
+    text_hash = _generate_text_hash(text_content, max_length=2000)
+    cache_key = f"issue_fix_{text_hash}"
+
+    # 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(f"[CACHE HIT] Fix extraction: cache_key={cache_key}")
+        result = cached.get("fix")
+        if result:
+            return result
+        return None
+
+    # 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Fix extraction: cache_key={cache_key}, calling LLM")
+
+    # LLM 호출
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set, using fallback")
+        # Fallback: 기본 summary 사용
+        if event.snippet_refs:
+            return {"summary": event.summary, "snippet_refs": event.snippet_refs}
+        return None
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            prompt_text = f"이벤트 요약:\n{event.summary[:1000]}"
+            if code_snippets:
+                prompt_text = f"{prompt_text}\n\n관련 코드:\n" + "\n".join(code_snippets[:3])[:1000]
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "다음 이벤트와 코드에서 구체적인 해결 방법을 추출하세요. 어떤 변경을 했고, 왜 그렇게 했는지 명확하게 설명하세요.",
+                    },
+                    {"role": "user", "content": prompt_text},
+                ],
+                max_tokens=300,
+                temperature=0.3,
+            )
+
+            fix_summary = response.choices[0].message.content.strip()
+
+            result = {
+                "summary": fix_summary[:500],
+                "snippet_refs": event.snippet_refs if event.snippet_refs else [],
+            }
+
+            # 결과 캐시 저장
+            cache_result = {"fix": result}
+            save_cached_result(cache_key, cache_result, text_hash=text_hash, turn_index=None)
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(f"[CACHE SAVE] Fix extraction: cache_key={cache_key}")
+
+            return result
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] Fix extraction attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] Fix extraction failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based fix extraction")
+                # Fallback: 기본 summary 사용
+                if event.snippet_refs:
+                    fallback_result = {"summary": event.summary, "snippet_refs": event.snippet_refs}
+                else:
+                    fallback_result = None
+                # Fallback 결과도 캐시 저장
+                if fallback_result:
+                    cache_result = {"fix": fallback_result}
+                    save_cached_result(
+                        cache_key, cache_result, text_hash=text_hash, turn_index=None
+                    )
+                    with _cache_stats_lock:
+                        _cache_stats["saves"] += 1
+                return fallback_result
+
+    # 모든 재시도 실패 시 fallback
+    if event.snippet_refs:
+        return {"summary": event.summary, "snippet_refs": event.snippet_refs}
+    return None
+
+
+def extract_validation_with_llm(turn: Turn) -> Optional[str]:
+    """
+    LLM으로 Validation 추출 (검증 방법 명확화)
+
+    Args:
+        turn: Turn (검증 내용이 포함된)
+
+    Returns:
+        검증 방법 텍스트 또는 None
+    """
+    # 캐시 키 생성
+    text_content = turn.body[:2000]
+    text_hash = _generate_text_hash(text_content, max_length=2000)
+    cache_key = f"issue_validation_{text_hash}"
+
+    # 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(f"[CACHE HIT] Validation extraction: cache_key={cache_key}")
+        result = cached.get("validation")
+        if result:
+            return result
+        return None
+
+    # 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Validation extraction: cache_key={cache_key}, calling LLM")
+
+    # LLM 호출
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set, using fallback")
+        # Fallback: 패턴 기반 추출
+        from backend.builders.issues_builder import extract_validation_text
+
+        return extract_validation_text(turn.body)
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "다음 텍스트에서 검증 방법만 추출하세요. '어떻게 확인했는지', '어떤 테스트를 했는지' 같은 내용만 추출하세요. 중간 과정이나 설명은 제외하세요.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"다음 텍스트에서 검증 방법을 추출하세요:\n\n{turn.body[:1500]}",
+                    },
+                ],
+                max_tokens=200,
+                temperature=0.3,
+            )
+
+            validation = response.choices[0].message.content.strip()
+
+            if not validation:
+                result = None
+            else:
+                result = validation[:300]  # 최대 300자
+
+            # 결과 캐시 저장 (None도 저장)
+            cache_result = {"validation": result}
+            save_cached_result(
+                cache_key, cache_result, text_hash=text_hash, turn_index=turn.turn_index
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(f"[CACHE SAVE] Validation extraction: cache_key={cache_key}")
+
+            return result
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] Validation extraction attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] Validation extraction failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based validation extraction")
+                # Fallback: 패턴 기반 추출
+                from backend.builders.issues_builder import extract_validation_text
+
+                fallback_result = extract_validation_text(turn.body)
+                # Fallback 결과도 캐시 저장
+                cache_result = {"validation": fallback_result}
+                save_cached_result(
+                    cache_key, cache_result, text_hash=text_hash, turn_index=turn.turn_index
+                )
+                with _cache_stats_lock:
+                    _cache_stats["saves"] += 1
+                return fallback_result
+
+    # 모든 재시도 실패 시 fallback
+    from backend.builders.issues_builder import extract_validation_text
+
+    return extract_validation_text(turn.body)

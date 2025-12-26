@@ -22,6 +22,7 @@ def build_issue_cards(
     turns: List[Turn],
     events: List[Event],
     session_meta: SessionMeta,
+    use_llm: bool = False,
 ) -> List[IssueCard]:
     """
     Turn과 Event로부터 Issue Cards 생성
@@ -30,6 +31,7 @@ def build_issue_cards(
         turns: Turn 리스트
         events: Event 리스트
         session_meta: 세션 메타데이터
+        use_llm: LLM 사용 여부 (기본값: False, True 시 LLM 기반 추출 사용)
 
     Returns:
         IssueCard 리스트
@@ -55,6 +57,7 @@ def build_issue_cards(
             window_events=window_events,
             seed_idx=seed_idx,
             session_meta=session_meta,
+            use_llm=use_llm,
         )
 
         if issue_card:
@@ -85,6 +88,7 @@ def build_issue_card_from_window(
     window_events: List[Event],
     seed_idx: int,
     session_meta: SessionMeta,
+    use_llm: bool = False,
 ) -> Optional[IssueCard]:
     """
     슬라이딩 윈도우 내에서 Issue Card 구성
@@ -95,67 +99,138 @@ def build_issue_card_from_window(
         window_events: 윈도우 내 Event 리스트
         seed_idx: Seed Turn 인덱스
         session_meta: 세션 메타데이터
+        use_llm: LLM 사용 여부 (기본값: False)
 
     Returns:
         IssueCard 또는 None (조건 미충족 시)
     """
-    # Symptom 추출 (User 발화)
-    symptoms = [seed_turn.body[:500]]  # 처음 500자만
+    # Symptom 추출
+    if use_llm:
+        try:
+            from backend.core.llm_service import extract_symptom_with_llm
+            symptom_text = extract_symptom_with_llm(seed_turn)
+            symptoms = [symptom_text] if symptom_text else [seed_turn.body[:500]]
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"[WARNING] LLM-based symptom extraction failed: {e}, using fallback")
+            symptoms = [seed_turn.body[:500]]  # Fallback
+    else:
+        symptoms = [seed_turn.body[:500]]  # 패턴 기반: 처음 500자만
 
-    # Root cause 추출 (Cursor turns에서)
+    # Root cause 추출
     root_cause = None
-    for turn in window_turns:
-        if turn.speaker == "Cursor":
-            if DEBUG_TRIGGERS["root_cause"].search(turn.body):
-                root_cause = {
-                    "status": IssueStatus.CONFIRMED.value,  # 또는 "hypothesis"
-                    "text": extract_root_cause_text(turn.body),
-                }
-                break
+    if use_llm:
+        try:
+            from backend.core.llm_service import extract_root_cause_with_llm
+            # 에러 컨텍스트 수집
+            error_context = None
+            for turn in window_turns:
+                if turn.speaker == "Cursor" and DEBUG_TRIGGERS["error"].search(turn.body):
+                    error_context = turn.body[:500]
+                    break
 
-    # Root cause가 없으면 hypothesis로 설정 (에러 패턴만 있는 경우)
+            # LLM 기반 추출 시도
+            for turn in window_turns:
+                if turn.speaker == "Cursor":
+                    root_cause = extract_root_cause_with_llm(turn, error_context=error_context)
+                    if root_cause:
+                        break
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"[WARNING] LLM-based root cause extraction failed: {e}, using fallback")
+            # Fallback으로 패턴 기반 추출
+            root_cause = None
+
+    # LLM 실패 또는 use_llm=False인 경우 패턴 기반 추출
     if not root_cause:
         for turn in window_turns:
-            if turn.speaker == "Cursor" and DEBUG_TRIGGERS["error"].search(
-                turn.body
-            ):
-                root_cause = {
-                    "status": IssueStatus.HYPOTHESIS.value,
-                    "text": turn.body[:300],  # 처음 300자
-                }
-                break
+            if turn.speaker == "Cursor":
+                if DEBUG_TRIGGERS["root_cause"].search(turn.body):
+                    root_cause = {
+                        "status": IssueStatus.CONFIRMED.value,
+                        "text": extract_root_cause_text(turn.body),
+                    }
+                    break
 
-    # Fix 추출 (DebugEvent에서 코드 스니펫이 있는 경우)
+        # Root cause가 없으면 hypothesis로 설정 (에러 패턴만 있는 경우)
+        if not root_cause:
+            for turn in window_turns:
+                if turn.speaker == "Cursor" and DEBUG_TRIGGERS["error"].search(turn.body):
+                    root_cause = {
+                        "status": IssueStatus.HYPOTHESIS.value,
+                        "text": turn.body[:300],
+                    }
+                    break
+
+    # Fix 추출
     fixes = []
-    for event in window_events:
-        if event.type == EventType.DEBUG and event.snippet_refs:
-            fixes.append(
-                {
-                    "summary": event.summary,
-                    "snippet_refs": event.snippet_refs,
-                }
-            )
-        # Fix 트리거가 있는 Turn도 포함
-        elif event.type == EventType.DEBUG:
-            turn = next(
-                (t for t in window_turns if t.turn_index == event.turn_ref),
-                None,
-            )
-            if turn and DEBUG_TRIGGERS["fix"].search(turn.body):
+    if use_llm:
+        try:
+            from backend.core.llm_service import extract_fix_with_llm
+            for event in window_events:
+                if event.type == EventType.DEBUG:
+                    # 코드 스니펫 수집 (실제 코드는 Phase 5에서 가져올 수 있음)
+                    code_snippets = None  # 현재는 snippet_refs만 사용
+                    fix = extract_fix_with_llm(event, code_snippets=code_snippets)
+                    if fix:
+                        fixes.append(fix)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"[WARNING] LLM-based fix extraction failed: {e}, using fallback")
+            # Fallback으로 패턴 기반 추출
+            fixes = []
+
+    # LLM 실패 또는 use_llm=False인 경우 패턴 기반 추출
+    if not fixes:
+        for event in window_events:
+            if event.type == EventType.DEBUG and event.snippet_refs:
                 fixes.append(
                     {
                         "summary": event.summary,
                         "snippet_refs": event.snippet_refs,
                     }
                 )
+            # Fix 트리거가 있는 Turn도 포함
+            elif event.type == EventType.DEBUG:
+                turn = next(
+                    (t for t in window_turns if t.turn_index == event.turn_ref),
+                    None,
+                )
+                if turn and DEBUG_TRIGGERS["fix"].search(turn.body):
+                    fixes.append(
+                        {
+                            "summary": event.summary,
+                            "snippet_refs": event.snippet_refs,
+                        }
+                    )
 
     # Validation 추출
     validations = []
-    for turn in window_turns:
-        if DEBUG_TRIGGERS["validation"].search(turn.body):
-            validation_text = extract_validation_text(turn.body)
-            if validation_text:
-                validations.append(validation_text)
+    if use_llm:
+        try:
+            from backend.core.llm_service import extract_validation_with_llm
+            for turn in window_turns:
+                if DEBUG_TRIGGERS["validation"].search(turn.body):
+                    validation_text = extract_validation_with_llm(turn)
+                    if validation_text:
+                        validations.append(validation_text)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"[WARNING] LLM-based validation extraction failed: {e}, using fallback")
+            # Fallback으로 패턴 기반 추출
+            validations = []
+
+    # LLM 실패 또는 use_llm=False인 경우 패턴 기반 추출
+    if not validations:
+        for turn in window_turns:
+            if DEBUG_TRIGGERS["validation"].search(turn.body):
+                validation_text = extract_validation_text(turn.body)
+                if validation_text:
+                    validations.append(validation_text)
 
     # Root cause 또는 Fix 중 하나라도 있어야 카드 생성
     if not root_cause and not fixes:

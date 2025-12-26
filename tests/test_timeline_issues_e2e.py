@@ -240,9 +240,9 @@ def test_timeline_issues_e2e_with_llm():
     # 실행 중 캐시 통계 수집
     runtime_cache_stats = get_cache_stats()
 
-    # 4. Issue Cards 생성 (Phase 4)
+    # 4. Issue Cards 생성 (Phase 4.6, LLM 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=True
     )
 
     # 5. 구조화된 Timeline 생성 (Phase 4.5, LLM 기반)
