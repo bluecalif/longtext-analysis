@@ -520,22 +520,22 @@ def extract_main_tasks_with_llm(
 
 ## 응답 형식
 
-JSON 형식으로 반환하세요:
+반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이 JSON만):
 
-```json
 {
   "tasks": [
     {
       "title": "작업 항목 제목",
       "summary": "작업 내용 요약",
       "event_seqs": [1, 2, 3]
-    },
-    ...
+    }
   ]
 }
-```
 
 주의사항:
+- 반드시 유효한 JSON 형식이어야 함
+- "tasks" 키가 필수이며, 배열 타입이어야 함
+- 각 task는 "title" (문자열), "summary" (문자열), "event_seqs" (정수 배열) 키를 포함해야 함
 - event_seqs는 반드시 입력 이벤트의 seq 값이어야 함
 - 모든 이벤트가 최소한 하나의 작업 항목에 포함되어야 함
 - 작업 항목은 1개 이상이어야 함"""
@@ -559,20 +559,42 @@ JSON 형식으로 반환하세요:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_content},
                 ],
-                max_tokens=1000,
+                max_tokens=2500,  # 증가: 67개 이벤트 처리 시 충분한 크기
                 temperature=0.3,
+                response_format={"type": "json_object"},  # JSON만 반환하도록 강제
             )
 
             result_text = response.choices[0].message.content.strip()
 
-            # JSON 파싱 (코드 블록 제거)
+            # response_format={"type": "json_object"} 사용 시 순수 JSON만 반환됨
+            # 하지만 안전을 위해 코드 블록 제거 로직 유지 (fallback)
             if "```json" in result_text:
                 result_text = result_text.split("```json")[1].split("```")[0].strip()
             elif "```" in result_text:
                 result_text = result_text.split("```")[1].split("```")[0].strip()
 
             result = json.loads(result_text)
+            
+            # 응답 구조 검증
+            if not isinstance(result, dict):
+                raise ValueError(f"LLM response is not a dict: {type(result)}")
+            
             tasks = result.get("tasks", [])
+            
+            # tasks 검증
+            if not isinstance(tasks, list):
+                raise ValueError(f"'tasks' is not a list: {type(tasks)}")
+            
+            # 각 task의 구조 검증
+            for idx, task in enumerate(tasks):
+                if not isinstance(task, dict):
+                    raise ValueError(f"task[{idx}] is not a dict: {type(task)}")
+                required_keys = ["title", "summary", "event_seqs"]
+                missing_keys = [key for key in required_keys if key not in task]
+                if missing_keys:
+                    raise ValueError(f"task[{idx}] missing keys: {missing_keys}")
+                if not isinstance(task.get("event_seqs"), list):
+                    raise ValueError(f"task[{idx}]['event_seqs'] is not a list: {type(task.get('event_seqs'))}")
 
             # 검증: 모든 이벤트 seq가 포함되어야 함
             input_seqs = set(event_seqs)
@@ -608,6 +630,43 @@ JSON 형식으로 반환하세요:
 
             return tasks
 
+        except json.JSONDecodeError as e:
+            last_error = e
+            logger.warning(
+                f"[WARNING] LLM response JSON decode failed (attempt {attempt + 1}/{LLM_MAX_RETRIES}): "
+                f"{str(e)[:200]}"
+            )
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(f"[WARNING] Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] LLM JSON decode failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{str(e)[:200]}"
+                )
+                logger.debug(f"[DEBUG] Failed JSON text (first 500 chars): {result_text[:500] if 'result_text' in locals() else 'N/A'}")
+                logger.info("[FALLBACK] Using pattern-based task extraction")
+                return _extract_main_tasks_fallback(events)
+        except (ValueError, KeyError, TypeError) as e:
+            # 구조 검증 오류
+            last_error = e
+            error_type = type(e).__name__
+            logger.warning(
+                f"[WARNING] LLM response validation failed (attempt {attempt + 1}/{LLM_MAX_RETRIES}): "
+                f"{error_type}: {str(e)[:200]}"
+            )
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(f"[WARNING] Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] LLM response validation failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info("[FALLBACK] Using pattern-based task extraction")
+                return _extract_main_tasks_fallback(events)
         except Exception as e:
             last_error = e
             error_type = type(e).__name__
