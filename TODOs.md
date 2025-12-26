@@ -203,6 +203,23 @@ JSON/MD 출력
 
 **목표**: 파싱된 Turn 데이터를 이벤트로 정규화
 
+**⚠️ 중요: Iterative Improvement Cycle (반복 개선 사이클)**
+
+프로젝트는 Phase 3 → Phase 4 → Phase 5 순서로 기본적으로 순차 진행합니다.
+하지만 Phase 4나 Phase 5에서 문제가 발견되면 **Phase 3으로 돌아가서 이벤트 정규화 로직을 개선**한 후, 다시 Phase 4, 5로 넘어가는 iterative cycle을 돌고 있습니다.
+
+**개선 사이클 예시**:
+1. Phase 3 기본 구현 완료 → Phase 4 진행
+2. Phase 4 E2E 테스트에서 Timeline/Issue Cards 품질 문제 발견
+3. **Phase 3.4로 돌아가서** 이벤트 정규화 품질 개선 (타입 분류, Summary 품질 등)
+4. 개선 완료 후 다시 **Phase 4 E2E 테스트 재실행**하여 품질 확인
+5. 품질이 충분히 개선되면 Phase 4 완료 처리, 필요시 Phase 5로 진행
+
+**주의사항**:
+- Phase 3, 4, 5의 **기본 순서는 항상 유지**: 3 → 4 → 5
+- 개선 작업은 **Phase 3의 서브 Phase (3.1, 3.2, 3.4 등)**로 진행
+- Phase 번호는 **절대 섞이지 않음** (3 → 4 → 3.4 → 5 ❌, 3 → 4 → 3.4 → 4 재검증 → 5 ✅)
+
 **상세 개선 계획**: [docs/phase3_improvement_plan.md](docs/phase3_improvement_plan.md) 참조
 
 ### Phase 3.0: 기본 구현 (완료)
@@ -449,9 +466,13 @@ JSON/MD 출력
 
 ---
 
-### Phase 3.4: 이벤트 정규화 품질 개선
+### Phase 3.4: 이벤트 정규화 품질 개선 (Iterative Improvement Cycle)
 
 **목표**: Phase 4 E2E 테스트 결과를 바탕으로 이벤트 정규화 품질 개선
+
+**⚠️ 컨텍스트**: 
+이 섹션은 **Phase 4 완료 후 문제가 발견되어 Phase 3으로 돌아온 개선 작업**입니다.
+Phase 4의 Timeline/Issue Cards 생성 결과를 분석하여 이벤트 정규화 품질의 실제 효과를 검증하고, 필요 시 개선 작업을 수행합니다.
 
 **발견된 문제점**:
 - Timeline: 이벤트 타입 분류가 부정확 (예: 메타데이터가 "turn" 타입으로 분류됨)
@@ -552,14 +573,40 @@ JSON/MD 출력
   - [ ] 개선 전후 비교 분석 (타입 체계 개선 구현 후 진행)
   - [ ] 비교 리포트 생성 (`tests/reports/improvement_comparison_YYYYMMDD_HHMMSS.json`)
 
-- [ ] 7단계: 타입 체계 개선 구현 (다음 세션 시작)
-  - [ ] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
-  - [ ] Step 1: EventType Enum 수정 (`backend/core/models.py`)
-  - [ ] Step 2: Artifact Action 타입 추가 (선택적)
-  - [ ] Step 3: 분류 로직 개선 (`backend/builders/event_normalizer.py`, `backend/core/llm_service.py`)
-  - [ ] Step 4: LLM 프롬프트 수정 (`backend/core/llm_service.py`)
-  - [ ] Step 5: 수동 검증 결과 재분류 (기존 `artifact` 타입 이벤트 재분류)
-  - [ ] Step 6: E2E 테스트 재실행 및 검증
+- [x] 7단계: 타입 체계 개선 구현 (2025-12-26 완료)
+  - [x] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
+  - [x] Step 1: EventType Enum 수정 (`backend/core/models.py`)
+    - [x] `EventType.ARTIFACT` 제거
+    - [x] `EventType.CODE_GENERATION = "code_generation"` 추가
+    - [x] 관련 주석 업데이트
+  - [x] Step 2: Artifact Action 타입 추가 (선택적) (`backend/core/models.py`)
+    - [x] `ArtifactAction` Enum 추가 (read, create, modify, execute, mention)
+    - [x] 기존 `"mention"` 기본값 유지 (하위 호환성)
+  - [x] Step 3: 분류 로직 개선 (`backend/builders/event_normalizer.py`)
+    - [x] `is_artifact_turn()` 함수 제거 및 `is_code_generation_turn()`으로 변경
+    - [x] `create_artifact_event()` 함수 제거 및 `create_code_generation_event()`로 변경
+    - [x] `create_single_event_with_priority()` 함수 수정 (우선순위에서 ARTIFACT 제거, CODE_GENERATION 추가)
+    - [x] `create_event_with_llm()` 함수 수정 (EventType.ARTIFACT 참조 제거, CODE_GENERATION 추가)
+    - [x] 맥락 기반 분류 로직 추가
+  - [x] Step 4: LLM 프롬프트 수정 (`backend/core/llm_service.py`)
+    - [x] 프롬프트에서 `artifact` 타입 설명 제거
+    - [x] `code_generation` 타입 설명 추가 (정의, 예시, 구분)
+    - [x] 타입 분류 우선순위 업데이트 (Artifact 우선 → Code Generation 우선)
+  - [x] Step 5: 평가 도구 업데이트 (`backend/builders/evaluation.py`)
+    - [x] `artifact` 타입 참조 제거
+    - [x] `code_generation` 타입 추가
+    - [x] HTML 생성 시 타입 스타일 업데이트
+    - [x] 혼동 행렬 생성 시 타입 목록 업데이트
+  - [x] Step 6: E2E 테스트 재실행 및 검증 (`tests/test_event_normalizer_e2e.py`)
+    - [x] 새로운 타입 체계로 E2E 테스트 실행
+    - [x] 결과 분석 및 검증 (code_generation 타입 이벤트 생성 확인, artifact 타입 이벤트 제거 확인)
+    - [x] 결과 파일 저장 및 리포트 생성
+    - [x] HTML 수동 검증 데이터셋 생성 완료 (2025-12-26)
+    - [x] 수동 검증 결과 확인 (전체적으로 나쁘지 않음, 다음 단계 진행 OK)
+  - [x] Step 7: 수동 검증 결과 확인 (선택적)
+    - [x] HTML 수동 검증 데이터셋 생성 완료 (`scripts/create_html_review.py` 사용)
+    - [x] 사용자 수동 검증 완료 (2025-12-26)
+    - [x] 결과 확인: 전체적으로 나쁘지 않음, 다음 단계 진행 OK
 
 - [ ] 8단계: Phase 완료 작업
   - [ ] TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
@@ -585,6 +632,10 @@ JSON/MD 출력
 ## Phase 4: Timeline 및 Issue Cards 생성
 
 **목표**: 정규화된 이벤트로부터 Timeline과 Issue Cards 생성
+
+**⚠️ 참고**: 
+- Phase 3 완료 후 진행합니다
+- E2E 테스트에서 품질 문제가 발견되면 **Phase 3.4 (이벤트 정규화 품질 개선)**로 돌아가서 개선 작업을 수행한 후 다시 Phase 4 E2E 테스트를 재실행합니다
 
 ### 상수 정의 (`backend/core/constants.py`)
 - [x] Event 타입 Enum 정의 (이미 `backend/core/models.py`에 정의됨)
@@ -678,22 +729,9 @@ JSON/MD 출력
 
 **산출물**: Timeline 빌더 모듈, Issue Cards 빌더 모듈, Timeline/Issue Cards 데이터 모델, E2E 테스트 완료 및 검증 리포트
 
-### Phase 3 이벤트 정규화 품질 재평가 (Phase 4 완료 후)
-
-**목표**: Phase 4의 Timeline/Issue Cards 생성 결과를 반영하여 Phase 3의 이벤트 정규화 품질을 재평가
-
-- [ ] Timeline/Issue Cards 품질 분석
-  - [ ] Timeline 이벤트의 적절성 검증 (이벤트 타입 분류가 Timeline 생성에 적합한지)
-  - [ ] Issue Cards 탐지 정확도 검증 (DebugEvent 기반 이슈 탐지가 효과적인지)
-  - [ ] 이벤트 Summary 품질이 Timeline/Issue Cards에 미치는 영향 분석
-- [ ] 이벤트 정규화 품질 재평가
-  - [ ] Phase 4 결과를 바탕으로 이벤트 정규화 품질 재검토
-  - [ ] Timeline/Issue Cards 품질이 낮은 경우 이벤트 정규화 로직 개선 필요 여부 판단
-  - [ ] 개선이 필요한 경우 Phase 3 이벤트 정규화 로직 수정
-- [ ] Golden 파일 생성 (재평가 완료 후)
-  - [ ] 재평가 결과가 양호한 경우 Golden 파일 생성
-  - [ ] 수동 검증 데이터셋과 Phase 4 결과를 종합하여 최종 Golden 파일 작성
-  - [ ] 회귀 테스트 기준으로 설정
+**⚠️ 참고: Phase 3.4와의 관계**
+- Phase 4 E2E 테스트에서 품질 문제가 발견되면 **Phase 3.4 (이벤트 정규화 품질 개선)** 섹션으로 돌아가서 개선 작업을 수행합니다
+- 개선 완료 후 다시 Phase 4 E2E 테스트를 재실행하여 품질을 확인합니다
 
 ### README 업데이트 (Phase 4 완료 후)
 - [ ] `README.md` 업데이트
@@ -1286,7 +1324,7 @@ longtext-analysis/
 
 **현재 Phase**: Phase 3.4 진행 중 (이벤트 정규화 품질 개선 및 타입 체계 개선)
 
-**마지막 업데이트**: 2025-12-23
+**마지막 업데이트**: 2025-12-26
 
 **완료된 Phase**:
 - Phase 1: 프로젝트 초기 설정 및 환경 구성 (2025-12-19 완료)
@@ -1349,6 +1387,7 @@ longtext-analysis/
   - ⏸️ Golden 파일 생성: 보류 (Phase 3.4 이벤트 정규화 품질 개선 완료 후 작성 예정)
   - **수동 검증 결과**: 전체적으로 크게 나쁘지 않음, Phase 4 진행 후 재평가 예정
 - Phase 3.4: 이벤트 정규화 품질 개선 및 타입 체계 개선 - 진행 중 (2025-12-23 시작)
+  - **컨텍스트**: Phase 4 완료 후 문제 발견 → Phase 3으로 돌아온 개선 작업 (Iterative Improvement Cycle)
   - Phase 4 E2E 테스트 결과 분석 완료 (Timeline/Issue Cards 품질 문제 발견)
   - ✅ 수동 검증 파일 재작성 완료 (2025-12-23)
     - ✅ HTML 형식으로 모든 이벤트 추출 (67개 이벤트)
@@ -1379,19 +1418,20 @@ longtext-analysis/
         - [x] 타입 체계 개선 계획 수립 완료
         - [x] 상세 개선 계획 문서 작성: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md)
       - [ ] 개선 전후 비교 분석 (타입 체계 개선 구현 후 진행)
-    - [ ] 7단계: 타입 체계 개선 구현 (다음 세션 시작)
-      - [ ] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
-      - [ ] Step 1-6 순차 진행 (상세 내용은 위 문서 참조)
+    - [x] 7단계: 타입 체계 개선 구현 (2025-12-26 완료)
+      - [x] **⚠️ 시작 전 필수**: [docs/phase3_4_type_system_improvement.md](docs/phase3_4_type_system_improvement.md) 문서 읽기
+      - [x] Step 1: EventType Enum 수정 완료
+      - [x] Step 2: ArtifactAction Enum 추가 완료
+      - [x] Step 3: 분류 로직 개선 완료
+      - [x] Step 4: LLM 프롬프트 수정 완료
+      - [x] Step 5: 평가 도구 업데이트 완료
+      - [x] Step 6: E2E 테스트 재실행 및 검증 완료
+      - [x] Step 7: 수동 검증 결과 확인 완료 (HTML 생성 및 사용자 검증 완료)
     - [ ] 8단계: Phase 완료 작업 (TODOs.md 업데이트, Git commit)
 
 **다음 단계**:
-- Phase 3.4 진행 (이벤트 정규화 품질 개선)
-  - ✅ 수동 검증 파일 재작성 (완료)
-  - [ ] 수동 검증 결과 평가 (`evaluate_manual_review()` 실행)
-  - [ ] 원인 분석 (with 사용자)
-  - [ ] Type 추출 로직 수정
-  - [ ] Summary 로직 수정
-  - [ ] E2E 재평가
-  - [ ] 결과 피드백
+- Phase 3.4 타입 체계 개선 구현 완료 (2025-12-26)
+  - ✅ Step 1-7 완료
+  - [ ] Step 8: Phase 완료 작업 (TODOs.md 업데이트, Git commit)
 - Phase 3.4 완료 후 Phase 4 재진행 (Timeline 및 Issue Cards 생성 품질 재검증)
 

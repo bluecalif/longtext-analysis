@@ -28,3 +28,16 @@ class IssueStatus(str, Enum):
 
     CONFIRMED = "confirmed"  # 원인 확인됨
     HYPOTHESIS = "hypothesis"  # 가설 (미확정)
+
+
+# 파일 타입 목록 (Artifact 추출에서 사용)
+# backend/parser/artifacts.py의 PATH_RE 패턴과 일치해야 함
+FILE_TYPES = [
+    "md",      # Markdown
+    "mdc",     # Markdown (Cursor)
+    "py",      # Python
+    "ts",      # TypeScript
+    "tsx",     # TypeScript React
+    "sql",     # SQL
+    "json",    # JSON
+]

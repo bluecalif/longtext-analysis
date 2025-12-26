@@ -8,7 +8,7 @@ import logging
 import threading
 import time
 import os
-from typing import Dict
+from typing import Dict, Optional
 from dotenv import load_dotenv
 
 # .env 파일 자동 로드
@@ -68,18 +68,28 @@ def reset_cache_stats() -> None:
         _cache_stats["saves"] = 0
 
 
-def classify_and_summarize_with_llm(turn: Turn) -> Dict[str, any]:
+def classify_and_summarize_with_llm(
+    turn: Turn,
+    context_info: Optional[Dict[str, any]] = None
+) -> Dict[str, any]:
     """
-    LLM으로 타입 분류 및 요약 생성 (개선 버전)
+    LLM으로 타입 분류 및 요약 생성 (개선 버전: Artifact 정보 및 맥락 포함)
 
     개선 사항:
     1. 결정적 해시 함수 사용 (SHA-256)
     2. 텍스트 해시 검증으로 충돌 감지
     3. Fallback 시에도 캐시 저장
     4. 캐시 메타데이터 추가
+    5. Artifact 정보(code_blocks, path_candidates) 포함
+    6. 맥락 정보(context_info) 포함
 
     Args:
         turn: Turn 객체
+        context_info: 맥락 정보 (선택적)
+            - recent_turn_count: 최근 Turn 개수
+            - recent_summaries: 최근 Turn 요약 리스트
+            - is_debug_context: debug 맥락 여부
+            - is_plan_context: plan 맥락 여부
 
     Returns:
         {
@@ -95,9 +105,51 @@ def classify_and_summarize_with_llm(turn: Turn) -> Dict[str, any]:
     - 비용: (125 * 0.40 + 30 * 1.60) / 1M = $0.000098 per Turn
     - 캐싱 적용 시: 70-80% 절감 → $0.0000196-0.0000294 per Turn
     """
-    # 1. 결정적 캐시 키 생성 (SHA-256 사용)
+    # 1. Artifact 정보 수집
+    artifact_info = ""
+    if turn.code_blocks:
+        artifact_info += f"\n## 코드 블록 정보\n"
+        artifact_info += f"- 코드 블록 개수: {len(turn.code_blocks)}\n"
+        for i, block in enumerate(turn.code_blocks[:3], 1):  # 최대 3개만
+            artifact_info += f"- 코드 블록 {i}: 언어={block.lang}, 길이={len(block.code)}자\n"
+
+    if turn.path_candidates:
+        artifact_info += f"\n## 파일 경로 정보\n"
+        artifact_info += f"- 파일 경로: {', '.join(turn.path_candidates[:5])}\n"  # 최대 5개만
+
+    # 2. 맥락 정보 수집
+    context_prompt = ""
+    if context_info:
+        context_prompt = f"""
+## 이전 Turn 맥락 정보
+
+최근 {context_info.get('recent_turn_count', 0)}개 Turn의 요약:
+"""
+        for i, summary in enumerate(context_info.get('recent_summaries', []), 1):
+            context_prompt += f"- Turn {i}: {summary}\n"
+
+        if context_info.get('is_debug_context'):
+            context_prompt += "\n⚠️ 중요: 이전 Turn들에서 debug 과정이 진행 중입니다. 현재 Turn도 debug 맥락 안에서 이루어질 가능성이 높습니다.\n"
+
+        if context_info.get('is_plan_context'):
+            context_prompt += "\n⚠️ 중요: 이전 Turn들에서 계획 수립이 진행 중입니다.\n"
+
+    # 3. 결정적 캐시 키 생성 (SHA-256 사용, Artifact 정보 포함)
     text_content = turn.body[:2000]  # 충분한 길이로 확장
-    text_hash = _generate_text_hash(text_content, max_length=2000)
+
+    # Artifact 정보를 캐시 키에 포함
+    artifact_hash = ""
+    if turn.code_blocks:
+        artifact_hash += f"_code_{len(turn.code_blocks)}"
+    if turn.path_candidates:
+        artifact_hash += f"_path_{len(turn.path_candidates)}"
+
+    # 맥락 정보도 캐시 키에 포함 (있는 경우)
+    context_hash = ""
+    if context_info:
+        context_hash = f"_ctx_{hash(str(context_info.get('recent_summaries', []))[:100]) % 10000}"
+
+    text_hash = _generate_text_hash(text_content + artifact_hash + context_hash, max_length=2000)
     cache_key = f"llm_{text_hash}"
     cache_file = CACHE_DIR / f"{cache_key}.json"
 
@@ -133,32 +185,106 @@ def classify_and_summarize_with_llm(turn: Turn) -> Dict[str, any]:
     last_error = None
     for attempt in range(LLM_MAX_RETRIES):
         try:
+            # System 프롬프트 생성 (Artifact 정보 및 맥락 포함)
+            system_prompt = f"""다음 텍스트의 이벤트 타입을 분류하고 1-2문장으로 요약하세요.
+
+{context_prompt}
+
+{artifact_info}
+
+## 이벤트 타입 선택지 및 구분 기준
+
+**⚠️ 중요**: 맥락 정보와 Artifact 정보를 반드시 고려하세요!
+
+- **status_review**: 상태 확인/리뷰 (파일 읽기, 현황 파악 등)
+  - 예: "프로젝트 현황을 파악합니다", "진행 상황을 확인합니다", "TODOs.md 파일을 참조합니다"
+  - ⚠️ 주의: debug 맥락 안에서의 상태 확인은 debug 타입이 더 적합할 수 있음
+  - ⚠️ 주의: 코드 블록이 있으면 code_generation 타입이 더 적합할 수 있음
+  - 파일 경로만 있고 코드 블록이 없으면 status_review 가능성 높음
+
+- **plan**: 계획 수립 (새로운 작업 계획, 단계별 계획)
+  - 예: "다음 작업을 계획합니다", "단계별 계획을 수립합니다"
+  - ⚠️ 주의: debug 맥락 안에서의 계획은 debug 타입이 더 적합할 수 있음
+  - ⚠️ 주의: 코드 블록이 있으면 code_generation 타입이 더 적합할 수 있음
+
+- **code_generation**: 코드 생성 (새로운 코드 작성, 컴포넌트 생성 등)
+  - **코드 블록이 있으면**: code_generation 타입 가능성 매우 높음
+  - **이전 Turn에 plan이 있고 현재 Turn에 코드 블록이 있으면**: code_generation 가능성 매우 높음
+  - 예: "새로운 컴포넌트를 생성합니다" + 코드 블록 → **code_generation**
+  - 예: "스크립트를 작성합니다" + 코드 블록 → **code_generation**
+  - 키워드: "스크립트 작성", "코드 작성", "파일 생성", "컴포넌트 생성", "생성합니다"
+  - ⚠️ 구분: 문제 해결을 위한 코드 수정은 debug 타입, 새로운 코드 작성은 code_generation
+
+- **debug**: 문제 해결 과정 (에러 분석, 원인 파악, 코드 수정, 검증)
+  - 예: "원인을 분석합니다", "문제를 해결합니다", "에러를 확인합니다", "코드를 수정합니다"
+  - ⚠️ 중요: 이전 Turn에 debug 맥락이 있으면 현재 Turn도 debug 가능성 높음
+  - ⚠️ 중요: debug 맥락 안에서의 상태 확인, 계획, 코드 수정도 debug 타입 고려
+  - ⚠️ 구분: 새로운 코드 생성은 code_generation, 문제 해결을 위한 수정은 debug
+
+- **completion**: 완료 (작업 완료, 성공, TODOs.md 업데이트 등)
+  - 예: "작업이 완료되었습니다", "성공적으로 완료했습니다", "TODOs.md에 반영합니다"
+  - 파일 경로(TODOs.md 등)와 함께 완료 키워드가 있으면 completion 가능성 높음
+
+- **next_step**: 다음 단계 (다음 작업, 진행)
+  - 예: "다음 단계로 진행합니다", "다음 작업을 시작합니다"
+
+- **turn**: 일반 대화 (기본값, 위 타입에 해당하지 않을 때)
+
+## 타입 분류 우선순위
+
+1. **맥락 우선**: 이전 Turn의 맥락을 먼저 고려
+   - 이전 Turn에 debug가 있으면 → 현재 Turn도 debug 가능성 높음
+   - 이전 Turn에 plan이 있고 현재 Turn에 코드 블록이 있으면 → code_generation 가능성 높음
+2. **Code Generation 우선**: 코드 블록이 있으면 code_generation 타입 우선 고려
+   - 단, debug 맥락이 있으면 debug 타입이 더 우선
+   - 단, 새로운 코드 생성이 아닌 문제 해결을 위한 수정이면 debug 타입
+3. **키워드 기반**: 현재 Turn의 키워드로 타입 판단
+4. **기본값**: 위 조건에 해당하지 않으면 turn
+
+## 요약 생성 규칙
+
+**핵심 원칙**:
+1. **핵심 동작 포함**: 무엇을 하는가 (동작 중심)
+2. **상태 정보 포함**: 진행중/완료/요청 등 상태 명시
+3. **중요 세부사항 포함**: 파일명, 수치, 변경사항 등
+4. **이전 Turn과의 연관성**: 이전 Turn과 연관이 있으면 언급
+
+**특수 기호 의미**:
+- **@**: 첨부 자료 또는 참조 대상 (예: @TODOs.md → "TODOs.md 파일을 참조")
+- **#**: 파일명, 항목 번호 등 (예: # Phase 6 → "Phase 6")
+- **`**: 코드나 파일명 (예: `main.py` → "main.py 파일")
+
+**요약 예시**:
+- ❌ 나쁜 예: "프로젝트 현황을 파악합니다."
+- ✅ 좋은 예: "TODOs.md 파일을 참조하여 프로젝트의 현재 진행 상황과 남은 작업들을 파악합니다."
+
+- ❌ 나쁜 예: "변경사항을 확인합니다."
+- ✅ 좋은 예: "기본 피드백 생성 로직 추가 완료 후, Git 커밋 진행합니다."
+
+**요약 길이**: 150-200자 (의미 있는 단위로 자르기, 문장 중간 자르기 금지)
+
+응답 형식:
+TYPE: [이벤트 타입]
+SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
+
+            # User 프롬프트 생성 (Artifact 정보 포함)
+            user_content = turn.body[:2000]
+            if artifact_info:
+                user_content += f"\n\n{artifact_info}"
+
             response = client.chat.completions.create(
                 model="gpt-4.1-mini",  # 사용자 지시대로 정확히 사용
                 messages=[
                     {
                         "role": "system",
-                        "content": """다음 텍스트의 이벤트 타입을 분류하고 1-2문장으로 요약하세요.
-
-이벤트 타입 선택지:
-- status_review: 상태 리뷰 (현황 점검, 상태 확인)
-- plan: 계획 수립 (작업 계획, 단계별 계획)
-- artifact: 파일/경로 관련 (파일 생성/수정/언급)
-- debug: 디버깅 (에러, 원인, 해결, 검증)
-- completion: 완료 (작업 완료, 성공)
-- next_step: 다음 단계 (다음 작업, 진행)
-- turn: 일반 대화 (기본값)
-
-응답 형식:
-TYPE: [이벤트 타입]
-SUMMARY: [1-2문장 요약]""",
+                        "content": system_prompt,
                     },
                     {
                         "role": "user",
-                        "content": turn.body[:2000],  # 토큰 절감
+                        "content": user_content,
                     },
                 ],
-                max_tokens=150,  # 타입 + 요약
+                max_tokens=200,  # 150 → 200으로 증가 (요약 품질 개선)
                 temperature=0.3,  # 일관성 유지
             )
 

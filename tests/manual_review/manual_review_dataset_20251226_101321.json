@@ -1,0 +1,673 @@
+{
+  "metadata": {
+    "total_events": 67,
+    "total_turns": 67,
+    "sample_size": 30,
+    "event_type_distribution": {
+      "status_review": 13,
+      "code_generation": 8,
+      "completion": 7,
+      "turn": 7,
+      "next_step": 6,
+      "debug": 22,
+      "plan": 4
+    },
+    "sampled_type_distribution": {
+      "status_review": 5,
+      "plan": 3,
+      "code_generation": 4,
+      "debug": 6,
+      "completion": 4,
+      "next_step": 4,
+      "turn": 4
+    }
+  },
+  "guidelines": {
+    "event_type_definition": {
+      "status_review": "상태 리뷰 (현황 점검, 상태 확인, 파일 읽기)",
+      "plan": "계획 수립 (작업 계획, 단계별 계획)",
+      "code_generation": "코드 생성 (새로운 코드 작성, 컴포넌트 생성)",
+      "debug": "디버깅 (에러 분석, 원인 파악, 코드 수정, 검증)",
+      "completion": "완료 (작업 완료, 성공, TODOs.md 업데이트)",
+      "next_step": "다음 단계 (다음 작업, 진행)",
+      "turn": "일반 대화 (기본값)"
+    },
+    "evaluation_criteria": {
+      "event_type_accuracy": "이벤트 타입이 Turn의 내용과 일치하는가?",
+      "summary_quality": "요약이 Turn의 핵심 내용을 잘 반영하는가? (1-5점)",
+      "summary_completeness": "요약이 중요한 정보를 누락하지 않는가? (1-5점)"
+    }
+  },
+  "samples": [
+    {
+      "event_id": "EVT-005",
+      "turn_index": 5,
+      "turn_speaker": "User",
+      "turn_body": "sub phase 8 진행 상태 확인하세요",
+      "current_event": {
+        "type": "status_review",
+        "summary": "이전 세션의 문서와 대화 내용을 바탕으로 Sub Phase 8의 진행 상황을 확인하여 현재 작업 상태와 완료된 부분을 파악합니다. Sub Phase 8 관련 파일 및 기록을 검토하여 진행 현황을 점검합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-007",
+      "turn_index": 7,
+      "turn_speaker": "User",
+      "turn_body": "피드백 세션에 대해서 논의 및 진행된 내용을 확인하세요",
+      "current_event": {
+        "type": "status_review",
+        "summary": "피드백 세션과 관련된 논의 및 진행 상황을 확인하여 현재 상태와 진행된 내용을 파악합니다. 이전 Turn에서 진행 중인 debug 과정과 연계하여 피드백 API 연동 상태를 점검합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-013",
+      "turn_index": 13,
+      "turn_speaker": "User",
+      "turn_body": "네 기본 생성",
+      "current_event": {
+        "type": "turn",
+        "summary": "간단한 인사 또는 확인 메시지로, 별도의 작업 지시나 상태 변경 없이 기본 생성에 대해 언급합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-015",
+      "turn_index": 15,
+      "turn_speaker": "User",
+      "turn_body": "잠깐요. sub phase별로 사용자가 프론트에서 확인하고 문제 없으면, @TODOs.md 업데이트 및 깃 커밋 실행이 순서입니다.\n모두 변경이 되었으면, 내가 무얼 확인하면 되는지 설명",
+      "current_event": {
+        "type": "status_review",
+        "summary": "Sub phase별 변경 사항을 프론트에서 사용자가 확인한 후, 문제가 없으면 TODOs.md 파일을 업데이트하고 Git 커밋을 진행하는 절차를 안내합니다. 변경 완료 후 확인해야 할 사항에 대해 설명을 요청합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 1,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-016",
+      "turn_index": 16,
+      "turn_speaker": "Cursor",
+      "turn_body": "작업 순서 확인했습니다. 현재 변경사항을 정리하고, 프론트엔드에서 확인할 항목을 정리합니다.\n\n\n\n## 변경사항 요약\n\n### 완료된 작업\n\n1. **negative 임계값 변경**\n  - 총 지출: 20% → 10%\n  - 카테고리별: 40% → 20%\n\n2. **기본 피드백 생성 로직 추가** (모든 타입)\n  - **negative**: 조건 미충족 시 총 지출 및 상위 카테고리 요약\n  - **positive**: 조건 미충족 시 \"안정적으로 관리되고 있습니다\" 메시지\n  - **improvement**: 조건 미충족 시 상위 카테고리 점검 제안\n  - **nextMonth**: 조건 미충족 시 차월 예상 지출 제공",
+      "current_event": {
+        "type": "status_review",
+        "summary": "작업 순서를 확인하고 현재 변경사항을 정리하며, 프론트엔드에서 확인할 항목들을 체계적으로 정리합니다. 완료된 작업으로는 negative 임계값 조정과 모든 타입에 대한 기본 피드백 생성 로직 추가가 포함되어 있습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-017",
+      "turn_index": 17,
+      "turn_speaker": "Unknown",
+      "turn_body": "## 프론트엔드에서 확인할 사항\n\n### 1. 백엔드 서버 재시작\n\n\n### 2. 리포트 페이지에서 피드백 섹션 확인\n\n**확인 경로**: 대시보드 → \"상세 리포트 보기\" 버튼 클릭\n\n**확인 항목**:\n\n1. 피드백이 항상 표시되는지\n  - 이전: 조건 미충족 시 피드백 없음\n  - 현재: 모든 월에서 최소 1개 이상 피드백 표시\n\n2. 각 피드백 타입별 기본 피드백 확인\n  - **문제점 (negative)**: \"이번 달 총 지출은 X원이며, Y 카테고리가 가장 큰 비중을 차지했습니다\"\n  - **잘된 점 (positive)**: \"이번 달 총 지출은 X원으로 안정적으로 관리되고 있습니다\"\n  - **개선 포인트 (improvement)**: \"Y 카테고리가 가장 큰 비중을 차지하고 있습니다. 지출 패턴을 점검하시기 바랍니다\"\n  - **차월 준비 사항 (nextMonth)**: \"차월 예상 지출은 이번 달과 유사한 수준일 것으로 예상됩니다\"\n\n3. negative 임계값 변",
+      "current_event": {
+        "type": "next_step",
+        "summary": "프론트엔드에서 백엔드 서버 재시작과 리포트 페이지의 피드백 섹션 확인 작업을 진행하며, negative 임계값 변경에 따른 문제점 감지 효과와 다양한 테스트 시나리오를 점검합니다. 이를 통해 모든 월에서 최소 1개 이상의 피드백이 정상적으로 표시되는지 검증합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 1
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-018",
+      "turn_index": 18,
+      "turn_speaker": "Unknown",
+      "turn_body": "## 확인 후 진행 순서\n\n1. 프론트엔드에서 위 항목 확인\n2. 문제 없으면 알려주시면:\n  - TODOs.md 업데이트\n  - Git 커밋 및 푸시\n\n백엔드 서버를 재시작한 뒤 리포트 페이지에서 피드백 섹션을 확인해 주세요. 문제가 있으면 알려주세요.",
+      "current_event": {
+        "type": "next_step",
+        "summary": "프론트엔드에서 변경사항을 확인하고 문제가 없으면 TODOs.md를 업데이트한 후 Git 커밋 및 푸시를 진행합니다. 백엔드 서버 재시작 후 리포트 페이지의 피드백 섹션을 확인하도록 안내합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 1,
+        "snippets_count": 1
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-020",
+      "turn_index": 20,
+      "turn_speaker": "Cursor",
+      "turn_body": "백엔드와 프론트엔드 서버 상태 확인 중입니다.\n\n\n\n서버 상태 확인 완료. 백엔드와 프론트엔드 서버가 실행 중입니다. 코드 변경사항 반영을 위해 백엔드 서버를 재시작합니다.\n\n\n\n백엔드 서버 재시작 완료. 헬스체크로 정상 동작 확인 중입니다.\n\n\n\n## 서버 상태 확인 완료\n\n### 서버 실행 상태\n\n- 백엔드 서버: 포트 8000에서 실행 중 (PID: 12408, 최신 코드 반영)\n- 프론트엔드 서버: 포트 3000에서 실행 중 (PID: 5440)",
+      "current_event": {
+        "type": "debug",
+        "summary": "백엔드와 프론트엔드 서버의 실행 상태를 확인하고, 코드 변경사항 반영을 위해 백엔드 서버를 재시작했으며, 재시작 후 헬스체크로 정상 동작을 검증했습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-026",
+      "turn_index": 26,
+      "turn_speaker": "Cursor",
+      "turn_body": "코드베이스를 다시 확인해 원인을 분석 중입니다.\n\n\n\n코드베이스를 더 확인 중입니다.\n\n\n\n코드베이스를 더 확인 중입니다. 에러 처리와 실제 데이터 흐름을 점검합니다.\n\n\n\n원인 분석 중입니다. 핵심 로직을 확인합니다.",
+      "current_event": {
+        "type": "debug",
+        "summary": "코드베이스를 재검토하며 에러 처리와 데이터 흐름을 점검하는 등 핵심 로직의 원인을 분석하는 문제 해결 과정을 진행 중입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-030",
+      "turn_index": 30,
+      "turn_speaker": "Cursor",
+      "turn_body": "활성화된 월 목록과 202502 상태를 확인하는 스크립트 작성 중입니다.\n\n\n\n\n\nDB 확인 결과, 202502 데이터가 없습니다. 모든 월 목록을 다시 확인 중입니다.",
+      "current_event": {
+        "type": "debug",
+        "summary": "활성화된 월 목록과 202502 상태를 확인하는 스크립트를 작성하며 DB를 점검한 결과, 202502 데이터가 없음을 발견하고 모든 월 목록을 재확인하는 문제 해결 과정을 진행 중입니다. 이전 Turn의 debug 맥락과 연계하여 원인 분석 및 데이터 상태 점검 작업을 수행하고 있습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 2
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-031",
+      "turn_index": 31,
+      "turn_speaker": "User",
+      "turn_body": "bluecalif@naver.com 사용자예요",
+      "current_event": {
+        "type": "turn",
+        "summary": "사용자가 자신의 이메일 주소를 제공하는 일반 대화가 이루어졌습니다. 이전 debug 맥락과는 관련 없는 정보 전달입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-032",
+      "turn_index": 32,
+      "turn_speaker": "Cursor",
+      "turn_body": "bluecalif@naver.com 사용자로 확인하도록 스크립트 수정 중입니다.",
+      "current_event": {
+        "type": "code_generation",
+        "summary": "bluecalif@naver.com 사용자 확인을 위한 스크립트를 수정하며 두 개의 TypeScript 코드 블록을 작성 중입니다. 이전 활성화 월 목록과 202502 데이터 확인 작업과 연계된 코드 생성 작업입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 2
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-038",
+      "turn_index": 38,
+      "turn_speaker": "Cursor",
+      "turn_body": "포트 8000 사용 여부 확인 후 서버 재시작 중입니다.\n\n\n\n포트 8000이 비어 있고 node 프로세스도 없습니다. 서버가 백그라운드에서 시작되었습니다. 잠시 대기 후 서버 상태를 확인하겠습니다.\n\n\n\n서버가 정상적으로 시작되었습니다. 피드백 생성 API를 호출해 negative 피드백 문제 로그를 확인하겠습니다.\n\n\n\nnegative 피드백이 여전히 0개입니다. 서버 로그를 확인하기 위해 서버 콘솔 출력을 확인하거나, 코드를 다시 검토하겠습니다.\n\n\n\n코드에 로그가 있습니다. 서버 로그를 확인하거나, `getAverageComparison`이 `negative.generate` 내부에서 null을 반환하는지 확인하겠습니다.",
+      "current_event": {
+        "type": "debug",
+        "summary": "포트 8000 사용 여부를 확인하고 서버를 재시작하여 정상 작동을 확인했습니다. 이후 negative 피드백 문제를 해결하기 위해 서버 로그와 관련 코드(`getAverageComparison` 함수)를 검토하는 문제 해결 과정을 진행 중입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-040",
+      "turn_index": 40,
+      "turn_speaker": "Cursor",
+      "turn_body": "원인: DB 저장 시 CHECK 제약조건 위반입니다.\n\n로그:\n- `negative.generate`는 정상 작동 (피드백 생성됨)\n- DB 저장 시 에러: `'new row for relation \"insights\" violates check constraint \"insights_type_check\"'`\n\n`insights` 테이블의 `type` 컬럼 CHECK 제약조건에서 `'negative'`가 허용되지 않는 것으로 보입니다. 스키마를 확인하겠습니다.\n\n\n\n원인: DB 스키마와 코드 간 불일치입니다.\n\n- DB 스키마: `type IN ('preparation', 'positive', 'improvement', 'next_month')`\n- 코드: `'negative'` 사용\n\nDB 스키마를 수정해 `'negative'`를 허용하겠습니다.\n\n\n\n\n\n원인: DB 스키마와 코드 간 불일치입니다.\n\n- DB 스키마: `type IN ('preparation', 'positive', ",
+      "current_event": {
+        "type": "code_generation",
+        "summary": "DB 스키마의 CHECK 제약조건에 'negative' 타입이 누락된 문제를 해결하기 위해, 이를 허용하도록 마이그레이션 파일과 관련 SQL 스크립트를 작성하고 실행 준비를 진행합니다. 코드와 DB 스키마 간 불일치를 수정하는 작업입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 2
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-042",
+      "turn_index": 42,
+      "turn_speaker": "Cursor",
+      "turn_body": "원인: DB 스키마와 코드 간 불일치입니다.\n\n- DB 스키마: `type IN ('preparation', 'positive', 'improvement', 'next_month')`\n- 코드: `'negative'` 사용\n\nSupabase SQL Editor에서 다음 SQL을 실행하세요:\n\n\n\n스키마와 코드 전반의 불일치를 점검 중입니다. 관련 파일을 확인하고 일관되게 수정하겠습니다.",
+      "current_event": {
+        "type": "debug",
+        "summary": "DB 스키마와 코드 간 불일치 원인을 분석하며, Supabase SQL Editor에서 관련 SQL을 실행해 문제를 점검 중입니다. 스키마와 코드의 일관성을 위해 관련 파일을 확인하고 수정할 계획입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-043",
+      "turn_index": 43,
+      "turn_speaker": "User",
+      "turn_body": "supabase는 CLI 이용해서 업데이트 하세요",
+      "current_event": {
+        "type": "plan",
+        "summary": "Supabase 업데이트를 위해 CLI 사용 방법을 안내하거나 계획을 수립합니다. CLI를 활용해 효율적으로 업데이트 작업을 진행할 계획입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-044",
+      "turn_index": 44,
+      "turn_speaker": "Cursor",
+      "turn_body": "스키마와 코드 간 불일치를 전면 재점검하고, Supabase CLI로 마이그레이션을 적용합니다.\n\n\n\n불일치 확인:\n- DB 스키마: `'preparation', 'positive', 'improvement', 'next_month'`\n- 백엔드/프론트엔드 코드: `'negative', 'positive', 'improvement', 'next_month'`\n\nSupabase CLI로 마이그레이션 적용 중입니다.\n\n\n\n전체 스키마 재점검 후 Supabase CLI로 마이그레이션 적용 중입니다.\n\n\n\n프로젝트 루트에서 Supabase CLI로 마이그레이션 적용 중입니다.",
+      "current_event": {
+        "type": "debug",
+        "summary": "DB 스키마와 코드 간의 불일치를 전면 재점검하고, Supabase CLI를 사용해 마이그레이션을 적용하는 문제 해결 과정을 진행 중입니다. 현재 프로젝트 루트에서 마이그레이션 적용 작업이 수행되고 있습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-045",
+      "turn_index": 45,
+      "turn_speaker": "User",
+      "turn_body": "엑세스 토큰 없어도 되나요?\n\nsbp_8430281e4267946b28a7c20666e081ceac69ffca",
+      "current_event": {
+        "type": "turn",
+        "summary": "엑세스 토큰 사용 여부에 대해 문의합니다. 제공된 토큰 문자열을 참고하여 답변을 요청합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-048",
+      "turn_index": 48,
+      "turn_speaker": "Cursor",
+      "turn_body": "Supabase SQL Editor에 입력할 SQL:\n\n\n\n**실행 방법:**\n1. Supabase Dashboard → SQL Editor로 이동\n2. 위 SQL을 복사해 붙여넣기\n3. Run 실행\n\n**변경 내용:**\n- 기존: `type IN ('preparation', 'positive', 'improvement', 'next_month')`\n- 변경: `type IN ('negative', 'positive', 'improvement', 'next_month')`\n\n이제 `'negative'` 타입의 피드백이 정상적으로 저장됩니다.",
+      "current_event": {
+        "type": "code_generation",
+        "summary": "Supabase SQL Editor에 입력할 SQL 코드를 제공하며, 기존 `type` 조건에서 `'preparation'`을 `'negative'`로 변경하여 `'negative'` 타입 피드백이 정상 저장되도록 수정합니다. 사용자는 SQL을 복사해 대시보드에서 실행할 수 있습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 2
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-049",
+      "turn_index": 49,
+      "turn_speaker": "User",
+      "turn_body": "실행했어요. 확인하세요",
+      "current_event": {
+        "type": "turn",
+        "summary": "사용자가 명령을 실행했음을 알리고 결과 확인을 요청합니다. 이전 Turn에서 제공한 SQL 실행 지침과 연관되어 있습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-052",
+      "turn_index": 52,
+      "turn_speaker": "Cursor",
+      "turn_body": "TODOs.md를 확인하고 업데이트한 뒤 Git 커밋을 진행합니다.\n\n\n\nTODOs.md를 확인하고 업데이트한 뒤 Git 커밋을 진행합니다.",
+      "current_event": {
+        "type": "completion",
+        "summary": "TODOs.md 파일을 확인하고 필요한 내용을 업데이트한 후, 변경 사항을 Git에 커밋하여 작업을 완료합니다. 이는 이전 피드백 저장 및 제약조건 수정 작업과 연계된 최종 단계입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 6,
+        "snippets_count": 2
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-053",
+      "turn_index": 53,
+      "turn_speaker": "User",
+      "turn_body": "TODOs.md에서 phase 6.8을 지금 진행 완료한겁니다",
+      "current_event": {
+        "type": "completion",
+        "summary": "TODOs.md 파일에서 phase 6.8 작업을 성공적으로 완료하였음을 보고합니다. 이전 작업과 연계하여 해당 단계의 진행이 마무리되었습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 1,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-054",
+      "turn_index": 54,
+      "turn_speaker": "Cursor",
+      "turn_body": "Phase 6 Sub Phase 8 완료로 표시하고 TODOs.md를 업데이트합니다.\n\n\n\nSub Phase 8 완료로 표시하고 상단 진행 상태를 업데이트합니다.\n\n\n\n\n\n\n\n\n\n## TODOs.md 업데이트 및 Git 커밋 완료\n\n### 업데이트 내용\n\n1. **Phase 6 Sub Phase 8 완료 표시**\n  - 요약 섹션 완료\n  - 트렌드 섹션 완료\n  - 피드백 섹션 완료 (문제점, 잘된 점, 개선 포인트, 차월 준비 사항)\n  - DB 스키마 수정 완료 (insights 테이블 type 제약조건 수정)\n\n2. **진행 상태 업데이트**\n  - Phase 6 진행 현황: Sub Phase 8 완료로 표시\n  - 다음 작업: Phase 6 Sub Phase 9 (UI/UX 개선)\n\n3. **Git 커밋 완료**\n  - 커밋 메시지: `docs: TODOs.md 업데이트 - Phase 6 Sub Phase 8 완료 표시`\n  - 최근 3개 커밋:\n  - `f55a530` -",
+      "current_event": {
+        "type": "completion",
+        "summary": "Phase 6 Sub Phase 8 완료를 TODOs.md 파일에 반영하고, 진행 상태를 업데이트한 후 Git 커밋을 완료했습니다. 현재 Phase 6 Sub Phase 8이 완료되었으며, 다음 작업은 Phase 6 Sub Phase 9(UI/UX 개선)입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 1,
+        "snippets_count": 3
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-056",
+      "turn_index": 56,
+      "turn_speaker": "Cursor",
+      "turn_body": "Phase 6 Sub Phase 9 (UI/UX 개선) 시작. TODOs.md에서 작업 항목을 확인 중입니다.\n\n\n\nSub Phase 9 작업 항목 확인. 프론트엔드 코드에서 로딩 상태와 에러 처리 현황을 점검 중입니다.\n\n\n\n현재 상태 확인: 로딩/에러 처리는 대부분 구현되어 있습니다. 반응형 디자인과 UI/UX 개선에 집중하겠습니다. 주요 컴포넌트를 확인 중입니다.\n\n\n\n현재 상태 확인: 반응형과 로딩/에러 처리는 일부 구현되어 있습니다. Sub Phase 9 작업을 체계적으로 진행합니다.\n\n\n\n로딩 스켈레톤 UI 컴포넌트를 추가하고, 에러 메시지 UI와 모바일 반응형을 개선 중입니다.\n\n\n\n\n\n\n\n\n\n\n\n\n\n리포트 페이지와 다른 페이지에도 동일한 개선을 적용 중입니다.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n리포트 페이지의 로딩/에러 처리 수정 중입니다.\n\n\n\n\n\n\n\n리포트 페이지의 `loadReportData` 함수 확인 중입니다.\n\n\n\n리포트 페이지의 함수를 외부에서 호출 가능하도록 리",
+      "current_event": {
+        "type": "code_generation",
+        "summary": "Phase 6 Sub Phase 9의 UI/UX 개선 작업을 위해 TODOs.md에서 작업 항목을 확인하고, 프론트엔드 코드에서 로딩 상태와 에러 처리, 반응형 디자인을 점검하며 로딩 스켈레톤 UI 컴포넌트 추가, 에러 메시지 UI 개선, 모바일 반응형 적용, 리포트 페이지 함수 리팩토링과 접근성 개선 작업을 진행 중입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 1,
+        "snippets_count": 38
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-058",
+      "turn_index": 58,
+      "turn_speaker": "Cursor",
+      "turn_body": "ARIA 라벨과 키보드 네비게이션은 웹 접근성(Accessibility)을 위한 기능입니다.\n\n## ARIA 라벨 (Accessible Rich Internet Applications)\n\n**목적**: 스크린 리더 등 보조 기술이 콘텐츠를 이해할 수 있도록 돕습니다.\n\n**예시**:\n\n\n**주요 속성**:\n- `aria-label`: 요소에 대한 설명 제공\n- `aria-live`: 동적 콘텐츠 변경 알림 (\"polite\", \"assertive\")\n- `role`: 요소의 역할 명시 (\"button\", \"alert\", \"region\" 등)\n- `aria-labelledby`: 다른 요소의 ID를 참조하여 라벨 연결\n\n## 키보드 네비게이션\n\n**목적**: 마우스 없이 키보드만으로 모든 기능을 사용할 수 있게 합니다.\n\n**필수 키**:\n- `Tab`: 다음 요소로 이동\n- `Shift + Tab`: 이전 요소로 이동\n- `Enter` / `Space`: 버튼/링크 활성화\n- `Esc",
+      "current_event": {
+        "type": "status_review",
+        "summary": "ARIA 라벨과 키보드 네비게이션을 통한 웹 접근성 기능의 목적과 중요성을 설명하며, 현재 `role=\"alert\"`, `aria-label`, `aria-live=\"polite\"`가 적용된 상태임을 리뷰합니다. 키보드 네비게이션은 추가 개선 여지가 있어 현황 점검과 향후 개선 방향을 논의합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 3,
+        "snippets_count": 10
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-059",
+      "turn_index": 59,
+      "turn_speaker": "User",
+      "turn_body": "알겠습니다. 하던거 계속 진행",
+      "current_event": {
+        "type": "next_step",
+        "summary": "이전 작업을 이어서 계속 진행하겠다는 의사를 표현하며, 다음 단계 작업을 시작합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-060",
+      "turn_index": 60,
+      "turn_speaker": "Cursor",
+      "turn_body": "Phase 6 Sub Phase 9 (UI/UX 개선) 마무리 중입니다. 테스트 및 검증 후 Git 커밋과 TODOs.md 업데이트를 진행합니다.\n\n\n\n리포트 페이지 함수 구조 확인 완료. 최종 검증 후 Git 커밋과 TODOs.md 업데이트 진행합니다.\n\n\n\n변경사항 확인 완료. Git 커밋 및 TODOs.md 업데이트 진행합니다.\n\n\n\n\n\n\n\n\n\n괄호가 포함된 경로를 따옴표로 감싸서 다시 추가 중입니다.\n\n\n\nTODOs.md를 다시 추가하고 커밋합니다.\n\n\n\nTODOs.md 변경사항 확인 후 커밋합니다.\n\n\n\nTODOs.md가 아직 업데이트되지 않았습니다. 다시 업데이트합니다.\n\n\n\n\n\n## Phase 6 Sub Phase 9 (UI/UX 개선) 완료\n\n### 완료된 작업\n\n1. 로딩 스피너 컴포넌트 개선\n  - `LoadingSpinner.tsx` 컴포넌트 추가 (크기 옵션, 텍스트 지원)\n  - `LoadingSkeleton.tsx` 컴포넌트 추가 (스켈레톤 UI)\n  - `",
+      "current_event": {
+        "type": "completion",
+        "summary": "Phase 6 Sub Phase 9(UI/UX 개선) 작업이 로딩 스피너, 에러 메시지 UI, 모바일 반응형, 접근성 개선 등 주요 컴포넌트 추가 및 수정으로 완료되었으며, 관련 Git 커밋과 TODOs.md 업데이트가 성공적으로 진행되었습니다. 현재 Phase 6의 모든 Sub Phase가 완료되어 다음 단계인 Phase 7(통합 테스트 및 배포 준비)로 진행할 준비가 되었습니다.",
+        "processing_method": "llm",
+        "artifacts_count": 4,
+        "snippets_count": 4
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-061",
+      "turn_index": 61,
+      "turn_speaker": "User",
+      "turn_body": "다음 단계",
+      "current_event": {
+        "type": "next_step",
+        "summary": "Phase 6 Sub Phase 9 (UI/UX 개선)의 다음 단계를 진행합니다. 이전 작업 완료 후 이어서 진행할 작업을 시작합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-063",
+      "turn_index": 63,
+      "turn_speaker": "User",
+      "turn_body": "통합테스트는 기존 Phase에서 진행한 것을 참고해서, 중복을 피해야 합니다.\n잘 검토하세요\n성능 최적화는 스킵\n배포 설정 및 문서화를 진행합시다.\n배포 이전에 마지막으로 중요한 것은 타입 에러등을 명확하게 하기 위해 npm run build로 프로덕션 환경을 정확히 확인할 것",
+      "current_event": {
+        "type": "plan",
+        "summary": "통합 테스트 시 기존 Phase 작업을 참고하여 중복을 피하는 계획을 수립하고, 성능 최적화는 생략하기로 결정합니다. 또한 배포 설정과 문서화를 진행하며, 배포 전 프로덕션 환경 확인을 위해 npm run build를 실행할 예정입니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    },
+    {
+      "event_id": "EVT-064",
+      "turn_index": 64,
+      "turn_speaker": "Cursor",
+      "turn_body": "기존 테스트를 확인해 중복을 피하고, 빌드로 타입/프로덕션 이슈를 확인한 뒤 배포 설정과 문서화를 진행합니다.\n\n\n\n기존 E2E 테스트는 Phase 3, 4, 5에서 완료되었습니다. Phase 7에서는 중복을 피하고 빌드 확인, 배포 설정, 문서화에 집중합니다.\n\n\n\n백엔드 타입 에러 확인. 먼저 수정한 뒤 프론트엔드 빌드를 확인합니다.",
+      "current_event": {
+        "type": "plan",
+        "summary": "기존 Phase 3, 4, 5에서 완료된 E2E 테스트를 참고해 중복을 피하고, 백엔드 타입 에러 수정과 프론트엔드 빌드 확인을 포함한 배포 설정 및 문서화 작업을 계획합니다. Phase 7에서는 빌드 이슈 점검과 배포 준비에 집중합니다.",
+        "processing_method": "llm",
+        "artifacts_count": 0,
+        "snippets_count": 0
+      },
+      "manual_review": {
+        "correct_type": null,
+        "correct_summary": null,
+        "type_accuracy": null,
+        "summary_quality": null,
+        "summary_completeness": null,
+        "notes": ""
+      }
+    }
+  ]
+}

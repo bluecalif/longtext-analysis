@@ -86,11 +86,11 @@ def create_manual_review_dataset(
         },
         "guidelines": {
             "event_type_definition": {
-                "status_review": "상태 리뷰 (현황 점검, 상태 확인)",
+                "status_review": "상태 리뷰 (현황 점검, 상태 확인, 파일 읽기)",
                 "plan": "계획 수립 (작업 계획, 단계별 계획)",
-                "artifact": "파일/경로 관련 (파일 생성/수정/언급)",
-                "debug": "디버깅 (에러, 원인, 해결, 검증)",
-                "completion": "완료 (작업 완료, 성공)",
+                "code_generation": "코드 생성 (새로운 코드 작성, 컴포넌트 생성)",
+                "debug": "디버깅 (에러 분석, 원인 파악, 코드 수정, 검증)",
+                "completion": "완료 (작업 완료, 성공, TODOs.md 업데이트)",
                 "next_step": "다음 단계 (다음 작업, 진행)",
                 "turn": "일반 대화 (기본값)",
             },
@@ -608,11 +608,11 @@ def create_all_events_html_review_dataset(
         },
         "guidelines": {
             "event_type_definition": {
-                "status_review": "상태 리뷰 (현황 점검, 상태 확인)",
+                "status_review": "상태 리뷰 (현황 점검, 상태 확인, 파일 읽기)",
                 "plan": "계획 수립 (작업 계획, 단계별 계획)",
-                "artifact": "파일/경로 관련 (파일 생성/수정/언급)",
-                "debug": "디버깅 (에러, 원인, 해결, 검증)",
-                "completion": "완료 (작업 완료, 성공)",
+                "code_generation": "코드 생성 (새로운 코드 작성, 컴포넌트 생성)",
+                "debug": "디버깅 (에러 분석, 원인 파악, 코드 수정, 검증)",
+                "completion": "완료 (작업 완료, 성공, TODOs.md 업데이트)",
                 "next_step": "다음 단계 (다음 작업, 진행)",
                 "turn": "일반 대화 (기본값)",
             }
@@ -669,7 +669,13 @@ def create_all_events_html_review_dataset(
     print(f"\n[INFO] 사용 방법:")
     print(f"  1. {html_file} 파일을 브라우저에서 열기")
     print(f"  2. 각 이벤트의 correct_type 선택 및 notes 입력")
-    print(f"  3. 'Export to JSON' 버튼 클릭하여 수정 결과 저장")
+    print(f"  3. 'Export to JSON' 버튼 클릭하여 수정 결과 다운로드")
+    print(f"  4. 다운로드한 JSON 파일을 다음 위치에 저장:")
+    print(f"     {output_dir / 'manual_review_updated.json'}")
+    print(f"\n[INFO] 저장 시 주의사항:")
+    print(f"  - 다운로드한 파일명은 'manual_review_updated_YYYYMMDD_HHMMSS.json' 형식입니다")
+    print(f"  - 파일을 '{output_dir / 'manual_review_updated.json'}'로 복사하거나 이름을 변경하세요")
+    print(f"  - 또는 다운로드한 파일을 그대로 사용해도 됩니다 (타임스탬프 포함)")
 
     return dataset
 
@@ -677,7 +683,7 @@ def create_all_events_html_review_dataset(
 def generate_html_review_page(dataset: Dict[str, Any]) -> str:
     """HTML 리뷰 페이지 생성"""
 
-    event_types = ["status_review", "plan", "artifact", "debug", "completion", "next_step", "turn"]
+    event_types = ["status_review", "plan", "code_generation", "debug", "completion", "next_step", "turn"]
 
     # HTML 템플릿
     html = f"""<!DOCTYPE html>
@@ -778,7 +784,7 @@ def generate_html_review_page(dataset: Dict[str, Any]) -> str:
         }}
         .type-status_review {{ background: #e3f2fd; color: #1976d2; }}
         .type-plan {{ background: #f3e5f5; color: #7b1fa2; }}
-        .type-artifact {{ background: #fff3e0; color: #e65100; }}
+        .type-code_generation {{ background: #fff3e0; color: #e65100; }}
         .type-debug {{ background: #ffebee; color: #c62828; }}
         .type-completion {{ background: #e8f5e9; color: #2e7d32; }}
         .type-next_step {{ background: #e0f2f1; color: #00695c; }}
@@ -1077,29 +1083,72 @@ def generate_html_review_page(dataset: Dict[str, Any]) -> str:
 
             updatedData.samples.forEach((sample, index) => {
                 const turnIndex = sample.turn_index;
-                const correctType = document.getElementById(`correct_type_${turnIndex}`).value;
-                const typeAccuracy = document.getElementById(`type_accuracy_${turnIndex}`).value;
-                const summaryQuality = document.getElementById(`summary_quality_${turnIndex}`).value;
-                const summaryCompleteness = document.getElementById(`summary_completeness_${turnIndex}`).value;
-                const notes = document.getElementById(`notes_${turnIndex}`).value;
+                const correctTypeEl = document.getElementById(`correct_type_${turnIndex}`);
+                const typeAccuracyEl = document.getElementById(`type_accuracy_${turnIndex}`);
+                const summaryQualityEl = document.getElementById(`summary_quality_${turnIndex}`);
+                const summaryCompletenessEl = document.getElementById(`summary_completeness_${turnIndex}`);
+                const notesEl = document.getElementById(`notes_${turnIndex}`);
 
-                sample.manual_review.correct_type = correctType || null;
-                sample.manual_review.type_accuracy = typeAccuracy ? parseInt(typeAccuracy) : null;
-                sample.manual_review.summary_quality = summaryQuality ? parseInt(summaryQuality) : null;
-                sample.manual_review.summary_completeness = summaryCompleteness ? parseInt(summaryCompleteness) : null;
-                sample.manual_review.notes = notes || '';
+                // 값 가져오기 (null 체크)
+                const correctType = correctTypeEl ? correctTypeEl.value : '';
+                const typeAccuracy = typeAccuracyEl ? typeAccuracyEl.value : '';
+                const summaryQuality = summaryQualityEl ? summaryQualityEl.value : '';
+                const summaryCompleteness = summaryCompletenessEl ? summaryCompletenessEl.value : '';
+                const notes = notesEl ? notesEl.value : '';
+
+                // manual_review 업데이트 (빈 문자열은 null로 처리, 숫자는 유효성 검사)
+                sample.manual_review.correct_type = correctType && correctType.trim() !== '' ? correctType : null;
+
+                // 숫자 필드는 빈 문자열이 아니고 유효한 숫자인 경우만 저장
+                if (typeAccuracy && typeAccuracy.trim() !== '') {
+                    const acc = parseInt(typeAccuracy);
+                    sample.manual_review.type_accuracy = (!isNaN(acc) && acc >= 1 && acc <= 5) ? acc : null;
+                } else {
+                    sample.manual_review.type_accuracy = null;
+                }
+
+                if (summaryQuality && summaryQuality.trim() !== '') {
+                    const qual = parseInt(summaryQuality);
+                    sample.manual_review.summary_quality = (!isNaN(qual) && qual >= 1 && qual <= 5) ? qual : null;
+                } else {
+                    sample.manual_review.summary_quality = null;
+                }
+
+                if (summaryCompleteness && summaryCompleteness.trim() !== '') {
+                    const comp = parseInt(summaryCompleteness);
+                    sample.manual_review.summary_completeness = (!isNaN(comp) && comp >= 1 && comp <= 5) ? comp : null;
+                } else {
+                    sample.manual_review.summary_completeness = null;
+                }
+
+                sample.manual_review.notes = notes ? notes.trim() : '';
             });
 
+            // 타임스탬프 포함 파일명 생성
+            const now = new Date();
+            const timestamp = now.getFullYear().toString() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0') +
+                String(now.getSeconds()).padStart(2, '0');
+            const filename = `manual_review_updated_${timestamp}.json`;
+
+            // JSON 문자열 생성 (UTF-8 인코딩)
             const jsonStr = JSON.stringify(updatedData, null, 2);
-            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'manual_review_all_events_updated.json';
+            a.download = filename;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            alert('JSON 파일이 다운로드되었습니다!');
+            // 검증 완료 수 계산
+            const reviewedCount = updatedData.samples.filter(s => s.manual_review.correct_type !== null).length;
+            alert(`JSON 파일이 다운로드되었습니다!\\n파일명: ${filename}\\n검증 완료: ${reviewedCount}/${updatedData.samples.length}개`);
         }
 
         // 진행 상황 저장 (로컬 스토리지)

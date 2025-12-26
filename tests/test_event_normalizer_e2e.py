@@ -17,6 +17,12 @@ load_dotenv()
 
 from backend.parser import parse_markdown
 from backend.builders.event_normalizer import normalize_turns_to_events
+from backend.builders.evaluation import (
+    create_manual_review_dataset,
+    evaluate_manual_review,
+    create_golden_file,
+    compare_with_golden
+)
 from backend.core.models import EventType
 
 
@@ -66,7 +72,7 @@ def test_event_normalizer_e2e():
     valid_types = {
         EventType.STATUS_REVIEW,
         EventType.PLAN,
-        EventType.ARTIFACT,
+        EventType.CODE_GENERATION,
         EventType.DEBUG,
         EventType.COMPLETION,
         EventType.NEXT_STEP,
@@ -79,14 +85,20 @@ def test_event_normalizer_e2e():
     session_meta = parse_result["session_meta"]
     # Phase/Subphase는 Timeline 빌더에서 연결되므로 여기서는 기본 구조만 확인
 
-    # Artifact 연결 정확성
-    artifact_events = [e for e in events if e.type == EventType.ARTIFACT]
-    if artifact_events:
-        for event in artifact_events:
-            assert len(event.artifacts) > 0, "ARTIFACT 타입 이벤트에 artifact가 연결되지 않음"
-            for artifact in event.artifacts:
-                assert "path" in artifact, "Artifact에 path가 없음"
-                assert "action" in artifact, "Artifact에 action이 없음"
+    # Code Generation 연결 정확성
+    code_generation_events = [e for e in events if e.type == EventType.CODE_GENERATION]
+    if code_generation_events:
+        for event in code_generation_events:
+            # 코드 블록이 있으면 snippet_refs가 있어야 함 (필수)
+            turn = parse_result["turns"][event.turn_ref]
+            if turn.code_blocks:
+                assert len(event.snippet_refs) > 0, "CODE_GENERATION 타입 이벤트에 코드 블록이 있지만 snippet_refs가 비어있음"
+            # 파일 경로가 있으면 artifacts가 있어야 함 (선택적)
+            if turn.path_candidates:
+                assert len(event.artifacts) > 0, "CODE_GENERATION 타입 이벤트에 파일 경로가 있지만 artifacts가 비어있음"
+                for artifact in event.artifacts:
+                    assert "path" in artifact, "Artifact에 path가 없음"
+                    assert "action" in artifact, "Artifact에 action이 없음"
 
     # Snippet 참조 연결 정확성
     events_with_snippets = [e for e in events if e.snippet_refs]
@@ -108,10 +120,10 @@ def test_event_normalizer_e2e():
     assert event_type_distribution.get(EventType.TURN.value, 0) > 0, "TURN 타입 이벤트가 없음"
 
     # 연결 관계의 정확성
-    # Artifact 연결률 계산
-    turns_with_paths = [t for t in parse_result["turns"] if t.path_candidates]
-    artifact_linking_rate = (
-        len(artifact_events) / len(turns_with_paths) if turns_with_paths else 0.0
+    # Code Generation 연결률 계산 (코드 블록이 있는 Turn 중 code_generation 타입으로 분류된 비율)
+    turns_with_code_blocks = [t for t in parse_result["turns"] if t.code_blocks]
+    code_generation_linking_rate = (
+        len(code_generation_events) / len(turns_with_code_blocks) if turns_with_code_blocks else 0.0
     )
     # 최소한 일부는 연결되어야 함 (모든 path_candidates가 artifact로 변환되지는 않을 수 있음)
 
@@ -127,9 +139,9 @@ def test_event_normalizer_e2e():
             "total_turns": len(parse_result["turns"]),
             "total_events": len(events),
             "event_type_distribution": event_type_distribution,
-            "artifact_events_count": len(artifact_events),
+            "code_generation_events_count": len(code_generation_events),
             "events_with_snippets_count": len(events_with_snippets),
-            "artifact_linking_rate": artifact_linking_rate,
+            "code_generation_linking_rate": code_generation_linking_rate,
         },
         "warnings": [],
         "errors": [],
@@ -146,8 +158,8 @@ def test_event_normalizer_e2e():
     if len(turn_refs) != len(set(turn_refs)):
         report["warnings"].append(f"중복된 turn_ref가 발견됨 (단일 이벤트 생성 실패)")
 
-    if artifact_linking_rate < 0.5 and len(turns_with_paths) > 0:
-        report["warnings"].append(f"Artifact 연결률이 낮음: {artifact_linking_rate:.1%}")
+    if code_generation_linking_rate < 0.5 and len(turns_with_code_blocks) > 0:
+        report["warnings"].append(f"Code Generation 연결률이 낮음: {code_generation_linking_rate:.1%}")
 
     # 리포트 출력
     print("\n" + "=" * 50)
@@ -253,7 +265,7 @@ def test_event_normalizer_e2e_with_llm():
     valid_types = {
         EventType.STATUS_REVIEW,
         EventType.PLAN,
-        EventType.ARTIFACT,
+        EventType.CODE_GENERATION,
         EventType.DEBUG,
         EventType.COMPLETION,
         EventType.NEXT_STEP,
@@ -262,19 +274,19 @@ def test_event_normalizer_e2e_with_llm():
     for event_type in unique_types:
         assert event_type in valid_types, f"유효하지 않은 이벤트 타입: {event_type}"
 
-    # Artifact 연결 정확성
-    # LLM 기반에서는 artifact 타입으로 분류되었지만 실제 파일 경로가 없을 수 있음
-    # 실제 파일 경로가 있는 Turn에 대해서만 검증
-    artifact_events = [e for e in events if e.type == EventType.ARTIFACT]
-    if artifact_events:
-        for event in artifact_events:
-            # 해당 Turn에 실제 파일 경로가 있는지 확인
+    # Code Generation 연결 정확성
+    # LLM 기반에서는 code_generation 타입으로 분류되었지만 실제 코드 블록이 없을 수 있음
+    # 실제 코드 블록이 있는 Turn에 대해서만 검증
+    code_generation_events = [e for e in events if e.type == EventType.CODE_GENERATION]
+    if code_generation_events:
+        for event in code_generation_events:
+            # 해당 Turn에 실제 코드 블록이 있는지 확인
             turn = parse_result["turns"][event.turn_ref]
-            if turn.path_candidates:
-                # 파일 경로가 있으면 artifacts 배열에도 포함되어야 함
+            if turn.code_blocks:
+                # 코드 블록이 있으면 snippet_refs 배열에도 포함되어야 함
                 assert (
-                    len(event.artifacts) > 0
-                ), f"ARTIFACT 타입 이벤트(turn_ref={event.turn_ref})에 파일 경로가 있지만 artifacts 배열이 비어있음"
+                    len(event.snippet_refs) > 0
+                ), f"CODE_GENERATION 타입 이벤트(turn_ref={event.turn_ref})에 코드 블록이 있지만 snippet_refs 배열이 비어있음"
 
     # Snippet 참조 연결 정확성
     events_with_snippets = [e for e in events if e.snippet_refs]
@@ -289,10 +301,10 @@ def test_event_normalizer_e2e_with_llm():
             event_type_distribution.get(event_type.value, 0) + 1
         )
 
-    # Artifact 연결률 계산
-    turns_with_paths = [t for t in parse_result["turns"] if t.path_candidates]
-    artifact_linking_rate = (
-        len(artifact_events) / len(turns_with_paths) if turns_with_paths else 0.0
+    # Code Generation 연결률 계산 (코드 블록이 있는 Turn 중 code_generation 타입으로 분류된 비율)
+    turns_with_code_blocks = [t for t in parse_result["turns"] if t.code_blocks]
+    code_generation_linking_rate = (
+        len(code_generation_events) / len(turns_with_code_blocks) if turns_with_code_blocks else 0.0
     )
 
     # 캐시 사용 통계 계산 (실행 중 통계 + 파일 기반 통계)
@@ -331,9 +343,9 @@ def test_event_normalizer_e2e_with_llm():
             "total_turns": len(parse_result["turns"]),
             "total_events": len(events),
             "event_type_distribution": event_type_distribution,
-            "artifact_events_count": len(artifact_events),
+            "code_generation_events_count": len(code_generation_events),
             "events_with_snippets_count": len(events_with_snippets),
-            "artifact_linking_rate": artifact_linking_rate,
+            "code_generation_linking_rate": code_generation_linking_rate,
             "processing_method": "llm",
             "parallel_processing": True,
             "max_workers": 5,
@@ -369,8 +381,8 @@ def test_event_normalizer_e2e_with_llm():
     if len(turn_refs) != len(set(turn_refs)):
         report["warnings"].append(f"중복된 turn_ref가 발견됨")
 
-    if artifact_linking_rate < 0.5 and len(turns_with_paths) > 0:
-        report["warnings"].append(f"Artifact 연결률이 낮음: {artifact_linking_rate:.1%}")
+    if code_generation_linking_rate < 0.5 and len(turns_with_code_blocks) > 0:
+        report["warnings"].append(f"Code Generation 연결률이 낮음: {code_generation_linking_rate:.1%}")
 
     # 리포트 출력
     print("\n" + "=" * 50)
@@ -410,3 +422,85 @@ def test_event_normalizer_e2e_with_llm():
         encoding="utf-8",
     )
     print(f"[RESULTS] Detailed results saved to: {results_file}")
+
+    # 7. 평가 도구 통합 (Phase 3.3)
+    # 7-1. 수동 검증 데이터셋 생성
+    MANUAL_REVIEW_DIR = Path(__file__).parent / "manual_review"
+    MANUAL_REVIEW_DIR.mkdir(exist_ok=True)
+
+    manual_review_dataset = create_manual_review_dataset(
+        events=events,
+        turns=parse_result["turns"],
+        output_file=MANUAL_REVIEW_DIR / f"manual_review_dataset_{timestamp}.json",
+        sample_size=30,
+        min_per_type=3
+    )
+    print(f"\n[EVALUATION] Manual review dataset created: {len(manual_review_dataset['samples'])} samples")
+    print(f"[EVALUATION] Dataset saved to: {MANUAL_REVIEW_DIR / f'manual_review_dataset_{timestamp}.json'}")
+
+    # 7-2. Golden 파일 비교 (회귀 테스트용, 수동 검증 후 생성됨)
+    GOLDEN_DIR = Path(__file__).parent / "golden"
+    GOLDEN_DIR.mkdir(exist_ok=True)
+
+    golden_file = GOLDEN_DIR / "event_normalizer_golden.json"
+
+    if golden_file.exists():
+        # Golden 파일과 비교 (회귀 감지)
+        comparison_result = compare_with_golden(
+            current_events=events,
+            golden_file=golden_file,
+            similarity_threshold=0.95
+        )
+
+        if comparison_result.get("regression_detected"):
+            print(f"\n[WARNING] Regression detected!")
+            for reason in comparison_result.get("regression_reasons", []):
+                print(f"  - {reason}")
+        else:
+            print(f"\n[EVALUATION] No regression detected (similarity >= 95%)")
+
+        # 비교 결과 리포트에 추가
+        report["evaluation"] = {
+            "golden_comparison": comparison_result,
+            "manual_review_dataset": {
+                "samples_count": len(manual_review_dataset["samples"]),
+                "file": str(MANUAL_REVIEW_DIR / f"manual_review_dataset_{timestamp}.json")
+            }
+        }
+
+        # 리포트 파일 업데이트
+        report_file.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    else:
+        # Golden 파일이 없으면 안내 메시지 출력
+        print(f"\n[INFO] Golden file not found: {golden_file}")
+        print("[INFO] Golden 파일 생성 방법:")
+        print("  1. 수동 검증 데이터셋 파일을 열어서 각 샘플에 대해 평가 입력")
+        print("  2. 수동 검증 완료 후 다음 명령어 실행:")
+        print(f"     poetry run python -c \"")
+        print(f"     from backend.builders.evaluation import create_golden_file_from_manual_review;")
+        print(f"     from backend.parser import parse_markdown;")
+        print(f"     from pathlib import Path;")
+        print(f"     # ... (스크립트 예시)\"")
+        print(f"  3. 또는 별도 스크립트 사용: scripts/create_golden_file.py")
+
+        # 리포트에 수동 검증 안내 추가
+        report["evaluation"] = {
+            "manual_review_dataset": {
+                "samples_count": len(manual_review_dataset["samples"]),
+                "file": str(MANUAL_REVIEW_DIR / f"manual_review_dataset_{timestamp}.json"),
+                "status": "pending_manual_review"
+            },
+            "golden_file": {
+                "status": "not_created",
+                "message": "수동 검증 완료 후 생성 필요"
+            }
+        }
+
+        # 리포트 파일 업데이트
+        report_file.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )

@@ -40,15 +40,32 @@ class Turn(BaseModel):
 
 
 class EventType(str, Enum):
-    """이벤트 타입 Enum"""
+    """이벤트 타입 Enum
 
-    STATUS_REVIEW = "status_review"
-    PLAN = "plan"
-    ARTIFACT = "artifact"
-    DEBUG = "debug"
-    COMPLETION = "completion"
-    NEXT_STEP = "next_step"
-    TURN = "turn"
+    각 타입은 수행되는 활동(activity)을 명확히 표현합니다.
+    Artifact 정보(파일 경로, 코드 블록 등)는 Event.artifacts 필드에 별도로 저장됩니다.
+    """
+
+    STATUS_REVIEW = "status_review"  # 상태 확인/리뷰
+    PLAN = "plan"  # 계획 수립
+    CODE_GENERATION = "code_generation"  # 코드 생성 (새로 추가)
+    DEBUG = "debug"  # 문제 해결
+    COMPLETION = "completion"  # 완료
+    NEXT_STEP = "next_step"  # 다음 단계
+    TURN = "turn"  # 일반 대화 (fallback)
+
+
+class ArtifactAction(str, Enum):
+    """Artifact Action 타입 Enum
+
+    파일이나 코드 블록에 대해 수행된 작업의 종류를 나타냅니다.
+    """
+
+    READ = "read"  # 읽기/확인
+    CREATE = "create"  # 생성
+    MODIFY = "modify"  # 수정
+    EXECUTE = "execute"  # 실행
+    MENTION = "mention"  # 단순 언급 (기본값)
 
 
 class Event(BaseModel):
@@ -64,3 +81,31 @@ class Event(BaseModel):
     artifacts: List[dict] = []  # 연결된 Artifact (파일 경로, 액션 등)
     snippet_refs: List[str] = []  # 연결된 스니펫 ID (Phase 5에서 생성될 ID)
     processing_method: str = "regex"  # "regex" 또는 "llm" (결과 파일에 기록)
+
+
+class TimelineEvent(BaseModel):
+    """Timeline 이벤트 모델"""
+
+    seq: int  # 시퀀스 번호
+    session_id: str  # 세션 ID
+    phase: Optional[int] = None  # Phase 번호
+    subphase: Optional[int] = None  # Subphase 번호
+    type: EventType  # 이벤트 타입
+    summary: str  # 요약
+    artifacts: List[dict] = []  # 연결된 Artifact (파일 경로, 액션 등)
+    snippet_refs: List[str] = []  # 연결된 스니펫 ID
+
+
+class IssueCard(BaseModel):
+    """Issue Card 모델"""
+
+    issue_id: str  # 이슈 ID (예: "ISS-003-1234")
+    scope: dict  # 범위 (session_id, phase, subphase)
+    title: str  # 이슈 제목
+    symptoms: List[str] = []  # 증상 (주로 User 발화)
+    root_cause: Optional[dict] = None  # 원인 (status: "confirmed" | "hypothesis", text: str)
+    evidence: List[dict] = []  # 증거
+    fix: List[dict] = []  # 조치 방법 (summary, snippet_refs)
+    validation: List[str] = []  # 검증 방법
+    related_artifacts: List[dict] = []  # 관련 파일
+    snippet_refs: List[str] = []  # 관련 코드 스니펫 ID
