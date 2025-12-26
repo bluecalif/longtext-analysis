@@ -151,7 +151,19 @@
   - [x] E2E 테스트 업데이트 (test_timeline_issues_e2e_with_llm에서 build_structured_timeline 사용)
   - [x] E2E 테스트 실행 완료 (7개 sections 생성, 패턴 기반 fallback 사용)
 
-**산출물**: 구조화된 Timeline 모델, Timeline 구조화 빌더, E2E 테스트 완료 및 검증 리포트
+**Timeline 품질 평가 및 수동 검증** (2025-12-26 완료):
+- [x] E2E 테스트 결과 분석 (결과 파일: `tests/timeline_issues_e2e_llm_20251226_130658.json`)
+  - Timeline Section 개수 및 구조 분석 (7개 섹션, 67개 이벤트)
+  - Section 제목/요약 품질 평가 (제목 품질 문제 발견: 모든 제목이 이벤트 타입만 나열)
+  - 이슈 연결 정확성 검증 (100% 연결률)
+  - 작업 결과 연결 정보 완성도 확인 (85.7% 섹션에 코드 스니펫/파일/Artifact 포함)
+- [x] Timeline 품질 평가 리포트 생성 (`tests/reports/timeline_quality_evaluation.json`)
+- [x] 수동 검증 및 개선점 도출 (`tests/reports/timeline_quality_analysis.md`)
+  - **주요 발견사항**: 제목 품질 문제 (7개 섹션 모두), Artifact 중복 문제 (4개 섹션)
+  - **품질 점수**: 45/100
+  - **개선 권장사항**: 제목 생성 로직 개선, Artifact 중복 제거
+
+**산출물**: 구조화된 Timeline 모델, Timeline 구조화 빌더, E2E 테스트 완료 및 검증 리포트, Timeline 품질 평가 리포트
 
 ### Phase 4.6: Issue Card 품질 개선
 
@@ -166,9 +178,12 @@
 
 **구현 계획**:
 - [ ] LLM 기반 추출 함수 구현 (`extract_symptom_with_llm`, `extract_root_cause_with_llm`, `extract_fix_with_llm`, `extract_validation_with_llm`)
-- [ ] 디버그 이슈 분리 로직 개선 (논리적 이슈 단위로 클러스터링)
-- [ ] LLM 프롬프트 설계 및 캐싱 로직 적용
-- [ ] 테스트 작성 및 E2E 테스트 업데이트
+  - 각 함수는 캐싱 로직 적용 (SHA-256 해시 기반)
+  - Fallback 로직 유지 (LLM 실패 시 패턴 기반)
+- [ ] Issue Builder에 LLM 기반 추출 통합 (`build_issue_cards()` 함수에 `use_llm` 파라미터 추가)
+- [ ] 디버그 이슈 분리 로직 개선 (논리적 이슈 단위로 클러스터링) (선택적)
+- [ ] 단위 테스트 작성 (`tests/test_issues_builder.py`)
+- [ ] E2E 테스트 업데이트 (`tests/test_timeline_issues_e2e.py`)
 
 ---
 
@@ -206,7 +221,7 @@
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 4.5 진행 중 (Timeline 구조화 개선)
+**현재 Phase**: Phase 4.6 진행 준비 (Issue Card 품질 개선)
 
 **마지막 업데이트**: 2025-12-26
 
@@ -220,16 +235,16 @@
   - LLM 기반 E2E 테스트 완료
 
 **진행 중인 Phase**:
-- Phase 4.5: Timeline 구조화 개선 (진행 중)
+- Phase 4.5: Timeline 구조화 개선 (완료)
   - [x] TimelineSection 모델 정의 완료
   - [x] Timeline 구조화 빌더 구현 완료 (패턴 기반, LLM 옵션 포함)
   - [x] LLM 기반 작업 항목 추출 구현 완료 (extract_main_tasks_with_llm)
   - [x] E2E 테스트 업데이트 및 실행 완료
-  - [ ] Timeline 품질 평가 및 수동 검증 (다음 단계)
+  - [x] Timeline 품질 평가 및 수동 검증 완료 (2025-12-26)
 
 **다음 단계**:
-- Phase 4.5: Timeline 품질 평가 및 수동 검증 (결과 파일 검토)
 - Phase 4.6: Issue Card 품질 개선 (LLM 기반 symptom/root_cause/fix/validation 추출)
+  - Phase 4.5 완료 후 사용자 피드백 대기 중
 
 ---
 

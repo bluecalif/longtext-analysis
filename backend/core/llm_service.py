@@ -574,17 +574,17 @@ def extract_main_tasks_with_llm(
                 result_text = result_text.split("```")[1].split("```")[0].strip()
 
             result = json.loads(result_text)
-            
+
             # 응답 구조 검증
             if not isinstance(result, dict):
                 raise ValueError(f"LLM response is not a dict: {type(result)}")
-            
+
             tasks = result.get("tasks", [])
-            
+
             # tasks 검증
             if not isinstance(tasks, list):
                 raise ValueError(f"'tasks' is not a list: {type(tasks)}")
-            
+
             # 각 task의 구조 검증
             for idx, task in enumerate(tasks):
                 if not isinstance(task, dict):
