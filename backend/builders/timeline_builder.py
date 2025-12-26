@@ -13,6 +13,7 @@ from backend.core.models import (
     SessionMeta,
     EventType,
 )
+from backend.core.constants import USE_LLM_BY_DEFAULT
 
 
 def build_timeline(
@@ -52,10 +53,13 @@ def build_structured_timeline(
     events: List[Event],
     session_meta: SessionMeta,
     issue_cards: Optional[List] = None,
-    use_llm: bool = False,
+    use_llm: bool = USE_LLM_BY_DEFAULT,
 ) -> Dict:
     """
     이벤트 리스트로부터 구조화된 Timeline 생성 (Phase 4.5)
+
+    ⚠️ 중요: 기본적으로 LLM을 사용합니다 (use_llm=True).
+    패턴 기반을 사용하려면 명시적으로 use_llm=False를 전달하세요.
 
     주요 작업 항목별로 그룹화하여 Timeline을 구조화합니다.
 
@@ -63,7 +67,7 @@ def build_structured_timeline(
         events: 정규화된 이벤트 리스트
         session_meta: 세션 메타데이터
         issue_cards: Issue Card 리스트 (이슈 연결용, 선택적)
-        use_llm: LLM 사용 여부 (기본값: False, True 시 작업 항목 추출에 LLM 사용)
+        use_llm: LLM 사용 여부 (기본값: True, USE_LLM_BY_DEFAULT 상수 사용)
 
     Returns:
         {
@@ -126,10 +130,13 @@ def _extract_main_tasks_from_group(
     subphase: Optional[int],
     session_meta: SessionMeta,
     issue_cards: List,
-    use_llm: bool = False,
+    use_llm: bool = USE_LLM_BY_DEFAULT,
 ) -> List[TimelineSection]:
     """
     이벤트 그룹에서 주요 작업 항목 추출 (패턴 기반 또는 LLM)
+
+    ⚠️ 중요: 기본적으로 LLM을 사용합니다 (use_llm=True).
+    패턴 기반을 사용하려면 명시적으로 use_llm=False를 전달하세요.
 
     Args:
         group_events: 같은 Phase/Subphase의 이벤트 리스트
@@ -137,7 +144,7 @@ def _extract_main_tasks_from_group(
         subphase: Subphase 번호
         session_meta: 세션 메타데이터
         issue_cards: Issue Card 리스트
-        use_llm: LLM 사용 여부 (기본값: False)
+        use_llm: LLM 사용 여부 (기본값: True, USE_LLM_BY_DEFAULT 상수 사용)
 
     Returns:
         TimelineSection 리스트

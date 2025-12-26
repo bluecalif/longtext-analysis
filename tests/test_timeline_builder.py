@@ -188,9 +188,9 @@ def test_structured_timeline_pattern_based():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     from backend.builders.issues_builder import build_issue_cards
-    issue_cards = build_issue_cards(parse_result["turns"], events, session_meta)
+    issue_cards = build_issue_cards(parse_result["turns"], events, session_meta, use_llm=False)
 
     # 구조화된 Timeline 생성 (패턴 기반)
     structured_result = build_structured_timeline(
@@ -223,12 +223,12 @@ def test_structured_timeline_pattern_based():
     all_section_event_seqs = set()
     for section in sections:
         all_section_event_seqs.update(section.events)
-    
+
     # 대부분의 이벤트가 포함되어야 함 (DEBUG 타입은 Issue Card로 처리되므로 제외 가능)
     event_seqs = set(e.seq for e in events)
     debug_event_seqs = set(e.seq for e in events if e.type == EventType.DEBUG)
     non_debug_event_seqs = event_seqs - debug_event_seqs
-    
+
     # DEBUG가 아닌 이벤트 중 대부분이 포함되어야 함
     covered_ratio = (
         len(all_section_event_seqs & non_debug_event_seqs) / len(non_debug_event_seqs)

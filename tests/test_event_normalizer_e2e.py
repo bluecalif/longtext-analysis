@@ -32,9 +32,12 @@ REPORT_DIR = Path(__file__).parent / "reports"
 RESULTS_DIR = Path(__file__).parent / "results"
 
 
-def test_event_normalizer_e2e():
+def test_event_normalizer_e2e_pattern():
     """
     실제 입력 데이터로 전체 이벤트 정규화 파이프라인 테스트 (정규식 기반)
+
+    ⚠️ 주의: 이 테스트는 의도적으로 패턴 기반(REGEX)을 사용합니다.
+    LLM 기반 테스트는 test_event_normalizer_e2e_with_llm()을 사용하세요.
     """
     # 1. 실제 입력 데이터 로드
     if not INPUT_FILE.exists():

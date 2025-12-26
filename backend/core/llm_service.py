@@ -8,13 +8,13 @@ import logging
 import threading
 import time
 import os
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Callable, Any
 from dotenv import load_dotenv
 
 # .env 파일 자동 로드
 load_dotenv()
 
-from backend.core.models import Turn, EventType, Event
+from backend.core.models import Turn, EventType, Event, TimelineSection
 from backend.core.cache import (
     get_cached_result,
     save_cached_result,
@@ -22,6 +22,7 @@ from backend.core.cache import (
     _generate_text_hash,
     get_cache_stats as get_cache_dir_stats,
 )
+from backend.core.constants import LLM_MODEL
 from backend.builders.event_normalizer import summarize_turn
 import json
 
@@ -35,6 +36,141 @@ _cache_stats_lock = threading.Lock()
 # LLM 설정 상수
 LLM_TIMEOUT = 120  # OpenAI API 타임아웃 (초)
 LLM_MAX_RETRIES = 3  # 최대 재시도 횟수
+
+
+def _call_llm_with_retry(
+    messages: List[Dict[str, str]],
+    cache_key: str,
+    text_hash: str,
+    model: str = LLM_MODEL,
+    max_tokens: int = 200,
+    temperature: float = 0.3,
+    response_format: Optional[Dict[str, str]] = None,
+    turn_index: Optional[int] = None,
+    fallback_fn: Optional[Callable[[], Any]] = None,
+) -> Optional[str]:
+    """
+    공통 LLM 호출 함수 (재시도 로직, 캐싱 포함)
+    
+    모든 LLM 호출 함수에서 이 함수를 사용하여 중복 제거
+    
+    Args:
+        messages: OpenAI API messages 리스트
+        cache_key: 캐시 키
+        text_hash: 텍스트 해시 (검증용)
+        model: LLM 모델명 (기본값: LLM_MODEL 상수)
+        max_tokens: 최대 토큰 수
+        temperature: 온도
+        response_format: 응답 형식 (JSON 등)
+        turn_index: Turn 인덱스 (로깅용)
+        fallback_fn: Fallback 함수 (재시도 실패 시 호출)
+    
+    Returns:
+        LLM 응답 텍스트 또는 None (실패 시)
+    """
+    # 1. 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(
+            f"[CACHE HIT] LLM call: cache_key={cache_key}, turn_index={turn_index}"
+        )
+        return cached.get("result")
+    
+    # 2. 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(
+        f"[CACHE MISS] LLM call: cache_key={cache_key}, turn_index={turn_index}, calling LLM"
+    )
+    
+    # 3. OpenAI 클라이언트 생성
+    from openai import OpenAI
+    
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set")
+        if fallback_fn:
+            return fallback_fn()
+        return None
+    
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+    
+    # 4. 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            # LLM 호출 파라미터 구성
+            call_params = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+            if response_format:
+                call_params["response_format"] = response_format
+            
+            response = client.chat.completions.create(**call_params)
+            
+            result = response.choices[0].message.content.strip()
+            
+            # 5. 캐시 저장
+            cache_result = {"result": result}
+            save_cached_result(
+                cache_key, cache_result, text_hash=text_hash, turn_index=turn_index
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(
+                f"[CACHE SAVE] LLM call: cache_key={cache_key}, turn_index={turn_index}"
+            )
+            
+            return result
+        
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+            
+            # 마지막 시도가 아니면 재시도
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt  # 지수 백오프: 1초, 2초, 4초
+                logger.warning(
+                    f"[WARNING] LLM call attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                # 모든 재시도 실패 시 에러 로그
+                logger.error(
+                    f"[ERROR] LLM call failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                
+                # Fallback 함수가 있으면 호출
+                if fallback_fn:
+                    logger.info("[FALLBACK] Using fallback function")
+                    fallback_result = fallback_fn()
+                    
+                    # Fallback 결과도 캐시 저장
+                    cache_result = {"result": fallback_result}
+                    save_cached_result(
+                        cache_key,
+                        cache_result,
+                        text_hash=text_hash,
+                        turn_index=turn_index,
+                    )
+                    with _cache_stats_lock:
+                        _cache_stats["saves"] += 1
+                    logger.info(
+                        f"[CACHE SAVE] LLM call (fallback): cache_key={cache_key}, turn_index={turn_index}"
+                    )
+                    
+                    return fallback_result
+                
+                return None
+    
+    return None
 
 
 def get_cache_stats() -> dict:
@@ -273,7 +409,7 @@ SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
                 user_content += f"\n\n{artifact_info}"
 
             response = client.chat.completions.create(
-                model="gpt-4.1-mini",  # 사용자 지시대로 정확히 사용
+                model=LLM_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -762,7 +898,7 @@ def extract_symptom_with_llm(seed_turn: Turn) -> str:
     for attempt in range(LLM_MAX_RETRIES):
         try:
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=LLM_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -885,7 +1021,7 @@ def extract_root_cause_with_llm(
                 prompt_text = f"{prompt_text}\n\n에러 컨텍스트:\n{error_context[:500]}"
 
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=LLM_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -1055,7 +1191,7 @@ def extract_fix_with_llm(
                 prompt_text = f"{prompt_text}\n\n관련 코드:\n" + "\n".join(code_snippets[:3])[:1000]
 
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=LLM_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -1170,7 +1306,7 @@ def extract_validation_with_llm(turn: Turn) -> Optional[str]:
     for attempt in range(LLM_MAX_RETRIES):
         try:
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=LLM_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -1237,3 +1373,182 @@ def extract_validation_with_llm(turn: Turn) -> Optional[str]:
     from backend.builders.issues_builder import extract_validation_text
 
     return extract_validation_text(turn.body)
+
+
+def extract_issue_with_llm(
+    timeline_section: Optional[TimelineSection],
+    cluster_events: List[Event],
+    related_turns: List[Turn],
+) -> Optional[Dict[str, any]]:
+    """
+    LLM으로 통합 컨텍스트 기반 Issue 추출 (Phase 4.7)
+
+    TimelineSection + 관련 Events + 관련 Turns를 통합 컨텍스트로 사용하여
+    symptom, root_cause, fix, validation을 한 번에 추출합니다.
+
+    Args:
+        timeline_section: TimelineSection (선택적)
+        cluster_events: DEBUG 이벤트 클러스터
+        related_turns: 관련 Turn 리스트
+
+    Returns:
+        {
+            "title": str,  # 이슈 제목 (20-50자, 핵심 내용을 간결하게)
+            "symptom": str,  # 증상 (핵심만)
+            "root_cause": {"status": "confirmed" | "hypothesis", "text": str},  # 원인
+            "fix": {"summary": str, "snippet_refs": List[str]},  # 조치 방법
+            "validation": str,  # 검증 방법
+        } 또는 None
+    """
+    if not cluster_events:
+        return None
+
+    # 통합 컨텍스트 구성
+    context_parts = []
+
+    # Timeline Section 정보
+    if timeline_section:
+        context_parts.append(f"작업 항목: {timeline_section.title}")
+        context_parts.append(f"작업 요약: {timeline_section.summary}")
+
+    # 관련 Turn 정보 (User 발화 우선)
+    user_turns = [t for t in related_turns if t.speaker == "User"]
+    cursor_turns = [t for t in related_turns if t.speaker == "Cursor"]
+
+    if user_turns:
+        context_parts.append("\n사용자 발화:")
+        for turn in user_turns[:3]:  # 최대 3개
+            context_parts.append(f"- {turn.body[:500]}")
+
+    if cursor_turns:
+        context_parts.append("\n개발자 응답:")
+        for turn in cursor_turns[:5]:  # 최대 5개
+            context_parts.append(f"- {turn.body[:500]}")
+
+    # Event 정보
+    context_parts.append("\n이벤트 요약:")
+    for event in cluster_events[:5]:  # 최대 5개
+        context_parts.append(f"- [{event.type.value}] {event.summary}")
+
+    context_text = "\n".join(context_parts)
+
+    # 캐시 키 생성 (통합 컨텍스트 기반)
+    text_hash = _generate_text_hash(context_text, max_length=5000)
+    cache_key = f"issue_integrated_{text_hash}"
+
+    # 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.debug(f"[CACHE HIT] Integrated issue extraction: cache_key={cache_key}")
+        return cached
+
+    # 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(f"[CACHE MISS] Integrated issue extraction: cache_key={cache_key}, calling LLM")
+
+    # LLM 호출
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not set, using fallback")
+        return None
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """다음 대화 내용에서 이슈 정보를 추출하세요. JSON 형식으로 반환하세요.
+
+반드시 제외해야 할 텍스트:
+- '원인 분석 중입니다...'
+- '분석 중입니다...'
+- '확인합니다...'
+- '정리합니다...'
+
+JSON 형식:
+{
+  "title": "이슈 제목 (20-50자, 핵심 내용을 간결하게 표현, 동작 중심으로 작성)",
+  "symptom": "사용자가 발견한 문제 현상 (핵심만, 1-2문장)",
+  "root_cause": {
+    "status": "confirmed" 또는 "hypothesis",
+    "text": "실제 원인 분석 결과만 (중간 과정 텍스트 제외)"
+  },
+  "fix": {
+    "summary": "구체적인 해결 방법 (어떤 변경을 했고, 왜 그렇게 했는지)",
+    "snippet_refs": []
+  },
+  "validation": "검증 방법 (어떻게 확인했는지)"
+}
+
+title과 symptom은 반드시 반환해야 합니다. 다른 필드는 선택적입니다. 없으면 null을 반환하세요.""",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"다음 대화 내용에서 이슈 정보를 추출하세요:\n\n{context_text[:4000]}",
+                    },
+                ],
+                max_tokens=800,
+                temperature=0.3,
+                response_format={"type": "json_object"},
+            )
+
+            result_text = response.choices[0].message.content.strip()
+
+            # JSON 파싱
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError:
+                logger.warning(f"[WARNING] Failed to parse JSON response: {result_text[:200]}")
+                return None
+
+            # 결과 검증 및 정규화
+            normalized_result = {
+                "title": result.get("title"),
+                "symptom": result.get("symptom"),
+                "root_cause": result.get("root_cause"),
+                "fix": result.get("fix"),
+                "validation": result.get("validation"),
+            }
+
+            # 결과 캐시 저장
+            save_cached_result(
+                cache_key,
+                normalized_result,
+                text_hash=text_hash,
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(f"[CACHE SAVE] Integrated issue extraction: cache_key={cache_key}")
+
+            return normalized_result
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt
+                logger.warning(
+                    f"[WARNING] Integrated issue extraction attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                logger.error(
+                    f"[ERROR] Integrated issue extraction failed after {LLM_MAX_RETRIES} attempts: "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                return None
+
+    return None

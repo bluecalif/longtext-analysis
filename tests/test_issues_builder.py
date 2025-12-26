@@ -36,9 +36,9 @@ def test_issue_detection():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증
@@ -68,9 +68,9 @@ def test_issue_grouping():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증
@@ -122,9 +122,9 @@ def test_root_cause_extraction():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증
@@ -160,9 +160,9 @@ def test_fix_extraction():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증
@@ -192,9 +192,9 @@ def test_validation_extraction():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증
@@ -222,9 +222,9 @@ def test_issue_card_completeness():
         parse_result["turns"], session_meta=session_meta, use_llm=False
     )
 
-    # Issue Cards 생성
+    # Issue Cards 생성 (패턴 기반)
     issue_cards = build_issue_cards(
-        parse_result["turns"], events, session_meta
+        parse_result["turns"], events, session_meta, use_llm=False
     )
 
     # 검증

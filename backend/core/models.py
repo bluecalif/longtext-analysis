@@ -134,3 +134,9 @@ class IssueCard(BaseModel):
     validation: List[str] = []  # 검증 방법
     related_artifacts: List[dict] = []  # 관련 파일
     snippet_refs: List[str] = []  # 관련 코드 스니펫 ID
+    # Phase 4.7 추가 필드
+    section_id: Optional[str] = None  # 연결된 Timeline Section ID
+    section_title: Optional[str] = None  # 연결된 Timeline Section 제목
+    related_events: List[int] = []  # 관련 Event seq 리스트
+    related_turns: List[int] = []  # 관련 Turn 인덱스 리스트
+    confidence_score: Optional[float] = None  # 추출 신뢰도 점수 (0.0 ~ 1.0)

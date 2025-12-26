@@ -8,21 +8,24 @@ import re
 from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from backend.core.models import Turn, Event, EventType, SessionMeta, ArtifactAction
-from backend.core.constants import DEBUG_TRIGGERS
+from backend.core.constants import DEBUG_TRIGGERS, USE_LLM_BY_DEFAULT
 
 
 def normalize_turns_to_events(
-    turns: List[Turn], session_meta: Optional[SessionMeta] = None, use_llm: bool = False
+    turns: List[Turn], session_meta: Optional[SessionMeta] = None, use_llm: bool = USE_LLM_BY_DEFAULT
 ) -> List[Event]:
     """
     Turn 리스트를 Event 리스트로 변환 (우선순위 기반 단일 이벤트, LLM 옵션)
+
+    ⚠️ 중요: 기본적으로 LLM을 사용합니다 (use_llm=True).
+    패턴 기반을 사용하려면 명시적으로 use_llm=False를 전달하세요.
 
     LLM 사용 시 병렬 처리 (max_workers=5)
 
     Args:
         turns: 파싱된 Turn 리스트
         session_meta: 세션 메타데이터 (Phase/Subphase 연결용, 선택)
-        use_llm: LLM 사용 여부 (기본값: False, True 시 일괄 적용, 병렬 처리)
+        use_llm: LLM 사용 여부 (기본값: True, USE_LLM_BY_DEFAULT 상수 사용)
 
     Returns:
         정규화된 Event 리스트

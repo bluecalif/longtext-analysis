@@ -1,0 +1,204 @@
+# LLM 기본값 규칙 (프로젝트 전역)
+
+## ⚠️ 가장 중요: 이 프로젝트는 LLM 기반이 기본값입니다
+
+**이 규칙은 프로젝트 전역에 적용되며, 다음 세션에서도 반드시 따라야 합니다.**
+
+---
+
+## 핵심 원칙
+
+### 1. 기본값: LLM 사용 (USE_LLM_BY_DEFAULT = True)
+
+**모든 빌더 함수는 기본적으로 LLM을 사용합니다.**
+
+```python
+# ✅ 올바른 예시
+from backend.core.constants import USE_LLM_BY_DEFAULT
+
+def build_something(..., use_llm: bool = USE_LLM_BY_DEFAULT):
+    """기본적으로 LLM 사용"""
+    pass
+
+# ❌ 잘못된 예시
+def build_something(..., use_llm: bool = False):  # ❌ 기본값 False 금지!
+    pass
+```
+
+### 2. 패턴 기반(REGEX) vs LLM 기반
+
+| 방식 | 용도 | 기본값 |
+|------|------|--------|
+| **LLM 기반** | 기본값, 모든 빌더 함수 | `use_llm=True` |
+| **패턴 기반** | LLM 실패 시 fallback, 테스트에서 명시적 사용 | `use_llm=False` (명시적 전달) |
+
+**규칙**:
+- ✅ **LLM 기반이 기본값**: 모든 빌더 함수는 기본적으로 LLM을 사용합니다.
+- ✅ **패턴 기반은 Fallback**: LLM 실패 시에만 패턴 기반으로 fallback합니다.
+- ✅ **명시적 패턴 기반**: 테스트에서 패턴 기반을 사용하려면 명시적으로 `use_llm=False`를 전달하세요.
+
+### 3. 적용 대상 함수
+
+다음 함수들은 모두 `use_llm=USE_LLM_BY_DEFAULT`를 기본값으로 사용합니다:
+
+1. **Phase 3: 이벤트 정규화**
+   - `normalize_turns_to_events(..., use_llm=USE_LLM_BY_DEFAULT)`
+
+2. **Phase 4.5: Timeline Section 생성**
+   - `build_structured_timeline(..., use_llm=USE_LLM_BY_DEFAULT)`
+   - `_extract_main_tasks_from_group(..., use_llm=USE_LLM_BY_DEFAULT)`
+
+3. **Phase 4.6: Issue Card 생성**
+   - `build_issue_cards(..., use_llm=USE_LLM_BY_DEFAULT)`
+   - `build_issue_card_from_cluster(..., use_llm=USE_LLM_BY_DEFAULT)`
+   - `build_issue_card_from_window(..., use_llm=USE_LLM_BY_DEFAULT)`
+
+4. **Phase 6+: API 엔드포인트** (구현 예정)
+   - 모든 API 엔드포인트도 기본적으로 LLM을 사용합니다.
+
+### 4. 테스트 규칙
+
+**테스트 함수 이름 규칙**:
+
+| 테스트 함수 이름 패턴 | LLM 사용 여부 | 설명 |
+|---------------------|-------------|------|
+| `test_*_with_llm()` | ✅ True | LLM 사용 (명시적) |
+| `test_*_pattern()` 또는 `test_*_no_llm()` | ❌ False | 패턴 기반 (명시적) |
+| 그 외 | ✅ True | 기본값 (LLM) |
+
+**예시**:
+```python
+# ✅ LLM 사용 (명시적)
+def test_event_normalizer_e2e_with_llm():
+    events = normalize_turns_to_events(turns, use_llm=True)  # 명시적
+    # 또는 기본값 사용
+    events = normalize_turns_to_events(turns)  # 자동으로 LLM 사용
+
+# ✅ 패턴 기반 (명시적)
+def test_event_normalizer_e2e_pattern():
+    events = normalize_turns_to_events(turns, use_llm=False)  # 명시적
+
+# ✅ 기본값 (LLM)
+def test_event_normalizer_e2e():
+    events = normalize_turns_to_events(turns)  # 자동으로 LLM 사용
+```
+
+### 5. API 규칙 (Phase 6+)
+
+**모든 API 엔드포인트도 기본적으로 LLM을 사용합니다.**
+
+```python
+# ✅ 올바른 예시
+@router.post("/api/timeline")
+async def create_timeline(
+    session_id: str,
+    events: List[dict],
+    session_meta: dict,
+    use_llm: bool = USE_LLM_BY_DEFAULT  # 기본값 LLM
+):
+    """기본적으로 LLM 사용"""
+    pass
+
+# ❌ 잘못된 예시
+@router.post("/api/timeline")
+async def create_timeline(
+    ...,
+    use_llm: bool = False  # ❌ 기본값 False 금지!
+):
+    pass
+```
+
+---
+
+## 다층 방어선
+
+이 규칙이 다음 세션에서도 지켜지도록 다층 방어선을 구축했습니다:
+
+### 1. 코드 레벨 (1차 방어선)
+- 모든 함수의 기본값이 `USE_LLM_BY_DEFAULT = True`
+- 상수 정의: `backend/core/constants.py`
+
+### 2. 상수 정의 (2차 방어선)
+- `USE_LLM_BY_DEFAULT = True` 상수로 명시적 의도 표현
+- 모든 함수에서 이 상수를 사용
+
+### 3. 문서화 (3차 방어선)
+- `TODOs.md`에 규칙 명시
+- `.cursor/rules/llm-default-rule.mdc` (이 파일)
+- 모든 함수의 docstring에 규칙 명시
+
+### 4. 테스트 Fixture (4차 방어선)
+- `tests/conftest.py`의 `_detect_use_llm_from_test_name()` 함수
+- 테스트 함수 이름에서 자동 감지
+
+### 5. 타입 힌트 및 주석 (5차 방어선)
+- 모든 함수에 명확한 타입 힌트
+- docstring에 "⚠️ 중요: 기본적으로 LLM을 사용합니다" 명시
+
+---
+
+## 금지 사항
+
+### ❌ 절대 하지 말 것
+
+1. **기본값을 False로 설정**:
+```python
+# ❌ 금지
+def build_something(..., use_llm: bool = False):
+    pass
+```
+
+2. **하드코딩된 False 사용**:
+```python
+# ❌ 금지
+events = normalize_turns_to_events(turns, use_llm=False)  # 명시적 이유 없이
+```
+
+3. **상수 없이 하드코딩**:
+```python
+# ❌ 금지
+def build_something(..., use_llm: bool = True):  # 상수 사용해야 함
+    pass
+
+# ✅ 올바른 예시
+from backend.core.constants import USE_LLM_BY_DEFAULT
+def build_something(..., use_llm: bool = USE_LLM_BY_DEFAULT):
+    pass
+```
+
+---
+
+## 체크리스트
+
+### 새 빌더 함수 추가 시
+- [ ] `use_llm` 파라미터의 기본값이 `USE_LLM_BY_DEFAULT`인지 확인
+- [ ] `from backend.core.constants import USE_LLM_BY_DEFAULT` import 확인
+- [ ] docstring에 "⚠️ 중요: 기본적으로 LLM을 사용합니다" 명시
+- [ ] 패턴 기반은 LLM 실패 시 fallback으로만 사용
+
+### API 엔드포인트 추가 시 (Phase 6+)
+- [ ] `use_llm` 파라미터의 기본값이 `USE_LLM_BY_DEFAULT`인지 확인
+- [ ] 클라이언트가 명시적으로 `use_llm=false`를 전달하지 않는 한 LLM 사용
+
+### 테스트 작성 시
+- [ ] 테스트 함수 이름 규칙 준수 (`_with_llm`, `_pattern`, `_no_llm`)
+- [ ] Fixture가 자동으로 감지하는지 확인
+
+---
+
+## 참고
+
+- 상수 정의: `backend/core/constants.py`
+- 프로젝트 문서: `TODOs.md` (LLM 사용 규칙 섹션)
+- 테스트 Fixture: `tests/conftest.py`의 `_detect_use_llm_from_test_name()`
+
+---
+
+## 다음 세션에서도 반드시 확인
+
+**이 규칙은 프로젝트 전역에 적용되며, 다음 세션에서도 반드시 따라야 합니다.**
+
+새로운 코드를 작성할 때:
+1. `backend/core/constants.py`의 `USE_LLM_BY_DEFAULT` 상수를 확인
+2. 모든 빌더 함수의 기본값이 이 상수를 사용하는지 확인
+3. 이 문서(`.cursor/rules/llm-default-rule.mdc`)를 참조

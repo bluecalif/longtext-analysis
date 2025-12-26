@@ -242,6 +242,58 @@ poetry run pytest tests/test_event_normalizer.py -v
 poetry run pytest tests/test_event_normalizer_e2e.py -v
 ```
 
+## Issue Card 생성 모듈
+
+### 호출 흐름
+
+```
+tests/test_timeline_issues_e2e.py
+  └── test_timeline_issues_e2e_with_llm()
+      └── build_issue_cards(turns, events, session_meta, timeline_sections)
+          └── backend/builders/issues_builder.py
+              ├── cluster_debug_events(events)  # DEBUG 이벤트 클러스터링
+              └── build_issue_card_from_cluster(cluster_events, related_turns, matched_section, ...)
+                  └── backend/core/llm_service.py
+                      └── extract_issue_with_llm(timeline_section, cluster_events, related_turns)
+                          └── LLM 호출 → JSON 응답 (symptom, root_cause, fix, validation)
+```
+
+### 데이터 흐름
+
+**입력**:
+- `turns: List[Turn]` - 파싱된 Turn 리스트
+- `events: List[Event]` - 정규화된 Event 리스트
+- `timeline_sections: List[TimelineSection]` - Timeline Section 리스트
+
+**처리**:
+1. DEBUG 이벤트 클러스터링 (논리적 이슈 단위로 그룹화)
+2. Timeline Section 매칭
+3. 통합 컨텍스트 구성 (TimelineSection + Events + Turns)
+4. LLM 호출하여 symptom, root_cause, fix, validation 한 번에 추출
+
+**출력**:
+- `List[IssueCard]` - Issue Card 리스트
+
+### 핵심 개선 (Phase 4.7)
+
+**이전**: 각 컴포넌트를 개별적으로 추출 (`extract_symptom_with_llm()`, `extract_root_cause_with_llm()`, `extract_fix_with_llm()`, `extract_validation_with_llm()`)
+- Fix가 각 이벤트마다 개별 호출되어 20개 생성됨
+
+**개선**: 통합 컨텍스트 기반 추출 (`extract_issue_with_llm()`)
+- TimelineSection + 모든 Events + 모든 Turns를 통합 컨텍스트로 사용
+- 모든 컴포넌트를 한 번에 추출하여 일관성 있는 체인 생성
+- Fix는 클러스터 전체에 대한 단일 조치 방법으로 추출 (20개 → 1개)
+
+### 테스트
+
+```powershell
+# E2E 테스트 (LLM 기반)
+poetry run pytest tests/test_timeline_issues_e2e.py::test_timeline_issues_e2e_with_llm -v
+
+# E2E 테스트 (패턴 기반)
+poetry run pytest tests/test_timeline_issues_e2e.py::test_timeline_issues_e2e_pattern -v
+```
+
 ## 개발 가이드
 
 프로젝트는 Phase별로 진행됩니다. 자세한 내용은 [TODOs.md](TODOs.md)를 참고하세요.

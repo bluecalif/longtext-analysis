@@ -12,6 +12,13 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
+from backend.core.pipeline_cache import (
+    get_or_create_parsed_data,
+    get_or_create_events,
+    get_or_create_timeline_sections,
+)
+from backend.core.models import SessionMeta, Event, TimelineSection
+
 
 # Phase 6+ 전용: 실제 서버 실행 fixture
 @pytest.fixture(scope="session")
@@ -187,4 +194,113 @@ def setup_test_logging(request):
         # 12. 정리 작업 (필요한 경우)
         # FileHandler는 루트 로거에 남겨두고, 다음 테스트에서 제거됨
         pass
+
+
+# Phase 4.7+: 파이프라인 중간 결과 캐싱 Fixture
+@pytest.fixture(scope="session")
+def input_file():
+    """
+    입력 파일 경로 fixture (세션 스코프)
+
+    Returns:
+        입력 마크다운 파일 경로
+    """
+    input_file_path = Path(__file__).parent.parent / "docs" / "cursor_phase_6_3.md"
+    if not input_file_path.exists():
+        pytest.skip(f"Input file not found: {input_file_path}")
+    return input_file_path
+
+
+@pytest.fixture(scope="session")
+def parsed_data(input_file):
+    """
+    파싱 결과 fixture (세션 스코프, 캐시 사용)
+
+    Args:
+        input_file: 입력 파일 경로 fixture
+
+    Returns:
+        파싱 결과 딕셔너리
+    """
+    return get_or_create_parsed_data(input_file)
+
+
+def _detect_use_llm_from_test_name(request) -> bool:
+    """
+    테스트 함수 이름에서 LLM 사용 여부 감지
+
+    규칙:
+    - test_*_with_llm(): LLM 사용 (True)
+    - test_*_pattern() 또는 test_*_no_llm(): 패턴 기반 (False)
+    - 그 외: 기본값 사용 (True, USE_LLM_BY_DEFAULT)
+    """
+    from backend.core.constants import USE_LLM_BY_DEFAULT
+
+    test_name = request.node.name
+
+    # 명시적 패턴 기반 테스트
+    if "_pattern" in test_name or "_no_llm" in test_name:
+        return False
+
+    # 명시적 LLM 테스트
+    if "_with_llm" in test_name:
+        return True
+
+    # 기본값 (LLM 사용)
+    return USE_LLM_BY_DEFAULT
+
+
+@pytest.fixture(scope="session")
+def normalized_events(parsed_data, input_file, request):
+    """
+    이벤트 정규화 결과 fixture (세션 스코프, 캐시 사용)
+
+    ⚠️ 중요: 기본적으로 LLM을 사용합니다 (USE_LLM_BY_DEFAULT=True).
+    테스트 함수 이름에서 자동으로 감지합니다:
+    - test_*_with_llm(): LLM 사용
+    - test_*_pattern() 또는 test_*_no_llm(): 패턴 기반
+    - 그 외: 기본값 (LLM)
+
+    Args:
+        parsed_data: 파싱 결과 fixture
+        input_file: 입력 파일 경로 fixture
+        request: pytest request 객체 (파라미터 접근용)
+
+    Returns:
+        (Event 리스트, SessionMeta) 튜플
+    """
+    use_llm = _detect_use_llm_from_test_name(request)
+    return get_or_create_events(parsed_data, input_file, use_llm=use_llm)
+
+
+@pytest.fixture(scope="session")
+def timeline_sections(normalized_events, input_file, request):
+    """
+    Timeline Section 결과 fixture (세션 스코프, 캐시 사용)
+
+    ⚠️ 중요: 기본적으로 LLM을 사용합니다 (USE_LLM_BY_DEFAULT=True).
+    테스트 함수 이름에서 자동으로 감지합니다:
+    - test_*_with_llm(): LLM 사용
+    - test_*_pattern() 또는 test_*_no_llm(): 패턴 기반
+    - 그 외: 기본값 (LLM)
+
+    Args:
+        normalized_events: 이벤트 정규화 결과 fixture
+        input_file: 입력 파일 경로 fixture
+        request: pytest request 객체 (파라미터 접근용)
+
+    Returns:
+        TimelineSection 리스트
+    """
+    events, session_meta = normalized_events
+    use_llm = _detect_use_llm_from_test_name(request)
+
+    # Issue Cards는 아직 생성되지 않았으므로 None 전달
+    return get_or_create_timeline_sections(
+        events=events,
+        session_meta=session_meta,
+        input_file=input_file,
+        use_llm=use_llm,
+        issue_cards=None
+    )
 
