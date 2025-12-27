@@ -140,3 +140,18 @@ class IssueCard(BaseModel):
     related_events: List[int] = []  # 관련 Event seq 리스트
     related_turns: List[int] = []  # 관련 Turn 인덱스 리스트
     confidence_score: Optional[float] = None  # 추출 신뢰도 점수 (0.0 ~ 1.0)
+
+
+class Snippet(BaseModel):
+    """코드 스니펫 모델 (Phase 5)
+
+    코드 블록을 별도로 저장하고 Timeline/Issue Cards와 링킹하기 위한 모델입니다.
+    """
+
+    snippet_id: str  # 스니펫 ID (예: "SNP-session-012-00-sql")
+    lang: str  # 언어 (예: "sql", "python", "typescript")
+    code: str  # 코드 내용
+    source: dict  # 출처 정보 {turn_index: int, block_index: int}
+    links: dict = {}  # 링크 정보 {issue_id?: str, event_seq?: int, paths?: List[str]}
+    snippet_hash: str  # 중복 제거용 해시 (SHA-256)
+    aliases: List[str] = []  # 중복 제거 시 원본 ID 목록 (선택적)

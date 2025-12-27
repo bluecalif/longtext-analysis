@@ -73,9 +73,7 @@ def _call_llm_with_retry(
     if cached:
         with _cache_stats_lock:
             _cache_stats["hits"] += 1
-        logger.debug(
-            f"[CACHE HIT] LLM call: cache_key={cache_key}, turn_index={turn_index}"
-        )
+        logger.debug(f"[CACHE HIT] LLM call: cache_key={cache_key}, turn_index={turn_index}")
         return cached.get("result")
 
     # 2. 캐시 미스
@@ -117,14 +115,10 @@ def _call_llm_with_retry(
 
             # 5. 캐시 저장
             cache_result = {"result": result}
-            save_cached_result(
-                cache_key, cache_result, text_hash=text_hash, turn_index=turn_index
-            )
+            save_cached_result(cache_key, cache_result, text_hash=text_hash, turn_index=turn_index)
             with _cache_stats_lock:
                 _cache_stats["saves"] += 1
-            logger.info(
-                f"[CACHE SAVE] LLM call: cache_key={cache_key}, turn_index={turn_index}"
-            )
+            logger.info(f"[CACHE SAVE] LLM call: cache_key={cache_key}, turn_index={turn_index}")
 
             return result
 

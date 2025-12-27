@@ -395,11 +395,69 @@
 
 **목표**: 코드 스니펫을 별도로 저장하고 참조 연결
 
-- [ ] 스니펫 ID 생성 규칙 구현
-- [ ] 스니펫 중복 제거 로직 (코드 내용 해시 기반)
-- [ ] 스니펫 파일 저장 기능 (선택)
-- [ ] Issue/Timeline과의 링킹 로직
-- [ ] 테스트 작성 및 E2E 테스트
+**⚠️ 중요**: Phase 5는 패턴 기반 처리입니다 (LLM 미사용)
+- 스니펫 ID 생성: 규칙 기반 (SNP-{session_id}-{turn_index:03d}-{block_index:02d}-{lang})
+- 언어 판별: fence_lang 우선 → 휴리스틱 (SQL/TS/Python/Bash 키워드)
+- 중복 제거: 해시 기반 (SHA-256)
+- 링킹: Turn/Event 인덱스 매칭
+
+**입력-처리-출력**:
+```
+입력: Turns (code_blocks), Events, IssueCards, SessionMeta
+처리: CodeBlock → Snippet 변환 → 중복 제거 → 링킹 → snippets.json 생성
+출력: snippets.json, 업데이트된 Events/IssueCards (snippet_refs 포함)
+```
+
+**구현 계획**:
+
+**Phase 5.1: Snippet 모델 정의** - ✅ 완료
+- [x] `backend/core/models.py`에 Snippet 모델 추가
+  - [x] snippet_id, lang, code, source, links, snippet_hash, aliases 필드
+
+**Phase 5.2: 스니펫 관리 모듈 구현** - ✅ 완료
+- [x] `backend/builders/snippet_manager.py` 생성
+  - [x] 스니펫 ID 생성 함수 (generate_snippet_id)
+  - [x] 코드 정규화 및 해시 생성 함수 (normalize_code, generate_snippet_hash)
+  - [x] 언어 판별 함수 (detect_language, fence_lang 우선 → 휴리스틱)
+  - [x] CodeBlock → Snippet 변환 함수 (code_blocks_to_snippets)
+  - [x] 중복 제거 로직 (deduplicate_snippets, 해시 기반)
+  - [x] 링킹 로직 (link_snippets_to_events, link_snippets_to_issues)
+  - [x] 통합 처리 함수 (process_snippets)
+
+**Phase 5.3: 스니펫 저장 모듈 구현** - ✅ 완료
+- [x] `backend/builders/snippet_storage.py` 생성
+  - [x] snippets.json 생성 함수 (generate_snippets_json)
+
+**Phase 5.4: 파이프라인 캐싱 통합 (선택적)**
+- [ ] `backend/core/pipeline_cache.py`에 스니펫 캐싱 추가 (선택적)
+  - [ ] get_or_create_snippets() 함수 추가
+
+**Phase 5.5: 테스트 작성** - ✅ 완료
+- [x] `tests/test_snippet_manager.py` 작성 (단위 테스트)
+  - [x] test_generate_snippet_id()
+  - [x] test_normalize_code()
+  - [x] test_generate_snippet_hash()
+  - [x] test_detect_language()
+  - [x] test_code_blocks_to_snippets()
+  - [x] test_deduplicate_snippets()
+  - [x] test_link_snippets_to_events()
+  - [x] test_link_snippets_to_issues()
+- [x] `tests/test_snippet_e2e.py` 작성 (E2E 테스트)
+  - [x] test_snippet_e2e_with_llm() - 전체 파이프라인 통합 테스트
+    - 실제 입력 파일 사용 (docs/cursor_phase_6_3.md)
+    - 파싱 → 이벤트 정규화 → Timeline → Issue Cards → 스니펫 처리
+    - snippets.json 생성 및 검증
+    - Event/IssueCard 링킹 검증
+
+**검증 계획**:
+- [x] 단위 테스트 실행 및 통과 확인 (9개 테스트 모두 통과)
+- [x] E2E 테스트 실행 및 검증 (2025-12-27 완료)
+  - [x] 스니펫 ID 형식 검증 (PASS)
+  - [x] 중복 제거 검증 (해시 기반, 92개 코드 블록 → 81개 스니펫, 11개 중복 제거)
+  - [x] Event 링킹 검증 (19개 이벤트에 스니펫 링크, PASS)
+  - [x] Issue Card 링킹 검증 (1개 Issue Card에 스니펫 링크, PASS)
+  - [x] snippets.json 구조 검증 (PASS)
+- [x] E2E 테스트 결과 분석 및 리포트 생성 (2025-12-27 완료)
 
 ---
 
@@ -448,16 +506,15 @@
   - LLM 모델 통일 (`gpt-4.1-mini`)
   - 개별 추출 함수 제거 (539줄 삭제)
   - E2E 테스트 완료: Fix 항목 20개 → 1개 (95% 감소), 품질 대폭 향상
-
-**진행 중인 Phase**:
-- Phase 4.7.7: 캐시 무효화 전략 구현 (진행 예정)
-  - 입력 파일 변경 감지 (파일 해시 비교)
-  - 자동 무효화 (캐시 키 기반)
-  - 수동 무효화 옵션 (테스트용)
+- Phase 5: 코드 스니펫 분리 및 저장 (2025-12-27 완료)
+  - Snippet 모델 정의 완료
+  - 스니펫 관리 모듈 구현 완료 (ID 생성, 해시, 언어 판별, 변환, 중복 제거, 링킹)
+  - 스니펫 저장 모듈 구현 완료 (snippets.json 생성)
+  - 단위 테스트 완료 (9개 테스트 모두 통과)
+  - E2E 테스트 완료: 92개 코드 블록 → 81개 스니펫 (11개 중복 제거), 19개 이벤트 링킹, 1개 Issue Card 링킹
 
 **다음 단계**:
-- Phase 4.7 완료 후 Phase 5 진행 예정
-  - Phase 4.7 완료 후 사용자 피드백 대기
+- Phase 6 진행 예정 (백엔드 API 구현)
 
 ---
 

@@ -265,13 +265,13 @@ def build_issue_card_from_cluster(
     if use_llm:
         try:
             from backend.core.llm_service import extract_issue_with_llm
-            
+
             integrated_result = extract_issue_with_llm(
                 timeline_section=matched_section,
                 cluster_events=cluster_events,
                 related_turns=related_turns,
             )
-            
+
             if integrated_result:
                 title = integrated_result.get("title")
                 symptom = integrated_result.get("symptom")
@@ -285,7 +285,7 @@ def build_issue_card_from_cluster(
     # Title fallback
     if not title:
         title = generate_issue_title_from_cluster(cluster_events, root_cause, matched_section)
-    
+
     # Symptom fallback
     if not symptom:
         # 첫 번째 User Turn 사용
@@ -293,13 +293,13 @@ def build_issue_card_from_cluster(
             if turn.speaker == "User":
                 symptom = turn.body[:500]
                 break
-    
+
     # Symptom이 없으면 카드 생성 안 함
     if not symptom:
         return None
-    
+
     symptoms = [symptom] if symptom else []
-    
+
     # Root cause fallback
     if not root_cause:
         for turn in related_turns:
@@ -310,7 +310,7 @@ def build_issue_card_from_cluster(
                         "text": extract_root_cause_text(turn.body),
                     }
                     break
-        
+
         # Root cause가 없으면 hypothesis로 설정
         if not root_cause:
             for turn in related_turns:
@@ -320,7 +320,7 @@ def build_issue_card_from_cluster(
                         "text": turn.body[:300],
                     }
                     break
-    
+
     # Fix fallback
     if not fix:
         # 첫 번째 DEBUG 이벤트의 summary 사용
@@ -331,9 +331,9 @@ def build_issue_card_from_cluster(
                     "snippet_refs": event.snippet_refs,
                 }
                 break
-    
+
     fixes = [fix] if fix else []
-    
+
     # Validation fallback
     if not validation:
         for turn in related_turns:
@@ -341,9 +341,9 @@ def build_issue_card_from_cluster(
                 validation = extract_validation_text(turn.body)
                 if validation:
                     break
-    
+
     validations = [validation] if validation else []
-    
+
     # Root cause 또는 Fix 중 하나라도 있어야 카드 생성
     if not root_cause and not fixes:
         return None
@@ -362,11 +362,9 @@ def build_issue_card_from_cluster(
                 seen_paths.add(path)
                 related_artifacts.append(artifact)
 
-    # Snippet 참조 수집
+    # Snippet 참조 수집 (Phase 5: process_snippets에서 실제 snippet_id로 업데이트됨)
+    # 여기서는 빈 리스트로 시작 (임시 형식 제거)
     snippet_refs = []
-    for event in cluster_events:
-        snippet_refs.extend(event.snippet_refs)
-    snippet_refs = list(set(snippet_refs))
 
     # 관련 Event seq 리스트
     related_event_seqs = [e.seq for e in cluster_events]
@@ -522,17 +520,17 @@ def build_issue_card_from_window(
     if use_llm:
         try:
             from backend.core.llm_service import extract_issue_with_llm
-            
+
             # window_events를 클러스터로 변환 (DEBUG 이벤트만)
             cluster_events = [e for e in window_events if e.type == EventType.DEBUG]
-            
+
             if cluster_events:
                 integrated_result = extract_issue_with_llm(
                     timeline_section=None,  # window 방식은 section 없음
                     cluster_events=cluster_events,
                     related_turns=window_turns,
                 )
-                
+
                 if integrated_result:
                     title = integrated_result.get("title")
                     symptom = integrated_result.get("symptom")
@@ -548,13 +546,13 @@ def build_issue_card_from_window(
     # Title fallback
     if not title:
         title = generate_issue_title(seed_turn, root_cause)
-    
+
     # Symptom fallback
     if not symptom:
         symptom = seed_turn.body[:500]
-    
+
     symptoms = [symptom] if symptom else []
-    
+
     # Root cause fallback
     if not root_cause:
         for turn in window_turns:
@@ -565,7 +563,7 @@ def build_issue_card_from_window(
                         "text": extract_root_cause_text(turn.body),
                     }
                     break
-        
+
         # Root cause가 없으면 hypothesis로 설정
         if not root_cause:
             for turn in window_turns:
@@ -575,7 +573,7 @@ def build_issue_card_from_window(
                         "text": turn.body[:300],
                     }
                     break
-    
+
     # Fix fallback
     if not fix:
         # 첫 번째 DEBUG 이벤트의 summary 사용
@@ -586,9 +584,9 @@ def build_issue_card_from_window(
                     "snippet_refs": event.snippet_refs,
                 }
                 break
-    
+
     fixes = [fix] if fix else []
-    
+
     # Validation fallback
     if not validation:
         for turn in window_turns:
@@ -596,9 +594,9 @@ def build_issue_card_from_window(
                 validation = extract_validation_text(turn.body)
                 if validation:
                     break
-    
+
     validations = [validation] if validation else []
-    
+
     # Root cause 또는 Fix 중 하나라도 있어야 카드 생성
     if not root_cause and not fixes:
         return None
