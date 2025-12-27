@@ -7,9 +7,14 @@ gpt-4.1-mini를 사용한 이벤트 타입 분류 및 요약 생성 테스트
 import pytest
 import os
 from pathlib import Path
-from backend.core.llm_service import classify_and_summarize_with_llm
+from backend.core.llm_service import (
+    classify_and_summarize_with_llm,
+    classify_and_summarize_batch_with_llm,
+    reset_cache_stats,
+    get_cache_stats,
+)
 from backend.core.models import Turn, EventType
-from backend.core.cache import get_cached_result, save_cached_result
+from backend.core.cache import get_cached_result, save_cached_result, CACHE_DIR
 
 
 def test_llm_service_caching():

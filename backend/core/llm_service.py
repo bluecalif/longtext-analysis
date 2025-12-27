@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # .env 파일 자동 로드
 load_dotenv()
 
-from backend.core.models import Turn, EventType, Event, TimelineSection
+from backend.core.models import Turn, EventType, Event, TimelineSection, SessionMeta
 from backend.core.cache import (
     get_cached_result,
     save_cached_result,
@@ -503,6 +503,383 @@ SUMMARY: [1-2문장 요약, 핵심 동작과 상태 정보 포함]"""
 
     # 모든 재시도 실패 시 마지막 오류를 다시 발생시킴 (fallback 후에는 도달하지 않음)
     raise last_error
+
+
+def classify_and_summarize_batch_with_llm(
+    turns: List[Turn], session_meta: Optional[SessionMeta] = None
+) -> List[Dict[str, any]]:
+    """
+    LLM으로 배치 단위 타입 분류 및 요약 생성 (Phase 6.1)
+
+    5개 Turn을 하나의 LLM 호출로 처리하여 호출 횟수를 감소시킵니다.
+    배치 내 Turn 간 컨텍스트를 활용하여 정확도를 향상시킵니다.
+
+    ⚠️ 중요: 배치 캐시만 사용합니다 (기존 개별 캐시는 무시)
+    - 캐시 키: `llm_batch_{text_hash}` 형식
+    - 기존 개별 캐시(`llm_*`)는 레거시이며 사용하지 않음
+    - 새 파일 처리 시 배치 캐시를 새로 생성
+
+    Args:
+        turns: Turn 리스트 (5개)
+        session_meta: 세션 메타데이터 (선택적)
+
+    Returns:
+        [
+            {
+                "event_type": EventType,
+                "summary": str
+            },
+            ...
+        ] (5개)
+
+    비용 분석:
+    - 입력: 5개 Turn × 평균 500자 = 약 2500자 → 약 625 tokens
+    - 출력: 5개 Event × 평균 30 tokens = 약 150 tokens
+    - 비용: (625 * 0.40 + 150 * 1.60) / 1M = $0.00049 per 배치
+    - 개별 처리 대비: 5번 호출 → 1번 호출 (80% 비용 절감)
+    """
+    if not turns:
+        return []
+
+    if len(turns) > 5:
+        logger.warning(f"[WARNING] Batch size exceeds 5: {len(turns)}, using first 5 turns")
+        turns = turns[:5]
+
+    # 1. 배치 단위 캐시 키 생성 (배치 내 Turn 해시 결합)
+    batch_texts = []
+    for turn in turns:
+        # 각 Turn의 텍스트 + Artifact 정보
+        turn_text = turn.body[:2000]
+        if turn.code_blocks:
+            turn_text += f"_code_{len(turn.code_blocks)}"
+        if turn.path_candidates:
+            turn_text += f"_path_{len(turn.path_candidates)}"
+        batch_texts.append(f"turn_{turn.turn_index}:{turn_text[:500]}")
+
+    combined_text = "\n".join(batch_texts)
+    text_hash = _generate_text_hash(combined_text, max_length=5000)
+    cache_key = f"llm_batch_{text_hash}"
+
+    logger.debug(
+        f"[CACHE] Batch (turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+        f"cache_key={cache_key}, text_hash={text_hash}"
+    )
+
+    # 2. 캐시 확인
+    cached = get_cached_result(cache_key, text_hash=text_hash)
+    if cached:
+        with _cache_stats_lock:
+            _cache_stats["hits"] += 1
+        logger.info(
+            f"[CACHE HIT] Batch (turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+            f"cache_key={cache_key}"
+        )
+        # 캐시된 결과를 Turn 순서대로 반환
+        cached_events = cached.get("events", [])
+        if len(cached_events) == len(turns):
+            return cached_events
+        else:
+            logger.warning(
+                f"[WARNING] Cached batch size mismatch: expected {len(turns)}, "
+                f"got {len(cached_events)}, ignoring cache"
+            )
+
+    # 3. 캐시 미스
+    with _cache_stats_lock:
+        _cache_stats["misses"] += 1
+    logger.info(
+        f"[CACHE MISS] Batch (turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+        f"cache_key={cache_key}, calling LLM"
+    )
+
+    # 4. LLM 호출 (재시도 로직 포함)
+    from openai import OpenAI
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("[WARNING] OPENAI_API_KEY not found, using fallback")
+        # Fallback: 개별 처리
+        return [classify_and_summarize_with_llm(turn) for turn in turns]
+
+    client = OpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+
+    # 재시도 로직 (지수 백오프)
+    last_error = None
+    for attempt in range(LLM_MAX_RETRIES):
+        try:
+            # 배치 내 Turn 정보 수집
+            batch_content = []
+            for idx, turn in enumerate(turns):
+                turn_info = f"""
+## Turn {idx + 1} (turn_index: {turn.turn_index})
+
+**Speaker**: {turn.speaker}
+
+**Body**:
+{turn.body[:2000]}
+
+"""
+                # Artifact 정보 추가
+                if turn.code_blocks:
+                    turn_info += f"**코드 블록**: {len(turn.code_blocks)}개\n"
+                    for i, block in enumerate(turn.code_blocks[:3], 1):
+                        turn_info += (
+                            f"- 코드 블록 {i}: 언어={block.lang}, 길이={len(block.code)}자\n"
+                        )
+
+                if turn.path_candidates:
+                    turn_info += f"**파일 경로**: {', '.join(turn.path_candidates[:5])}\n"
+
+                batch_content.append(turn_info)
+
+            # System 프롬프트 (배치 처리용)
+            system_prompt = """당신은 소프트웨어 개발 세션의 대화 로그를 분석하여 각 Turn의 이벤트 타입을 분류하고 요약하는 전문가입니다.
+
+## 작업
+다음 5개 Turn의 이벤트 타입을 각각 분류하고 1-2문장으로 요약하세요.
+
+## 이벤트 타입 선택지 및 구분 기준
+
+- **status_review**: 상태 확인/리뷰 (파일 읽기, 현황 파악 등)
+  - 예: "프로젝트 현황을 파악합니다", "진행 상황을 확인합니다", "TODOs.md 파일을 참조합니다"
+  - 파일 경로만 있고 코드 블록이 없으면 status_review 가능성 높음
+
+- **plan**: 계획 수립 (새로운 작업 계획, 단계별 계획)
+  - 예: "다음 작업을 계획합니다", "단계별 계획을 수립합니다"
+
+- **code_generation**: 코드 생성 (새로운 코드 작성, 컴포넌트 생성 등)
+  - **코드 블록이 있으면**: code_generation 타입 가능성 매우 높음
+  - 예: "새로운 컴포넌트를 생성합니다" + 코드 블록 → **code_generation**
+  - 키워드: "스크립트 작성", "코드 작성", "파일 생성", "컴포넌트 생성"
+
+- **debug**: 문제 해결 과정 (에러 분석, 원인 파악, 코드 수정, 검증)
+  - 예: "원인을 분석합니다", "문제를 해결합니다", "에러를 확인합니다", "코드를 수정합니다"
+  - ⚠️ 구분: 새로운 코드 생성은 code_generation, 문제 해결을 위한 수정은 debug
+
+- **completion**: 완료 (작업 완료, 성공, TODOs.md 업데이트 등)
+  - 예: "작업이 완료되었습니다", "성공적으로 완료했습니다", "TODOs.md에 반영합니다"
+
+- **next_step**: 다음 단계 (다음 작업, 진행)
+  - 예: "다음 단계로 진행합니다", "다음 작업을 시작합니다"
+
+- **turn**: 일반 대화 (기본값, 위 타입에 해당하지 않을 때)
+
+## 타입 분류 우선순위
+
+1. **Code Generation 우선**: 코드 블록이 있으면 code_generation 타입 우선 고려
+2. **키워드 기반**: Turn의 키워드로 타입 판단
+3. **기본값**: 위 조건에 해당하지 않으면 turn
+
+## 요약 생성 규칙
+
+**핵심 원칙**:
+1. **핵심 동작 포함**: 무엇을 하는가 (동작 중심)
+2. **상태 정보 포함**: 진행중/완료/요청 등 상태 명시
+3. **중요 세부사항 포함**: 파일명, 수치, 변경사항 등
+
+**요약 길이**: 150-200자 (의미 있는 단위로 자르기, 문장 중간 자르기 금지)
+
+## 배치 내 컨텍스트 활용
+
+- 이전 Turn의 내용을 참고하여 현재 Turn의 타입을 더 정확히 분류하세요
+- 연속된 Turn의 타입 일관성을 고려하세요
+- 같은 주제나 작업에 대한 Turn들은 유사한 타입을 가질 가능성이 높습니다
+
+## 응답 형식
+
+반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이 JSON만):
+
+{
+  "events": [
+    {
+      "turn_index": 0,
+      "event_type": "status_review",
+      "summary": "요약 내용"
+    },
+    {
+      "turn_index": 1,
+      "event_type": "plan",
+      "summary": "요약 내용"
+    },
+    ...
+  ]
+}
+
+주의사항:
+- 반드시 유효한 JSON 형식이어야 함
+- "events" 키가 필수이며, 배열 타입이어야 함
+- 각 event는 "turn_index" (정수), "event_type" (문자열), "summary" (문자열) 키를 포함해야 함
+- turn_index는 입력 Turn의 순서대로 0, 1, 2, 3, 4여야 함
+- 모든 Turn이 반드시 포함되어야 함 (5개)
+- event_type은 반드시 위의 선택지 중 하나여야 함"""
+
+            # User 프롬프트 (배치 내 모든 Turn)
+            user_content = "\n---\n".join(batch_content)
+
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    },
+                    {
+                        "role": "user",
+                        "content": user_content,
+                    },
+                ],
+                max_tokens=1000,  # 5개 Event × 평균 200 tokens
+                temperature=0.3,
+                response_format={"type": "json_object"},  # JSON 형식 강제
+            )
+
+            result_text = response.choices[0].message.content.strip()
+
+            # JSON 파싱
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"[WARNING] Failed to parse JSON response (attempt {attempt + 1}/{LLM_MAX_RETRIES}): {str(e)[:200]}"
+                )
+                if attempt < LLM_MAX_RETRIES - 1:
+                    wait_time = 2**attempt
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # Fallback: 개별 처리
+                    logger.info(
+                        f"[FALLBACK] Using individual processing for batch "
+                        f"(turns {turns[0].turn_index}-{turns[-1].turn_index})"
+                    )
+                    return [classify_and_summarize_with_llm(turn) for turn in turns]
+
+            # 응답 구조 검증
+            if not isinstance(result, dict):
+                raise ValueError(f"LLM response is not a dict: {type(result)}")
+
+            events = result.get("events", [])
+
+            if not isinstance(events, list):
+                raise ValueError(f"'events' is not a list: {type(events)}")
+
+            if len(events) != len(turns):
+                raise ValueError(f"Event count mismatch: expected {len(turns)}, got {len(events)}")
+
+            # 각 event 검증 및 변환
+            batch_results = []
+            for idx, event_data in enumerate(events):
+                if not isinstance(event_data, dict):
+                    raise ValueError(f"event[{idx}] is not a dict: {type(event_data)}")
+
+                turn_index = event_data.get("turn_index")
+                if turn_index is None or turn_index != idx:
+                    logger.warning(
+                        f"[WARNING] turn_index mismatch: expected {idx}, got {turn_index}, "
+                        f"using turn_index from turns list"
+                    )
+                    turn_index = turns[idx].turn_index
+
+                event_type_str = event_data.get("event_type", "").lower()
+                summary = event_data.get("summary", "")
+
+                # 타입 검증
+                try:
+                    event_type = EventType(event_type_str) if event_type_str else EventType.TURN
+                except ValueError:
+                    logger.warning(f"[WARNING] Invalid event_type: {event_type_str}, using TURN")
+                    event_type = EventType.TURN
+
+                # 요약이 없으면 기본 요약
+                if not summary:
+                    summary = summarize_turn(turns[idx])
+
+                batch_results.append(
+                    {
+                        "event_type": event_type,
+                        "summary": summary,
+                    }
+                )
+
+            # 결과 캐시 저장
+            cache_result = {
+                "events": [
+                    {
+                        "event_type": r["event_type"].value,
+                        "summary": r["summary"],
+                    }
+                    for r in batch_results
+                ]
+            }
+            save_cached_result(
+                cache_key,
+                cache_result,
+                text_hash=text_hash,
+                turn_index=None,  # 배치이므로 turn_index 없음
+            )
+            with _cache_stats_lock:
+                _cache_stats["saves"] += 1
+            logger.info(
+                f"[CACHE SAVE] Batch (turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+                f"cache_key={cache_key}"
+            )
+
+            return batch_results
+
+        # 모든 예외 처리 (타임아웃, Rate limit, 일시적 오류 등)
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+
+            # 마지막 시도가 아니면 재시도
+            if attempt < LLM_MAX_RETRIES - 1:
+                wait_time = 2**attempt  # 지수 백오프: 1초, 2초, 4초
+                logger.warning(
+                    f"[WARNING] LLM batch call attempt {attempt + 1}/{LLM_MAX_RETRIES} failed "
+                    f"(turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+                    f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+            else:
+                # 모든 재시도 실패 시 Fallback (개별 처리)
+                logger.error(
+                    f"[ERROR] LLM batch call failed after {LLM_MAX_RETRIES} attempts "
+                    f"(turns {turns[0].turn_index}-{turns[-1].turn_index}): "
+                    f"{error_type}: {str(e)[:200]}"
+                )
+                logger.info(
+                    f"[FALLBACK] Using individual processing for batch "
+                    f"(turns {turns[0].turn_index}-{turns[-1].turn_index})"
+                )
+
+                # Fallback: 개별 처리
+                fallback_results = []
+                for turn in turns:
+                    try:
+                        result = classify_and_summarize_with_llm(turn)
+                        fallback_results.append(result)
+                    except Exception as fallback_error:
+                        # 개별 처리도 실패하면 기본 이벤트 생성
+                        logger.warning(
+                            f"[WARNING] Individual processing also failed for Turn {turn.turn_index}: "
+                            f"{str(fallback_error)[:100]}"
+                        )
+                        fallback_results.append(
+                            {
+                                "event_type": EventType.TURN,
+                                "summary": summarize_turn(turn),
+                            }
+                        )
+
+                # Fallback 결과도 캐시 저장 (선택적)
+                return fallback_results
+
+    # 모든 재시도 실패 시 Fallback
+    logger.info(
+        f"[FALLBACK] Using individual processing for batch "
+        f"(turns {turns[0].turn_index}-{turns[-1].turn_index})"
+    )
+    return [classify_and_summarize_with_llm(turn) for turn in turns]
 
 
 def extract_main_tasks_with_llm(

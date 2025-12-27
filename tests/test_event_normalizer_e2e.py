@@ -244,11 +244,11 @@ def test_event_normalizer_e2e_with_llm():
         parse_result["turns"]
     ), f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음"
 
-    # 처리 방법 확인 (LLM 기반이므로 모두 "llm")
+    # 처리 방법 확인 (배치 처리이므로 "llm_batch")
     processing_methods = [getattr(event, "processing_method", "regex") for event in events]
     assert all(
-        method == "llm" for method in processing_methods
-    ), "LLM 기반 테스트인데 processing_method가 'llm'이 아님"
+        method == "llm_batch" for method in processing_methods
+    ), f"배치 처리 테스트인데 processing_method가 'llm_batch'가 아님: {set(processing_methods)}"
 
     # Turn → Event 변환 정확성
     turn_refs = [event.turn_ref for event in events]
@@ -317,22 +317,44 @@ def test_event_normalizer_e2e_with_llm():
     runtime_cache_hits = runtime_cache_stats["hits"]
     runtime_cache_misses = runtime_cache_stats["misses"]
     runtime_cache_saves = runtime_cache_stats["saves"]
+    # 배치 처리이므로 배치 단위로 히트율 계산 (Phase 6.1)
+    BATCH_SIZE = 5
+    total_batches = (len(parse_result["turns"]) + BATCH_SIZE - 1) // BATCH_SIZE
     runtime_cache_hit_rate = (
-        runtime_cache_hits / len(parse_result["turns"]) if parse_result["turns"] else 0.0
+        runtime_cache_hits / total_batches if total_batches > 0 else 0.0
     )
 
-    # 파일 기반 통계 (테스트 실행 후 캐시 파일 존재 여부)
-    file_based_cache_hits = 0
-    file_based_cache_misses = 0
-    for turn in parse_result["turns"]:
-        cache_key = f"llm_{hash(turn.body[:1000]) % 1000000}"
+    # 파일 기반 통계 (배치 캐시 확인, Phase 6.1)
+    from backend.core.cache import _generate_text_hash
+
+    # 배치 캐시 확인 (BATCH_SIZE개씩 묶어서 확인)
+    file_based_batch_cache_hits = 0
+    file_based_batch_cache_misses = 0
+
+    for i in range(0, len(parse_result["turns"]), BATCH_SIZE):
+        batch = parse_result["turns"][i : i + BATCH_SIZE]
+        # 배치 캐시 키 생성 (classify_and_summarize_batch_with_llm과 동일한 로직)
+        batch_texts = []
+        for turn in batch:
+            turn_text = turn.body[:2000]
+            if turn.code_blocks:
+                turn_text += f"_code_{len(turn.code_blocks)}"
+            if turn.path_candidates:
+                turn_text += f"_path_{len(turn.path_candidates)}"
+            batch_texts.append(f"turn_{turn.turn_index}:{turn_text[:500]}")
+
+        combined_text = "\n".join(batch_texts)
+        text_hash = _generate_text_hash(combined_text, max_length=5000)
+        cache_key = f"llm_batch_{text_hash}"
         cache_file = CACHE_DIR / f"{cache_key}.json"
+
         if cache_file.exists():
-            file_based_cache_hits += 1
+            file_based_batch_cache_hits += 1
         else:
-            file_based_cache_misses += 1
-    file_based_cache_hit_rate = (
-        file_based_cache_hits / len(parse_result["turns"]) if parse_result["turns"] else 0.0
+            file_based_batch_cache_misses += 1
+
+    file_based_batch_cache_hit_rate = (
+        file_based_batch_cache_hits / total_batches if total_batches > 0 else 0.0
     )
 
     # 6. 결과 분석 및 자동 보고
@@ -349,9 +371,12 @@ def test_event_normalizer_e2e_with_llm():
             "code_generation_events_count": len(code_generation_events),
             "events_with_snippets_count": len(events_with_snippets),
             "code_generation_linking_rate": code_generation_linking_rate,
-            "processing_method": "llm",
+            "processing_method": "llm_batch",  # Phase 6.1: 배치 처리
+            "batch_size": 5,
             "parallel_processing": True,
             "max_workers": 5,
+            "expected_llm_calls": total_batches,  # 배치 개수만큼 LLM 호출
+            "actual_llm_calls": runtime_cache_misses,  # 캐시 미스 = 실제 LLM 호출
             "elapsed_time_seconds": round(elapsed_time, 2),
             "average_time_per_turn": (
                 round(elapsed_time / len(parse_result["turns"]), 2) if parse_result["turns"] else 0
@@ -363,10 +388,11 @@ def test_event_normalizer_e2e_with_llm():
                     "cache_saves": runtime_cache_saves,
                     "cache_hit_rate": round(runtime_cache_hit_rate, 4),
                 },
-                "file_based": {
-                    "cache_hits": file_based_cache_hits,
-                    "cache_misses": file_based_cache_misses,
-                    "cache_hit_rate": round(file_based_cache_hit_rate, 4),
+                "file_based_batch": {
+                    "cache_hits": file_based_batch_cache_hits,
+                    "cache_misses": file_based_batch_cache_misses,
+                    "cache_hit_rate": round(file_based_batch_cache_hit_rate, 4),
+                    "total_batches": total_batches,
                 },
             },
         },

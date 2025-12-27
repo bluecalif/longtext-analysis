@@ -51,11 +51,18 @@ def _normalize_turns_to_events_parallel(
     turns: List[Turn], session_meta: Optional[SessionMeta] = None
 ) -> List[Event]:
     """
-    LLM 기반 이벤트 생성 (병렬 처리, 하이브리드 방식)
+    LLM 기반 이벤트 생성 (배치 처리 + 병렬 처리, Phase 6.1)
 
-    하이브리드 방식:
-    1. 1차: 병렬로 모든 Turn 처리 (맥락 없이)
-    2. 2차: 순차적으로 맥락 정보를 활용하여 재분류 (필요시)
+    배치 처리 방식:
+    1. Turn 리스트를 5개씩 배치로 분할
+    2. 각 배치를 병렬로 처리 (max_workers=5)
+    3. 배치 내 Turn들은 하나의 LLM 호출로 처리
+    4. 배치 결과를 Event 객체로 변환
+
+    ⚠️ 중요: 배치 캐시만 사용합니다 (기존 개별 캐시는 무시)
+    - 배치 캐시 키: `llm_batch_{text_hash}` 형식
+    - 기존 개별 캐시(`llm_*`)는 레거시이며 사용하지 않음
+    - 새 파일 처리 시 배치 캐시를 새로 생성
 
     Args:
         turns: Turn 리스트
@@ -64,34 +71,120 @@ def _normalize_turns_to_events_parallel(
     Returns:
         Event 리스트 (turn_index 순서 유지)
     """
+    from backend.core.llm_service import classify_and_summarize_batch_with_llm
+
+    # 배치 크기
+    BATCH_SIZE = 5
+
+    # 1. Turn 리스트를 5개씩 배치로 분할
+    batches = []
+    for i in range(0, len(turns), BATCH_SIZE):
+        batch = turns[i : i + BATCH_SIZE]
+        batches.append(batch)
+
     events_dict = {}  # turn_index -> Event 매핑
 
-    # 1차: 병렬로 모든 Turn 처리 (맥락 없이, 빠른 처리)
+    # 2. 배치 단위로 병렬 처리
     with ThreadPoolExecutor(max_workers=5) as executor:
-        # 각 Turn을 병렬로 처리
-        future_to_turn = {
-            executor.submit(create_event_with_llm, turn, session_meta, turns, None): turn
-            for turn in turns
+        # 각 배치를 병렬로 처리
+        future_to_batch = {
+            executor.submit(_process_batch, batch, session_meta): batch
+            for batch in batches
         }
 
-        # 완료된 작업부터 처리 (순서 보장을 위해 turn_index 저장)
-        for future in as_completed(future_to_turn):
-            turn = future_to_turn[future]
+        # 완료된 작업부터 처리
+        for future in as_completed(future_to_batch):
+            batch = future_to_batch[future]
             try:
-                event = future.result()
-                events_dict[turn.turn_index] = event
+                batch_events = future.result()
+                # 배치 결과를 events_dict에 저장
+                for event in batch_events:
+                    events_dict[event.turn_ref] = event
             except Exception as e:
-                # 에러 발생 시 기본 이벤트 생성 (fallback)
-                # 로깅은 선택적 (필요시 추가)
-                event = create_single_event_with_priority(turn, session_meta)
-                events_dict[turn.turn_index] = event
+                import logging
 
-    # 2차: 맥락 정보를 활용하여 재분류 (순차 처리)
-    # 현재는 1차 결과를 그대로 사용 (향후 개선 가능)
-    # 맥락 정보가 중요한 경우에만 재분류하도록 최적화 가능
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"[WARNING] Batch processing failed for turns "
+                    f"{batch[0].turn_index}-{batch[-1].turn_index}: {str(e)[:200]}"
+                )
+                # Fallback: 개별 처리
+                for turn in batch:
+                    try:
+                        event = create_event_with_llm(turn, session_meta, turns, None)
+                        events_dict[turn.turn_index] = event
+                    except Exception as fallback_error:
+                        # 개별 처리도 실패하면 기본 이벤트 생성
+                        event = create_single_event_with_priority(turn, session_meta)
+                        events_dict[turn.turn_index] = event
 
     # turn_index 순서로 정렬
     events = [events_dict[turn.turn_index] for turn in turns]
+    return events
+
+
+def _process_batch(
+    batch: List[Turn], session_meta: Optional[SessionMeta] = None
+) -> List[Event]:
+    """
+    배치 단위 이벤트 생성 (Phase 6.1)
+
+    Args:
+        batch: Turn 리스트 (5개)
+        session_meta: 세션 메타데이터
+
+    Returns:
+        Event 리스트 (5개)
+    """
+    from backend.core.llm_service import classify_and_summarize_batch_with_llm
+
+    # 배치 처리 LLM 호출
+    batch_results = classify_and_summarize_batch_with_llm(batch, session_meta)
+
+    # 배치 결과를 Event 객체로 변환
+    events = []
+    for idx, turn in enumerate(batch):
+        if idx < len(batch_results):
+            result = batch_results[idx]
+            event_type = result["event_type"]
+            summary = result["summary"]
+        else:
+            # 결과가 부족하면 기본 이벤트 생성
+            event_type = EventType.TURN
+            summary = summarize_turn(turn)
+
+        # Artifact 연결 (파일 경로가 있으면)
+        artifacts = []
+        if turn.path_candidates:
+            for path in turn.path_candidates:
+                # 코드 블록이 있으면 create, 그 외는 read
+                action = (
+                    ArtifactAction.CREATE.value
+                    if turn.code_blocks
+                    else ArtifactAction.READ.value
+                )
+                artifacts.append({"path": path, "action": action})
+
+        # Snippet 참조 생성
+        snippet_refs = [
+            f"turn_{turn.turn_index}_block_{block.block_index}"
+            for block in turn.code_blocks
+        ]
+
+        event = Event(
+            seq=0,  # 임시, normalize_turns_to_events에서 부여
+            session_id=session_meta.session_id if session_meta else "",
+            turn_ref=turn.turn_index,
+            phase=session_meta.phase if session_meta else None,
+            subphase=session_meta.subphase if session_meta else None,
+            type=event_type,
+            summary=summary,
+            artifacts=artifacts,
+            snippet_refs=snippet_refs,
+            processing_method="llm_batch",  # 배치 처리 표시
+        )
+        events.append(event)
+
     return events
 
 
