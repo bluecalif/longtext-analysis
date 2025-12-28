@@ -468,18 +468,21 @@
   - [ ] 작은 화면에서 3열 레이아웃을 세로 스택으로 변경
   - [ ] 모바일 뷰 최적화
 
-**브라우저 확인**:
-- [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-- [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
-- [ ] 브라우저에서 `http://localhost:3000` 접속
-- [ ] 전체 UI 스타일 확인:
-  - [ ] Tailwind CSS 스타일 적용 확인
-  - [ ] 로딩 상태 표시 확인 (파일 업로드, API 호출 중)
-  - [ ] 에러 메시지 표시 확인 (파일 크기 초과, 잘못된 형식 등)
-  - [ ] 반응형 디자인 확인 (창 크기 조절, 모바일 뷰)
-- [ ] UX 개선 사항 확인:
-  - [ ] 사용자 피드백 명확성 확인
-  - [ ] 인터랙션 반응성 확인
+**브라우저 확인** (⚠️ 필수):
+- [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+- [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
+- [x] 브라우저에서 `http://localhost:3000` 접속
+- [x] 전체 UI 스타일 확인:
+  - [x] Tailwind CSS 스타일 적용 확인
+  - [x] 로딩 상태 표시 확인 (파일 업로드, API 호출 중)
+  - [x] 에러 메시지 표시 확인 (파일 크기 초과, 잘못된 형식 등)
+  - [x] 반응형 디자인 확인 (창 크기 조절, 모바일 뷰)
+    - [x] 작은 화면에서 3열 레이아웃이 세로 스택으로 변경되는지 확인
+- [x] UX 개선 사항 확인:
+  - [x] 사용자 피드백 명확성 확인
+  - [x] 인터랙션 반응성 확인
+- [x] 브라우저 확인 결과 문서화 (성공/실패, 발견된 문제점)
+  - ✅ 확인 결과: 양호 (2025-12-28)
 
 ### Phase 8.10: 통합 테스트 및 검증
 
@@ -491,22 +494,23 @@
 - ✅ 필수: 완료 보고에 테스트 실행 결과 포함
 
 **구현 계획**:
-- [ ] 수동 테스트 시나리오 실행
-  - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000` (프로젝트 루트에서)
-  - [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev` (프로젝트 루트에서)
-  - [ ] 브라우저에서 `http://localhost:3000` 접속
-  - [ ] 파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Snippets 처리 → Export 전체 플로우 테스트
-  - [ ] 각 단계별 결과 확인 (콘솔 로그, 네트워크 탭, 브라우저 화면)
-  - [ ] 에러 처리 확인 (파일 크기 초과, 잘못된 형식 등)
-- [ ] API contract 일치 확인
-  - [ ] Query 파라미터 이름 일치 (`use_llm` snake_case) - 네트워크 탭에서 확인
-  - [ ] Request/Response 타입 일치 - TypeScript 컴파일 오류 없음 확인
-  - [ ] Enum 값 일치 (EventType, ExportFormat 등) - 실제 API 응답과 비교
-  - [ ] Optional 필드 일치 - 백엔드 모델과 비교
-- [ ] 테스트 결과 문서화
-  - [ ] 테스트 실행 명령어 기록
-  - [ ] 테스트 통과 상태 기록 (PASS / FAIL)
-  - [ ] 발견된 문제점 및 해결 방법 기록
+- [x] 수동 테스트 시나리오 실행
+  - [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000` (프로젝트 루트에서)
+  - [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev` (프로젝트 루트에서)
+  - [x] 브라우저에서 `http://localhost:3000` 접속
+  - [x] 파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Snippets 처리 → Export 전체 플로우 테스트
+  - [x] 각 단계별 결과 확인 (콘솔 로그, 네트워크 탭, 브라우저 화면)
+  - [x] 에러 처리 확인 (파일 크기 초과, 잘못된 형식 등)
+- [x] API contract 일치 확인
+  - [x] Query 파라미터 이름 일치 (`use_llm` snake_case) - 네트워크 탭에서 확인
+  - [x] Request/Response 타입 일치 - TypeScript 컴파일 오류 없음 확인
+  - [x] Enum 값 일치 (EventType, ExportFormat 등) - 실제 API 응답과 비교
+  - [x] Optional 필드 일치 - 백엔드 모델과 비교
+- [x] 테스트 결과 문서화
+  - [x] 테스트 실행 명령어 기록 (`docs/phase8_10_test_results.md`)
+  - [x] 테스트 통과 상태 기록 (PASS)
+  - [x] 발견된 문제점 및 해결 방법 기록 (없음)
+- [x] 통합 테스트 가이드 문서 생성 (`docs/phase8_10_integration_test.md`)
 
 **브라우저 확인** (최종 통합 확인):
 - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
@@ -525,16 +529,16 @@
   - [ ] 기능 요청 사항 확인
 
 **검증 체크리스트**:
-- [ ] 모든 타입이 백엔드 모델과 1:1 매핑
-- [ ] Enum 값이 문자열 리터럴로 정확히 일치
-- [ ] Query 파라미터 이름이 snake_case로 일치 (`use_llm`)
-- [ ] 필드명, 타입, Optional 여부 모두 일치
-- [ ] Request/Response 스키마 일치
-- [ ] 파일 업로드 및 파싱 동작
-- [ ] Timeline 생성 및 표시
-- [ ] Issues 생성 및 표시
-- [ ] Snippets 처리 및 표시
-- [ ] Export 다운로드 동작
+- [x] 모든 타입이 백엔드 모델과 1:1 매핑
+- [x] Enum 값이 문자열 리터럴로 정확히 일치
+- [x] Query 파라미터 이름이 snake_case로 일치 (`use_llm`)
+- [x] 필드명, 타입, Optional 여부 모두 일치
+- [x] Request/Response 스키마 일치
+- [x] 파일 업로드 및 파싱 동작
+- [x] Timeline 생성 및 표시
+- [x] Issues 생성 및 표시
+- [x] Snippets 처리 및 표시
+- [x] Export 다운로드 동작
 
 **Phase 8 완료 시 필수 작업**:
 1. Phase 8.10 통합 테스트 완료 (수동 테스트 시나리오 실행)
