@@ -343,40 +343,49 @@
   - [x] FileUpload 컴포넌트 사용
   - [x] SessionMetaPreview 컴포넌트 사용
 
-**브라우저 확인**:
-- [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-- [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
-- [ ] 브라우저에서 `http://localhost:3000` 접속
-- [ ] FileUpload 컴포넌트 확인:
-  - [ ] 드래그&드롭 영역 표시 확인
-  - [ ] 파일 선택 버튼 동작 확인
-  - [ ] `.md` 파일 업로드 테스트 (실제 파일 사용: `docs/cursor_phase_6_3.md`)
-  - [ ] 업로드 진행 상태 표시 확인
-  - [ ] 에러 메시지 표시 확인 (잘못된 파일 형식, 크기 초과 등)
-- [ ] SessionMetaPreview 컴포넌트 확인:
-  - [ ] 파일 업로드 후 Session Meta 정보 표시 확인
-  - [ ] Phase/Subphase 수동 입력 기능 확인 (필요 시)
+**브라우저 확인** (⚠️ 필수):
+- [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+- [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
+- [x] 브라우저에서 `http://localhost:3000` 접속
+- [x] FileUpload 컴포넌트 확인:
+  - [x] 드래그&드롭 영역 표시 확인
+  - [x] 파일 선택 버튼 동작 확인
+  - [x] `.md` 파일 업로드 테스트 (실제 파일 사용: `docs/cursor_phase_6_3.md`)
+  - [x] 업로드 진행 상태 표시 확인
+  - [x] 에러 메시지 표시 확인 (잘못된 파일 형식, 크기 초과 등)
+- [x] SessionMetaPreview 컴포넌트 확인:
+  - [x] 파일 업로드 후 Session Meta 정보 표시 확인
+  - [x] Phase/Subphase 수동 입력 기능 확인 (필요 시)
+- [x] 초기화 기능 확인:
+  - [x] 초기화 버튼 표시 확인 (파일 업로드 후)
+  - [x] 초기화 버튼 클릭 시 모든 데이터 초기화 확인
+- [x] 브라우저 확인 결과 문서화 (성공/실패, 발견된 문제점)
+  - ✅ 확인 결과: 양호 (2025-12-28)
 
 ### Phase 8.6: 결과 미리보기 컴포넌트 구현
 
 **목표**: Timeline, Issues, Snippets 미리보기
 
 **구현 계획**:
-- [ ] `frontend/components/TimelinePreview.tsx` 생성
-  - [ ] Timeline Section 리스트 표시
-  - [ ] 각 Section의 이벤트 표시
-  - [ ] 이슈 연결 표시 (has_issues, issue_refs)
-  - [ ] 작업 결과 연결 정보 표시 (코드 스니펫, 파일, Artifact)
-- [ ] `frontend/components/IssuesPreview.tsx` 생성
-  - [ ] Issue Card 리스트 표시
-  - [ ] 카드 클릭 시 상세 정보 표시 (증상, 원인, 조치, 검증)
-  - [ ] 관련 스니펫 링크 표시
-  - [ ] Timeline Section 연결 표시
-- [ ] `frontend/components/SnippetsPreview.tsx` 생성
-  - [ ] 언어별 필터 (sql/ts/py 등)
-  - [ ] 스니펫 목록 표시 (snippet_id, 언어, 코드 일부)
-  - [ ] 코드 접기/펼치기 기능
-  - [ ] 스니펫 상세 조회 (API 호출)
+- [x] `frontend/components/TimelinePreview.tsx` 생성
+  - [x] Timeline Section 리스트 표시
+  - [x] 각 Section의 이벤트 표시 (접기/펼치기)
+  - [x] 이슈 연결 표시 (has_issues, issue_refs)
+  - [x] 작업 결과 연결 정보 표시 (코드 스니펫, 파일, Artifact)
+- [x] `frontend/components/IssuesPreview.tsx` 생성
+  - [x] Issue Card 리스트 표시
+  - [x] 카드 클릭 시 상세 정보 표시 (증상, 원인, 조치, 검증)
+  - [x] 관련 스니펫 링크 표시
+  - [x] Timeline Section 연결 표시
+- [x] `frontend/components/SnippetsPreview.tsx` 생성
+  - [x] 언어별 필터 (sql/ts/py 등)
+  - [x] 스니펫 목록 표시 (snippet_id, 언어, 코드 일부)
+  - [x] 코드 접기/펼치기 기능
+  - [x] 스니펫 상세 조회 (API 호출, 캐싱)
+- [x] `frontend/app/page.tsx` 리팩토링
+  - [x] TimelinePreview 컴포넌트 사용
+  - [x] IssuesPreview 컴포넌트 사용
+  - [x] SnippetsPreview 컴포넌트 사용
 
 **브라우저 확인**:
 - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`

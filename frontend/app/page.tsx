@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { FileUpload } from '@/components/FileUpload'
 import { SessionMetaPreview } from '@/components/SessionMetaPreview'
+import { TimelinePreview } from '@/components/TimelinePreview'
+import { IssuesPreview } from '@/components/IssuesPreview'
+import { SnippetsPreview } from '@/components/SnippetsPreview'
 import type {
   SessionMeta,
   Turn,
@@ -243,69 +246,12 @@ export default function Home() {
           {/* 탭 컨텐츠 */}
           <div className="flex-1 overflow-y-auto p-4">
             {activeTab === 'timeline' && (
-              <div>
-                {timelineSections.length === 0 ? (
-                  <div className="text-center text-gray-400 py-12">
-                    Timeline 데이터가 없습니다. 파일을 업로드하세요.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {timelineSections.map((section, idx) => (
-                      <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                        <h3 className="font-semibold mb-2">{section.title}</h3>
-                        <div className="text-sm text-gray-600">
-                          {section.events.length}개 이벤트
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <TimelinePreview sections={timelineSections} events={events} />
             )}
 
-            {activeTab === 'issues' && (
-              <div>
-                {issueCards.length === 0 ? (
-                  <div className="text-center text-gray-400 py-12">
-                    Issue Cards 데이터가 없습니다. 파일을 업로드하세요.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {issueCards.map((card) => (
-                      <div key={card.issue_id} className="border border-gray-200 rounded-lg p-4">
-                        <h3 className="font-semibold mb-2">{card.title}</h3>
-                        <div className="text-sm text-gray-600">
-                          증상: {card.symptoms.length}개
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {activeTab === 'issues' && <IssuesPreview issues={issueCards} />}
 
-            {activeTab === 'snippets' && (
-              <div>
-                {snippets.length === 0 ? (
-                  <div className="text-center text-gray-400 py-12">
-                    Snippets 데이터가 없습니다. 파일을 업로드하세요.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {snippets.map((snippet) => (
-                      <div key={snippet.snippet_id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="text-sm font-mono text-gray-600 mb-2">
-                          {snippet.snippet_id} ({snippet.lang})
-                        </div>
-                        <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
-                          {snippet.code.substring(0, 200)}...
-                        </pre>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {activeTab === 'snippets' && <SnippetsPreview snippets={snippets} />}
           </div>
         </div>
 
