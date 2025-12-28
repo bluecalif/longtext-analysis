@@ -142,7 +142,19 @@ export default function Home() {
       <main className="flex gap-4 p-4 h-[calc(100vh-80px)]">
         {/* 좌측: 입력 패널 */}
         <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4">입력 패널</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">입력 패널</h2>
+            {sessionMeta && (
+              <button
+                onClick={handleReset}
+                className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                disabled={isProcessing}
+                title="모든 데이터 초기화"
+              >
+                초기화
+              </button>
+            )}
+          </div>
 
           {/* 파일 업로드 컴포넌트 */}
           <FileUpload
