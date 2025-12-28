@@ -238,23 +238,23 @@
 **목표**: 타입 안전한 API 클라이언트 구현
 
 **구현 계획**:
-- [ ] `frontend/lib/api.ts` 생성
-  - [ ] API 기본 URL 설정 (`NEXT_PUBLIC_API_URL` 환경 변수)
-  - [ ] axios 또는 fetch 기반 클라이언트 구현
-  - [ ] 에러 처리 (HTTPException → Error 변환)
-  - [ ] API 함수 구현:
-    - [ ] `parseFile(file: File, use_llm?: boolean): Promise<ParseResponse>`
+- [x] `frontend/lib/api.ts` 생성
+  - [x] API 기본 URL 설정 (`NEXT_PUBLIC_API_URL` 환경 변수)
+  - [x] fetch 기반 클라이언트 구현
+  - [x] 에러 처리 (HTTPException → ApiError 변환)
+  - [x] API 함수 구현:
+    - [x] `parseFile(file: File, use_llm?: boolean): Promise<ParseResponse>`
       - Query 파라미터: `use_llm` (snake_case, bool)
       - FormData로 파일 업로드
-    - [ ] `createTimeline(request: TimelineRequest, use_llm?: boolean): Promise<TimelineResponse>`
+    - [x] `createTimeline(request: TimelineRequest, use_llm?: boolean): Promise<TimelineResponse>`
       - Query 파라미터: `use_llm` (snake_case, bool)
-    - [ ] `createIssues(request: IssuesRequest, use_llm?: boolean): Promise<IssuesResponse>`
+    - [x] `createIssues(request: IssuesRequest, use_llm?: boolean): Promise<IssuesResponse>`
       - Query 파라미터: `use_llm` (snake_case, bool)
-    - [ ] `processSnippets(request: SnippetsProcessRequest): Promise<SnippetsProcessResponse>`
-    - [ ] `getSnippet(snippetId: string): Promise<SnippetResponse>`
-    - [ ] `exportTimeline(request: ExportTimelineRequest): Promise<Blob>`
-    - [ ] `exportIssues(request: ExportIssuesRequest): Promise<Blob>`
-    - [ ] `exportAll(request: ExportAllRequest): Promise<Blob>`
+    - [x] `processSnippets(request: SnippetsProcessRequest): Promise<SnippetsProcessResponse>`
+    - [x] `getSnippet(snippetId: string): Promise<SnippetResponse>`
+    - [x] `exportTimeline(request: ExportTimelineRequest): Promise<Blob>`
+    - [x] `exportIssues(request: ExportIssuesRequest): Promise<Blob>`
+    - [x] `exportAll(request: ExportAllRequest): Promise<Blob>`
 
 **⚠️ 중요: Query 파라미터 동기화**
 - 백엔드: `use_llm: bool = Query(default=USE_LLM_BY_DEFAULT)` (snake_case)
