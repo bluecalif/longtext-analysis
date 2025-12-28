@@ -259,10 +259,10 @@ export default function Home() {
         <p className="text-sm text-gray-600 mt-1">Cursor IDE 세션 분석 도구</p>
       </header>
 
-      {/* 메인 컨텐츠 - 3열 레이아웃 */}
-      <main className="flex gap-4 p-4 h-[calc(100vh-80px)]">
+      {/* 메인 컨텐츠 - 3열 레이아웃 (반응형: 모바일에서는 세로 스택) */}
+      <main className="flex flex-col lg:flex-row gap-4 p-4 h-[calc(100vh-80px)]">
         {/* 좌측: 입력 패널 */}
-        <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
+        <div className="w-full lg:w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">입력 패널</h2>
             {sessionMeta && (
@@ -374,7 +374,7 @@ export default function Home() {
         </div>
 
         {/* 우측: Export 패널 */}
-        <div className="w-72 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
+        <div className="w-full lg:w-72 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
           <h2 className="text-lg font-semibold mb-4">Export</h2>
 
           {!sessionMeta ? (
