@@ -73,7 +73,7 @@ def _call_llm_with_retry(
     if cached:
         with _cache_stats_lock:
             _cache_stats["hits"] += 1
-        logger.debug(f"[CACHE HIT] LLM call: cache_key={cache_key}, turn_index={turn_index}")
+        logger.info(f"[CACHE HIT] LLM call: cache_key={cache_key}, turn_index={turn_index}")
         return cached.get("result")
 
     # 2. 캐시 미스
@@ -1028,11 +1028,17 @@ def extract_main_tasks_with_llm(
   ]
 }
 
+⚠️ 중요: event_seqs 정확성 규칙 (Phase 6.2)
+- event_seqs는 반드시 입력 이벤트의 seq 값과 정확히 일치해야 함
+- 입력 이벤트에 없는 seq 값을 포함하면 해당 task는 무시됨
+- 모든 이벤트가 최소한 하나의 작업 항목에 포함되어야 함
+- 누락된 이벤트는 자동으로 별도 작업 항목으로 추가됨
+
 주의사항:
 - 반드시 유효한 JSON 형식이어야 함
 - "tasks" 키가 필수이며, 배열 타입이어야 함
 - 각 task는 "title" (문자열), "summary" (문자열), "event_seqs" (정수 배열) 키를 포함해야 함
-- event_seqs는 반드시 입력 이벤트의 seq 값이어야 함
+- event_seqs는 반드시 입력 이벤트의 seq 값이어야 함 (정확히 일치)
 - 모든 이벤트가 최소한 하나의 작업 항목에 포함되어야 함
 - 작업 항목은 1개 이상이어야 함"""
 
@@ -1094,20 +1100,80 @@ def extract_main_tasks_with_llm(
                         f"task[{idx}]['event_seqs'] is not a list: {type(task.get('event_seqs'))}"
                     )
 
-            # 검증: 모든 이벤트 seq가 포함되어야 함
+            # 검증 및 개선: 유효한 seq만 필터링, 누락된 이벤트 자동 포함 (Phase 6.2)
             input_seqs = set(event_seqs)
             output_seqs = set()
-            for task in tasks:
-                output_seqs.update(task.get("event_seqs", []))
+            valid_tasks = []
 
-            # 누락된 이벤트가 있으면 fallback
+            logger.info(
+                f"[LLM VALIDATION] Starting validation: input_seqs={sorted(input_seqs)}, "
+                f"tasks_count={len(tasks)}"
+            )
+
+            for idx, task in enumerate(tasks):
+                task_event_seqs = task.get("event_seqs", [])
+                # 유효한 seq만 필터링 (입력 이벤트에 존재하는 seq만)
+                valid_seqs = [seq for seq in task_event_seqs if seq in input_seqs]
+                invalid_seqs = [seq for seq in task_event_seqs if seq not in input_seqs]
+
+                if invalid_seqs:
+                    logger.warning(
+                        f"[LLM VALIDATION] Task[{idx}] has invalid seqs: {invalid_seqs}, "
+                        f"filtering out. Valid seqs: {valid_seqs}"
+                    )
+
+                if valid_seqs:
+                    # 유효한 seq만 사용하여 task 수정
+                    task["event_seqs"] = valid_seqs
+                    output_seqs.update(valid_seqs)
+                    valid_tasks.append(task)
+                    logger.debug(
+                        f"[LLM VALIDATION] Task[{idx}] validated: "
+                        f"title='{task.get('title', '')[:50]}', "
+                        f"valid_seqs={valid_seqs}"
+                    )
+                else:
+                    logger.warning(
+                        f"[LLM VALIDATION] Task[{idx}] has no valid seqs, skipping. "
+                        f"Original seqs: {task_event_seqs}"
+                    )
+
+            # 누락된 이벤트 자동 포함 (Phase 6.2)
             missing_seqs = input_seqs - output_seqs
             if missing_seqs:
                 logger.warning(
-                    f"[WARNING] Missing event seqs in LLM response: {missing_seqs}, "
-                    f"using fallback"
+                    f"[LLM VALIDATION] Missing event seqs: {sorted(missing_seqs)}, "
+                    f"auto-including as separate task"
                 )
+                # 누락된 이벤트를 별도 작업 항목으로 추가
+                for missing_seq in sorted(missing_seqs):
+                    missing_event = next((e for e in events if e.seq == missing_seq), None)
+                    if missing_event:
+                        auto_task = {
+                            "title": f"{missing_event.type.value} 작업",
+                            "summary": missing_event.summary[:200],
+                            "event_seqs": [missing_seq],
+                        }
+                        valid_tasks.append(auto_task)
+                        logger.info(
+                            f"[LLM VALIDATION] Auto-included missing event seq={missing_seq} "
+                            f"as task: '{auto_task['title']}'"
+                        )
+
+            # 유효한 task가 없으면 fallback
+            if not valid_tasks:
+                logger.error(f"[LLM VALIDATION] No valid tasks after validation, using fallback")
                 return _extract_main_tasks_fallback(events)
+
+            logger.info(
+                f"[LLM VALIDATION] Validation complete: "
+                f"valid_tasks={len(valid_tasks)}, "
+                f"covered_seqs={len(output_seqs)}/{len(input_seqs)}, "
+                f"missing_seqs={len(missing_seqs)}"
+            )
+
+            # 유효한 tasks로 교체
+            tasks = valid_tasks
 
             # 결과 캐시 저장
             cache_result = {
@@ -1165,6 +1231,9 @@ def extract_main_tasks_with_llm(
                     f"[ERROR] LLM response validation failed after {LLM_MAX_RETRIES} attempts: "
                     f"{error_type}: {str(e)[:200]}"
                 )
+                # Traceback 로깅 추가
+                import traceback
+                logger.debug(f"[LLM ERROR] Validation traceback: {traceback.format_exc()}")
                 logger.info("[FALLBACK] Using pattern-based task extraction")
                 return _extract_main_tasks_fallback(events)
         except Exception as e:
@@ -1177,12 +1246,20 @@ def extract_main_tasks_with_llm(
                     f"[WARNING] LLM call attempt {attempt + 1}/{LLM_MAX_RETRIES} failed: "
                     f"{error_type}: {str(e)[:100]}, retrying in {wait_time}s..."
                 )
+                # Traceback 로깅 (재시도 시에도 기록)
+                import traceback
+                logger.debug(
+                    f"[LLM ERROR] Attempt {attempt + 1} traceback: {traceback.format_exc()}"
+                )
                 time.sleep(wait_time)
             else:
                 logger.error(
                     f"[ERROR] LLM call failed after {LLM_MAX_RETRIES} attempts: "
                     f"{error_type}: {str(e)[:200]}"
                 )
+                # Traceback 로깅 (최종 실패 시)
+                import traceback
+                logger.debug(f"[LLM ERROR] Final failure traceback: {traceback.format_exc()}")
                 logger.info("[FALLBACK] Using pattern-based task extraction")
                 return _extract_main_tasks_fallback(events)
 
@@ -1292,7 +1369,7 @@ def extract_issue_with_llm(
     if cached:
         with _cache_stats_lock:
             _cache_stats["hits"] += 1
-        logger.debug(f"[CACHE HIT] Integrated issue extraction: cache_key={cache_key}")
+        logger.info(f"[CACHE HIT] Integrated issue extraction: cache_key={cache_key}")
         return cached
 
     # 캐시 미스

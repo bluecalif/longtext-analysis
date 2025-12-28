@@ -26,11 +26,16 @@
    - 피드백 없이는 다음 Phase로 진행하지 않음
 
 4. **Phase 완료 시 필수 작업**
+   - **테스트 실행 검증** (테스트 관련 작업 포함 시 필수)
+     - ❌ 절대 금지: 테스트 파일만 작성하고 실행하지 않은 채 완료 보고
+     - ✅ 필수: 테스트 파일 작성 후 반드시 실제로 실행 (`poetry run pytest tests/test_xxx.py -v`)
+     - ✅ 필수: 테스트 통과 확인 및 결과 파일 생성 확인 (`tests/logs/`, `tests/results/`)
+     - ✅ 필수: 완료 보고에 테스트 실행 명령어 및 결과 포함
    - **TODOs.md 업데이트**: 완료된 작업 항목 체크박스 업데이트 및 진행 상황 추적 섹션 업데이트
    - **Git Commit**: Phase 완료 후 반드시 커밋 실행
      - 커밋 메시지 형식: `feat: Phase X 완료 - [Phase 제목]`
      - 예시: `feat: Phase 1 완료 - 프로젝트 초기 설정 및 환경 구성`
-   - **작업 순서**: TODOs.md 업데이트 → Git add → Git commit → 사용자 피드백 요청
+   - **작업 순서**: 테스트 실행 검증 (해당 시) → TODOs.md 업데이트 → Git add → Git commit → 사용자 피드백 요청
 
 5. **예외 상황**
    - 사용자가 명시적으로 "모든 Phase를 진행하라"고 요청한 경우에만 전체 진행
@@ -60,6 +65,11 @@
 **완료된 작업**:
 - [완료된 항목들]
 
+**테스트 실행 검증** (테스트 관련 작업 포함 시 필수):
+- [ ] 테스트 실행: `poetry run pytest tests/test_xxx.py -v`
+- [ ] 테스트 통과 상태: PASS / FAIL
+- [ ] 결과 파일 확인: `tests/logs/`, `tests/results/`
+
 **확인 사항**:
 - [사용자가 확인해야 할 것들]
 
@@ -67,8 +77,9 @@
 - Phase X+1 진행 준비
 
 **Phase 완료 후 필수 작업**:
-1. TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
-2. Git commit 실행 (feat: Phase X 완료 - [Phase 제목])
+1. 테스트 실행 검증 (해당 시)
+2. TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
+3. Git commit 실행 (feat: Phase X 완료 - [Phase 제목])
 
 피드백 주시면 다음 Phase로 진행하겠습니다.
 ```
@@ -365,6 +376,15 @@ taskkill /F /PID [PID번호]    # PID로 종료
 Get-Process | Where-Object {$_.ProcessName -eq "node"}
 Get-Process | Where-Object {$_.ProcessName -eq "python"}
 ```
+
+### 5.1 PowerShell 명령어 길이 제한 및 스크립트 사용
+
+**⚠️ 중요**: PowerShell에서 긴 Python 코드를 직접 실행하지 마세요. 별도 스크립트 파일로 작성하여 실행하세요.
+
+**규칙**:
+- ❌ `poetry run python -c "매우 긴 코드..."` 금지
+- ✅ 스크립트 파일 생성 (`scripts/` 디렉토리) → 실행 → 재사용 (삭제 금지)
+- ✅ 명명 규칙: `scripts/check_*.py`, `scripts/analyze_*.py`, `scripts/utils_*.py`
 
 ---
 

@@ -13,11 +13,14 @@ from dotenv import load_dotenv
 # .env 파일 자동 로드
 load_dotenv()
 
-from backend.parser import parse_markdown
-from backend.builders.event_normalizer import normalize_turns_to_events
-from backend.builders.timeline_builder import build_timeline, build_structured_timeline
-from backend.builders.issues_builder import build_issue_cards
-from backend.core.models import EventType, TimelineEvent, TimelineSection, IssueCard
+from backend.core.pipeline_cache import (
+    get_or_create_parsed_data,
+    get_or_create_events,
+    get_or_create_timeline_sections,
+    get_or_create_issue_cards,
+)
+from backend.builders.timeline_builder import build_timeline
+from backend.core.models import EventType, TimelineEvent, TimelineSection, IssueCard, Turn
 
 
 # 실제 입력 데이터 경로
@@ -37,22 +40,40 @@ def test_timeline_issues_e2e_pattern():
     if not INPUT_FILE.exists():
         pytest.skip(f"Input file not found: {INPUT_FILE}")
 
-    text = INPUT_FILE.read_text(encoding="utf-8")
+    # 2. 파싱 실행 (Phase 2 결과, pipeline_cache 사용)
+    parsed_data = get_or_create_parsed_data(input_file=INPUT_FILE)
 
-    # 2. 파싱 실행 (Phase 2 결과)
-    parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
-
-    # 3. 이벤트 정규화 실행 (Phase 3 결과)
-    session_meta = parse_result["session_meta"]
-    events = normalize_turns_to_events(
-        parse_result["turns"], session_meta=session_meta, use_llm=False
+    # 3. 이벤트 정규화 실행 (Phase 3 결과, pipeline_cache 사용)
+    events, session_meta = get_or_create_events(
+        parsed_data=parsed_data,
+        input_file=INPUT_FILE,
+        use_llm=False
     )
 
-    # 4. Timeline 생성 (Phase 4)
+    # Turn 모델 변환
+    turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
+
+    # 4. Timeline 생성 (Phase 4, 기존 방식 유지)
     timeline = build_timeline(events, session_meta)
 
-    # 5. Issue Cards 생성 (Phase 4, 패턴 기반)
-    issue_cards = build_issue_cards(parse_result["turns"], events, session_meta, use_llm=False)
+    # 5. Timeline Sections 생성 (pipeline_cache 사용)
+    timeline_sections = get_or_create_timeline_sections(
+        events=events,
+        session_meta=session_meta,
+        input_file=INPUT_FILE,
+        use_llm=False,
+        issue_cards=None
+    )
+
+    # 6. Issue Cards 생성 (Phase 4, 패턴 기반, pipeline_cache 사용)
+    issue_cards = get_or_create_issue_cards(
+        turns=turns,
+        events=events,
+        session_meta=session_meta,
+        input_file=INPUT_FILE,
+        use_llm=False,
+        timeline_sections=timeline_sections
+    )
 
     # 6. 정합성 검증
     # Timeline 검증
@@ -134,7 +155,7 @@ def test_timeline_issues_e2e_pattern():
         "timestamp": timestamp,
         "input_file": str(INPUT_FILE),
         "results": {
-            "total_turns": len(parse_result["turns"]),
+            "total_turns": len(turns),
             "total_events": len(events),
             "total_timeline_sections": len(timeline_sections),
             "total_timeline_events": len(timeline),
@@ -193,8 +214,8 @@ def test_timeline_issues_e2e_pattern():
     results_file = RESULTS_DIR / f"timeline_issues_e2e_{timestamp}.json"
 
     detailed_results = {
-        "session_meta": parse_result["session_meta"].model_dump(),
-        "turns_count": len(parse_result["turns"]),
+        "session_meta": session_meta.model_dump(),
+        "turns_count": len(turns),
         "events_count": len(events),
         "timeline": [te.model_dump() for te in timeline],
         "issue_cards": [card.model_dump() for card in issue_cards],

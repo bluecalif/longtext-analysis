@@ -13,14 +13,19 @@ parsing → event → timeline → issuecard 파이프라인의 중간 결과를
 import json
 import hashlib
 import time
+import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any
 from datetime import datetime
 
-from backend.core.models import SessionMeta, Event, TimelineSection, Turn
+from backend.core.models import SessionMeta, Event, TimelineSection, Turn, IssueCard
 from backend.parser import parse_markdown
 from backend.builders.event_normalizer import normalize_turns_to_events
 from backend.builders.timeline_builder import build_structured_timeline
+from backend.builders.issues_builder import build_issue_cards
+
+# 로거 설정
+logger = logging.getLogger(__name__)
 
 # 캐시 디렉토리 경로
 PIPELINE_CACHE_DIR = Path(__file__).parent.parent.parent / "cache" / "pipeline"
@@ -47,35 +52,77 @@ def _generate_file_hash(file_path: Path) -> str:
         return "0000000000000000"
 
 
-def _generate_cache_key(input_file: Path, use_llm: bool = True, cache_type: str = "parsed") -> str:
+def _generate_content_hash(content: bytes) -> str:
+    """
+    파일 내용의 해시 생성 (SHA-256)
+
+    Args:
+        content: 파일 내용 (bytes)
+
+    Returns:
+        16자리 해시 문자열
+    """
+    hash_obj = hashlib.sha256(content)
+    return hash_obj.hexdigest()[:16]
+
+
+def _generate_cache_key(
+    input_file: Optional[Path] = None,
+    content_hash: Optional[str] = None,
+    use_llm: bool = True,
+    cache_type: str = "parsed",
+) -> str:
     """
     캐시 키 생성
 
     Args:
-        input_file: 입력 파일 경로
+        input_file: 입력 파일 경로 (선택적, content_hash와 둘 중 하나 필수)
+        content_hash: 파일 내용 해시 (선택적, input_file과 둘 중 하나 필수)
         use_llm: LLM 사용 여부
-        cache_type: 캐시 타입 ("parsed", "events", "timeline_sections")
+        cache_type: 캐시 타입 ("parsed", "events", "timeline_sections", "issue_cards")
 
     Returns:
         캐시 키 문자열
     """
-    file_hash = _generate_file_hash(input_file)
+    if content_hash:
+        file_hash = content_hash
+    elif input_file:
+        file_hash = _generate_file_hash(input_file)
+    else:
+        raise ValueError("Either input_file or content_hash must be provided")
+
     llm_flag = "llm" if use_llm else "pattern"
     cache_key = f"{cache_type}_{file_hash}_{llm_flag}"
     return cache_key
 
 
-def get_or_create_parsed_data(input_file: Path) -> Dict[str, Any]:
+def get_or_create_parsed_data(
+    input_file: Optional[Path] = None,
+    content_hash: Optional[str] = None,
+    content: Optional[bytes] = None,
+    source_doc: str = "input.md",
+) -> Dict[str, Any]:
     """
     파싱 결과를 가져오거나 생성 (캐시 우선)
 
     Args:
-        input_file: 입력 마크다운 파일 경로
+        input_file: 입력 마크다운 파일 경로 (선택적, content_hash와 둘 중 하나 필수)
+        content_hash: 파일 내용 해시 (선택적, input_file과 둘 중 하나 필수)
+        content: 파일 내용 (bytes, 선택적, content_hash 제공 시)
+        source_doc: 소스 문서 이름 (기본값: "input.md")
 
     Returns:
         파싱 결과 딕셔너리
     """
-    cache_key = _generate_cache_key(input_file, use_llm=False, cache_type="parsed")
+    # 해시 계산
+    if content_hash:
+        file_hash = content_hash
+    elif input_file:
+        file_hash = _generate_file_hash(input_file)
+    else:
+        raise ValueError("Either input_file or content_hash must be provided")
+
+    cache_key = _generate_cache_key(content_hash=file_hash, use_llm=False, cache_type="parsed")
     cache_file = PIPELINE_CACHE_DIR / f"{cache_key}.json"
 
     # 캐시 확인
@@ -87,11 +134,10 @@ def get_or_create_parsed_data(input_file: Path) -> Dict[str, Any]:
             # 캐시 메타데이터 확인
             cache_meta = cached_data.get("_cache_meta", {})
             cached_file_hash = cache_meta.get("file_hash")
-            current_file_hash = _generate_file_hash(input_file)
 
             # 파일 해시가 일치하면 캐시 사용
-            if cached_file_hash == current_file_hash:
-                print(f"[CACHE HIT] Parsed data: {cache_key}")
+            if cached_file_hash == file_hash:
+                logger.info(f"[CACHE HIT] Parsed data: {cache_key}")
                 # 캐시 메타데이터 제거
                 cached_data.pop("_cache_meta", None)
                 return cached_data
@@ -100,9 +146,16 @@ def get_or_create_parsed_data(input_file: Path) -> Dict[str, Any]:
             pass
 
     # 캐시 미스 또는 무효화 → 파싱 실행
-    print(f"[CACHE MISS] Parsing file: {input_file}")
-    text = input_file.read_text(encoding="utf-8")
-    parse_result = parse_markdown(text, source_doc=str(input_file))
+    if content is not None:
+        logger.info(f"[CACHE MISS] Parsing content (hash: {file_hash[:8]}...)")
+        text = content.decode("utf-8")
+    elif input_file:
+        logger.info(f"[CACHE MISS] Parsing file: {input_file}")
+        text = input_file.read_text(encoding="utf-8")
+    else:
+        raise ValueError("Either input_file or content must be provided for parsing")
+
+    parse_result = parse_markdown(text, source_doc=source_doc)
 
     # 결과를 딕셔너리로 변환
     result = {
@@ -116,18 +169,19 @@ def get_or_create_parsed_data(input_file: Path) -> Dict[str, Any]:
     cache_meta = {
         "cached_at": time.time(),
         "cache_key": cache_key,
-        "file_hash": _generate_file_hash(input_file),
-        "input_file": str(input_file),
+        "file_hash": file_hash,
+        "input_file": str(input_file) if input_file else None,
+        "source_doc": source_doc,
     }
     result["_cache_meta"] = cache_meta
 
     # 임시 파일로 먼저 저장 후 원자적 이동
-    temp_file = cache_file.with_suffix('.tmp')
+    temp_file = cache_file.with_suffix(".tmp")
     with open(temp_file, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     temp_file.replace(cache_file)
 
-    print(f"[CACHE SAVE] Parsed data: {cache_key}")
+    logger.info(f"[CACHE SAVE] Parsed data: {cache_key}")
 
     # 캐시 메타데이터 제거 후 반환
     result.pop("_cache_meta", None)
@@ -136,21 +190,31 @@ def get_or_create_parsed_data(input_file: Path) -> Dict[str, Any]:
 
 def get_or_create_events(
     parsed_data: Dict[str, Any],
-    input_file: Path,
-    use_llm: bool = True
+    input_file: Optional[Path] = None,
+    content_hash: Optional[str] = None,
+    use_llm: bool = True,
 ) -> Tuple[List[Event], SessionMeta]:
     """
     이벤트 정규화 결과를 가져오거나 생성 (캐시 우선)
 
     Args:
         parsed_data: 파싱 결과 딕셔너리
-        input_file: 입력 파일 경로 (캐시 키 생성용)
+        input_file: 입력 파일 경로 (선택적, content_hash와 둘 중 하나 필수)
+        content_hash: 파일 내용 해시 (선택적, input_file과 둘 중 하나 필수)
         use_llm: LLM 사용 여부
 
     Returns:
         (Event 리스트, SessionMeta) 튜플
     """
-    cache_key = _generate_cache_key(input_file, use_llm=use_llm, cache_type="events")
+    # 해시 계산
+    if content_hash:
+        file_hash = content_hash
+    elif input_file:
+        file_hash = _generate_file_hash(input_file)
+    else:
+        raise ValueError("Either input_file or content_hash must be provided")
+
+    cache_key = _generate_cache_key(content_hash=file_hash, use_llm=use_llm, cache_type="events")
     cache_file = PIPELINE_CACHE_DIR / f"{cache_key}.json"
 
     # 캐시 확인
@@ -162,16 +226,16 @@ def get_or_create_events(
             # 캐시 메타데이터 확인
             cache_meta = cached_data.get("_cache_meta", {})
             cached_file_hash = cache_meta.get("file_hash")
-            current_file_hash = _generate_file_hash(input_file)
 
             # 파일 해시가 일치하면 캐시 사용
-            if cached_file_hash == current_file_hash:
-                print(f"[CACHE HIT] Events: {cache_key}")
+            if cached_file_hash == file_hash:
+                logger.info(f"[CACHE HIT] Events: {cache_key}")
                 # 캐시 메타데이터 제거
                 cached_data.pop("_cache_meta", None)
 
                 # 딕셔너리를 모델로 변환
                 from backend.core.models import SessionMeta, Event
+
                 session_meta = SessionMeta(**cached_data["session_meta"])
                 events = [Event(**event_dict) for event_dict in cached_data["events"]]
 
@@ -181,10 +245,11 @@ def get_or_create_events(
             pass
 
     # 캐시 미스 또는 무효화 → 이벤트 정규화 실행
-    print(f"[CACHE MISS] Normalizing events: {cache_key}")
+    logger.info(f"[CACHE MISS] Normalizing events: {cache_key}")
 
     # 딕셔너리를 모델로 변환
     from backend.core.models import SessionMeta, Turn
+
     session_meta = SessionMeta(**parsed_data["session_meta"])
     turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
 
@@ -201,19 +266,19 @@ def get_or_create_events(
     cache_meta = {
         "cached_at": time.time(),
         "cache_key": cache_key,
-        "file_hash": _generate_file_hash(input_file),
-        "input_file": str(input_file),
+        "file_hash": file_hash,
+        "input_file": str(input_file) if input_file else None,
         "use_llm": use_llm,
     }
     result["_cache_meta"] = cache_meta
 
     # 임시 파일로 먼저 저장 후 원자적 이동
-    temp_file = cache_file.with_suffix('.tmp')
+    temp_file = cache_file.with_suffix(".tmp")
     with open(temp_file, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     temp_file.replace(cache_file)
 
-    print(f"[CACHE SAVE] Events: {cache_key}")
+    logger.info(f"[CACHE SAVE] Events: {cache_key}")
 
     return events, session_meta
 
@@ -221,9 +286,10 @@ def get_or_create_events(
 def get_or_create_timeline_sections(
     events: List[Event],
     session_meta: SessionMeta,
-    input_file: Path,
+    input_file: Optional[Path] = None,
+    content_hash: Optional[str] = None,
     use_llm: bool = True,
-    issue_cards: Optional[List] = None
+    issue_cards: Optional[List] = None,
 ) -> List[TimelineSection]:
     """
     Timeline Section 결과를 가져오거나 생성 (캐시 우선)
@@ -231,14 +297,25 @@ def get_or_create_timeline_sections(
     Args:
         events: 정규화된 이벤트 리스트
         session_meta: 세션 메타데이터
-        input_file: 입력 파일 경로 (캐시 키 생성용)
+        input_file: 입력 파일 경로 (선택적, content_hash와 둘 중 하나 필수)
+        content_hash: 파일 내용 해시 (선택적, input_file과 둘 중 하나 필수)
         use_llm: LLM 사용 여부
         issue_cards: Issue Cards 리스트 (선택적, 연결용)
 
     Returns:
         TimelineSection 리스트
     """
-    cache_key = _generate_cache_key(input_file, use_llm=use_llm, cache_type="timeline_sections")
+    # 해시 계산
+    if content_hash:
+        file_hash = content_hash
+    elif input_file:
+        file_hash = _generate_file_hash(input_file)
+    else:
+        raise ValueError("Either input_file or content_hash must be provided")
+
+    cache_key = _generate_cache_key(
+        content_hash=file_hash, use_llm=use_llm, cache_type="timeline_sections"
+    )
     cache_file = PIPELINE_CACHE_DIR / f"{cache_key}.json"
 
     # 캐시 확인
@@ -250,17 +327,20 @@ def get_or_create_timeline_sections(
             # 캐시 메타데이터 확인
             cache_meta = cached_data.get("_cache_meta", {})
             cached_file_hash = cache_meta.get("file_hash")
-            current_file_hash = _generate_file_hash(input_file)
 
             # 파일 해시가 일치하면 캐시 사용
-            if cached_file_hash == current_file_hash:
-                print(f"[CACHE HIT] Timeline sections: {cache_key}")
+            if cached_file_hash == file_hash:
+                logger.info(f"[CACHE HIT] Timeline sections: {cache_key}")
                 # 캐시 메타데이터 제거
                 cached_data.pop("_cache_meta", None)
 
                 # 딕셔너리를 모델로 변환
                 from backend.core.models import TimelineSection
-                sections = [TimelineSection(**section_dict) for section_dict in cached_data["timeline_sections"]]
+
+                sections = [
+                    TimelineSection(**section_dict)
+                    for section_dict in cached_data["timeline_sections"]
+                ]
 
                 return sections
         except (json.JSONDecodeError, IOError, KeyError):
@@ -268,14 +348,11 @@ def get_or_create_timeline_sections(
             pass
 
     # 캐시 미스 또는 무효화 → Timeline Section 생성 실행
-    print(f"[CACHE MISS] Building timeline sections: {cache_key}")
+    logger.info(f"[CACHE MISS] Building timeline sections: {cache_key}")
 
     # Timeline Section 생성
     timeline_result = build_structured_timeline(
-        events=events,
-        session_meta=session_meta,
-        use_llm=use_llm,
-        issue_cards=issue_cards or []
+        events=events, session_meta=session_meta, use_llm=use_llm, issue_cards=issue_cards or []
     )
 
     # Dict에서 sections 추출
@@ -290,21 +367,120 @@ def get_or_create_timeline_sections(
     cache_meta = {
         "cached_at": time.time(),
         "cache_key": cache_key,
-        "file_hash": _generate_file_hash(input_file),
-        "input_file": str(input_file),
+        "file_hash": file_hash,
+        "input_file": str(input_file) if input_file else None,
         "use_llm": use_llm,
     }
     result["_cache_meta"] = cache_meta
 
     # 임시 파일로 먼저 저장 후 원자적 이동
-    temp_file = cache_file.with_suffix('.tmp')
+    temp_file = cache_file.with_suffix(".tmp")
     with open(temp_file, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     temp_file.replace(cache_file)
 
-    print(f"[CACHE SAVE] Timeline sections: {cache_key}")
+    logger.info(f"[CACHE SAVE] Timeline sections: {cache_key}")
 
     return timeline_sections
+
+
+def get_or_create_issue_cards(
+    turns: List[Turn],
+    events: List[Event],
+    session_meta: SessionMeta,
+    input_file: Optional[Path] = None,
+    content_hash: Optional[str] = None,
+    use_llm: bool = True,
+    timeline_sections: Optional[List[TimelineSection]] = None,
+) -> List[IssueCard]:
+    """
+    Issue Cards 결과를 가져오거나 생성 (캐시 우선)
+
+    Args:
+        turns: Turn 리스트
+        events: Event 리스트
+        session_meta: 세션 메타데이터
+        input_file: 입력 파일 경로 (선택적, content_hash와 둘 중 하나 필수)
+        content_hash: 파일 내용 해시 (선택적, input_file과 둘 중 하나 필수)
+        use_llm: LLM 사용 여부
+        timeline_sections: Timeline Section 리스트 (선택적, 연결용)
+
+    Returns:
+        IssueCard 리스트
+    """
+    # 해시 계산
+    if content_hash:
+        file_hash = content_hash
+    elif input_file:
+        file_hash = _generate_file_hash(input_file)
+    else:
+        raise ValueError("Either input_file or content_hash must be provided")
+
+    cache_key = _generate_cache_key(
+        content_hash=file_hash, use_llm=use_llm, cache_type="issue_cards"
+    )
+    cache_file = PIPELINE_CACHE_DIR / f"{cache_key}.json"
+
+    # 캐시 확인
+    if cache_file.exists():
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                cached_data = json.load(f)
+
+            # 캐시 메타데이터 확인
+            cache_meta = cached_data.get("_cache_meta", {})
+            cached_file_hash = cache_meta.get("file_hash")
+
+            # 파일 해시가 일치하면 캐시 사용
+            if cached_file_hash == file_hash:
+                logger.info(f"[CACHE HIT] Issue cards: {cache_key}")
+                # 캐시 메타데이터 제거
+                cached_data.pop("_cache_meta", None)
+
+                # 딕셔너리를 모델로 변환
+                issue_cards = [IssueCard(**issue_dict) for issue_dict in cached_data["issue_cards"]]
+
+                return issue_cards
+        except (json.JSONDecodeError, IOError, KeyError):
+            # 캐시 파일 손상 시 무시하고 재생성
+            pass
+
+    # 캐시 미스 또는 무효화 → Issue Cards 생성 실행
+    logger.info(f"[CACHE MISS] Building issue cards: {cache_key}")
+
+    # Issue Cards 생성
+    issue_cards = build_issue_cards(
+        turns=turns,
+        events=events,
+        session_meta=session_meta,
+        use_llm=use_llm,
+        timeline_sections=timeline_sections or [],
+    )
+
+    # 결과를 딕셔너리로 변환
+    result = {
+        "issue_cards": [issue_card.model_dump() for issue_card in issue_cards],
+    }
+
+    # 캐시 저장
+    cache_meta = {
+        "cached_at": time.time(),
+        "cache_key": cache_key,
+        "file_hash": file_hash,
+        "input_file": str(input_file) if input_file else None,
+        "use_llm": use_llm,
+    }
+    result["_cache_meta"] = cache_meta
+
+    # 임시 파일로 먼저 저장 후 원자적 이동
+    temp_file = cache_file.with_suffix(".tmp")
+    with open(temp_file, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    temp_file.replace(cache_file)
+
+    logger.info(f"[CACHE SAVE] Issue cards: {cache_key}")
+
+    return issue_cards
 
 
 def invalidate_cache(input_file: Optional[Path] = None, cache_type: Optional[str] = None) -> int:
@@ -313,7 +489,7 @@ def invalidate_cache(input_file: Optional[Path] = None, cache_type: Optional[str
 
     Args:
         input_file: 입력 파일 경로 (지정 시 해당 파일의 캐시만 무효화)
-        cache_type: 캐시 타입 ("parsed", "events", "timeline_sections", None=전체)
+        cache_type: 캐시 타입 ("parsed", "events", "timeline_sections", "issue_cards", None=전체)
 
     Returns:
         무효화된 캐시 파일 수
@@ -339,7 +515,7 @@ def invalidate_cache(input_file: Optional[Path] = None, cache_type: Optional[str
             cache_file.unlink()
             invalidated_count += 1
 
-    print(f"[CACHE INVALIDATE] {invalidated_count} cache files removed")
+    logger.info(f"[CACHE INVALIDATE] {invalidated_count} cache files removed")
     return invalidated_count
 
 
@@ -355,11 +531,12 @@ def get_cache_stats() -> Dict[str, Any]:
         "parsed": 0,
         "events": 0,
         "timeline_sections": 0,
+        "issue_cards": 0,
         "total_size_bytes": 0,
     }
 
     for cache_file in PIPELINE_CACHE_DIR.glob("*.json"):
-        if cache_file.name.endswith('.tmp'):
+        if cache_file.name.endswith(".tmp"):
             continue
 
         stats["total_files"] += 1
@@ -371,6 +548,7 @@ def get_cache_stats() -> Dict[str, Any]:
             stats["events"] += 1
         elif cache_file.name.startswith("timeline_sections_"):
             stats["timeline_sections"] += 1
+        elif cache_file.name.startswith("issue_cards_"):
+            stats["issue_cards"] += 1
 
     return stats
-

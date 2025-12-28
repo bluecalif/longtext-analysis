@@ -155,3 +155,109 @@ class Snippet(BaseModel):
     links: dict = {}  # 링크 정보 {issue_id?: str, event_seq?: int, paths?: List[str]}
     snippet_hash: str  # 중복 제거용 해시 (SHA-256)
     aliases: List[str] = []  # 중복 제거 시 원본 ID 목록 (선택적)
+
+
+# ============================================================================
+# API Request/Response 모델 (Phase 7)
+# ============================================================================
+
+class ExportFormat(str, Enum):
+    """Export 파일 형식 Enum"""
+
+    JSON = "json"
+    MARKDOWN = "md"
+
+
+class ParseResponse(BaseModel):
+    """POST /api/parse 응답 모델"""
+
+    session_meta: SessionMeta
+    turns: List[Turn]
+    events: List[Event]
+    content_hash: Optional[str] = None  # 파일 내용 해시 (캐시 키 생성용)
+
+
+class TimelineRequest(BaseModel):
+    """POST /api/timeline 요청 모델"""
+
+    session_meta: SessionMeta
+    events: List[Event]
+    issue_cards: Optional[List[IssueCard]] = None
+    content_hash: Optional[str] = None  # 파일 내용 해시 (캐시 키 생성용)
+
+
+class TimelineResponse(BaseModel):
+    """POST /api/timeline 응답 모델"""
+
+    session_meta: SessionMeta
+    sections: List[TimelineSection]
+    events: List[TimelineEvent]
+
+
+class IssuesRequest(BaseModel):
+    """POST /api/issues 요청 모델"""
+
+    session_meta: SessionMeta
+    turns: List[Turn]
+    events: List[Event]
+    timeline_sections: Optional[List[TimelineSection]] = None
+    content_hash: Optional[str] = None  # 파일 내용 해시 (캐시 키 생성용)
+
+
+class IssuesResponse(BaseModel):
+    """POST /api/issues 응답 모델"""
+
+    session_meta: SessionMeta
+    issues: List[IssueCard]
+
+
+class SnippetResponse(BaseModel):
+    """GET /api/snippets/{snippet_id} 응답 모델"""
+
+    snippet: Snippet
+
+
+class SnippetsProcessRequest(BaseModel):
+    """POST /api/snippets/process 요청 모델"""
+
+    session_meta: SessionMeta
+    turns: List[Turn]
+    events: List[Event]
+    issue_cards: List[IssueCard]
+
+
+class SnippetsProcessResponse(BaseModel):
+    """POST /api/snippets/process 응답 모델"""
+
+    session_meta: SessionMeta
+    snippets: List[Snippet]
+    events: List[Event]
+    issue_cards: List[IssueCard]
+
+
+class ExportTimelineRequest(BaseModel):
+    """POST /api/export/timeline 요청 모델"""
+
+    session_meta: SessionMeta
+    sections: List[TimelineSection]
+    events: List[TimelineEvent]
+    format: ExportFormat = ExportFormat.JSON
+
+
+class ExportIssuesRequest(BaseModel):
+    """POST /api/export/issues 요청 모델"""
+
+    session_meta: SessionMeta
+    issues: List[IssueCard]
+    format: ExportFormat = ExportFormat.JSON
+
+
+class ExportAllRequest(BaseModel):
+    """POST /api/export/all 요청 모델"""
+
+    session_meta: SessionMeta
+    sections: List[TimelineSection]
+    events: List[TimelineEvent]
+    issues: List[IssueCard]
+    snippets: List[Snippet]
+    format: ExportFormat = ExportFormat.JSON

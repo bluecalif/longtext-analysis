@@ -11,10 +11,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-from backend.parser import parse_markdown
-from backend.builders.event_normalizer import normalize_turns_to_events
-from backend.builders.timeline_builder import build_structured_timeline
-from backend.builders.issues_builder import build_issue_cards
+from backend.core.pipeline_cache import get_or_create_issue_cards
 from backend.builders.snippet_manager import process_snippets
 from backend.builders.snippet_storage import generate_snippets_json
 from backend.core.models import Snippet, Event, IssueCard
@@ -25,7 +22,7 @@ RESULTS_DIR = Path(__file__).parent / "results"
 REPORT_DIR = Path(__file__).parent / "reports"
 
 
-def test_snippet_e2e_with_llm(parsed_data, normalized_events, timeline_sections):
+def test_snippet_e2e_with_llm(parsed_data, normalized_events, timeline_sections, input_file):
     """
     실제 입력 데이터로 전체 스니펫 처리 파이프라인 E2E 테스트
 
@@ -45,11 +42,12 @@ def test_snippet_e2e_with_llm(parsed_data, normalized_events, timeline_sections)
     from backend.core.models import Turn, IssueCard
     turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
 
-    # 3. Issue Cards 생성
-    issue_cards = build_issue_cards(
+    # 3. Issue Cards 생성 (pipeline_cache 사용)
+    issue_cards = get_or_create_issue_cards(
         turns=turns,
         events=events,
         session_meta=session_meta,
+        input_file=input_file,
         use_llm=True,  # LLM 사용 (기본값)
         timeline_sections=timeline_sections,
     )

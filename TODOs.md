@@ -620,12 +620,189 @@
 
 ---
 
-## Phase 7-9: 미완료 (간략 요약)
+## Phase 7: 백엔드 API 구현
 
-### Phase 7: 백엔드 API 구현
-- [ ] FastAPI 엔드포인트 구현 (파싱, Timeline, Issues, Snippets, Export)
-- [ ] Markdown 렌더러 구현
-- [ ] 테스트 및 E2E 테스트 (실제 서버 실행)
+**목표**: FastAPI 기반 백엔드 API 엔드포인트 구현. 프론트엔드에서 사용할 수 있도록 RESTful API 제공.
+
+### Phase 7.1: API 요청/응답 스키마 검토 및 필요 시 추가
+- [x] 기존 `backend/core/models.py` 모델 확인 및 API 전용 모델 추가 완료
+  - [x] ExportFormat Enum 추가 (json, md)
+  - [x] ParseResponse 모델 추가
+  - [x] TimelineRequest/Response 모델 추가
+  - [x] IssuesRequest/Response 모델 추가
+  - [x] SnippetResponse 모델 추가
+  - [x] SnippetsProcessRequest/Response 모델 추가
+  - [x] ExportTimelineRequest, ExportIssuesRequest, ExportAllRequest 모델 추가
+  - [x] 모델 import 테스트 완료
+
+### Phase 7.2: Parse API 구현
+- [x] `backend/api/routes/parse.py` 생성
+- [x] `POST /api/parse` 엔드포인트 구현 (파일 업로드, 파싱, 이벤트 정규화)
+  - [x] 파일 업로드 처리 (UploadFile)
+  - [x] 파일 검증 (확장자, 크기 제한 10MB, UTF-8 인코딩)
+  - [x] Query 파라미터: `use_llm: bool = USE_LLM_BY_DEFAULT` (snake_case)
+  - [x] `parse_markdown()` 호출
+  - [x] `normalize_turns_to_events()` 호출 (use_llm 파라미터 전달)
+  - [x] `response_model=ParseResponse` 지정
+  - [x] 에러 처리 (HTTPException)
+  - [x] python-multipart 의존성 추가 및 설치 완료
+
+### Phase 7.3: Timeline API 구현
+- [x] `backend/api/routes/timeline.py` 생성
+- [x] `POST /api/timeline` 엔드포인트 구현 (구조화된 Timeline 생성)
+  - [x] TimelineRequest 받기
+  - [x] Query 파라미터: `use_llm: bool = USE_LLM_BY_DEFAULT` (snake_case)
+  - [x] `build_structured_timeline()` 호출
+  - [x] `response_model=TimelineResponse` 지정
+  - [x] 에러 처리 (HTTPException)
+
+### Phase 7.4: Issues API 구현
+- [x] `backend/api/routes/issues.py` 생성
+- [x] `POST /api/issues` 엔드포인트 구현 (Issue Cards 생성)
+  - [x] IssuesRequest 받기
+  - [x] Query 파라미터: `use_llm: bool = USE_LLM_BY_DEFAULT` (snake_case)
+  - [x] `build_issue_cards()` 호출 (timeline_sections 파라미터 포함)
+  - [x] `response_model=IssuesResponse` 지정
+  - [x] 에러 처리 (HTTPException)
+
+### Phase 7.5: Snippets API 구현
+- [x] `backend/api/routes/snippets.py` 생성
+- [x] 스니펫 저장소 구현 (메모리 기반, 세션별 관리)
+- [x] `GET /api/snippets/{snippet_id}` 엔드포인트 구현
+- [x] `POST /api/snippets/process` 엔드포인트 구현 (스니펫 처리)
+  - [x] `process_snippets()` 호출
+  - [x] 스니펫 저장소에 저장
+  - [x] `response_model=SnippetsProcessResponse` 지정
+  - [x] 에러 처리 (HTTPException)
+
+### Phase 7.6: Markdown 렌더러 구현
+- [x] `backend/render/render_md.py` 생성
+- [x] Timeline Markdown 렌더링 함수 구현 (`render_timeline_md`)
+  - [x] 세션 메타데이터 표시
+  - [x] Timeline Section 구조화된 표시
+  - [x] 관련 이벤트, 이슈, 파일, 스니펫 표시
+  - [x] 전체 이벤트 목록 표시 (하위 호환성)
+- [x] Issues Markdown 렌더링 함수 구현 (`render_issues_md`)
+  - [x] 세션 메타데이터 표시
+  - [x] Issue Card 카드 형식 표시
+  - [x] 증상, 원인, 조치, 검증, 관련 파일, 스니펫 표시
+
+### Phase 7.7: Export API 구현
+- [x] `backend/api/routes/export.py` 생성
+- [x] `POST /api/export/timeline` 엔드포인트 구현 (JSON/MD 다운로드)
+  - [x] ExportFormat Enum 사용 (json, md)
+  - [x] JSON 형식: Pydantic model_dump() 사용
+  - [x] MD 형식: render_timeline_md() 사용
+  - [x] Content-Disposition 헤더 설정
+- [x] `POST /api/export/issues` 엔드포인트 구현 (JSON/MD 다운로드)
+  - [x] ExportFormat Enum 사용
+  - [x] JSON/MD 형식 지원
+  - [x] Content-Disposition 헤더 설정
+- [x] `POST /api/export/all` 엔드포인트 구현 (전체 산출물 ZIP 다운로드)
+  - [x] Timeline, Issues, Snippets 파일 생성
+  - [x] ZIP 파일 생성 (zipfile 모듈)
+  - [x] 임시 디렉토리 사용 (tempfile)
+  - [x] Content-Disposition 헤더 설정
+
+### Phase 7.8: FastAPI 앱 라우터 등록
+- [x] `backend/main.py` 수정 (라우터 등록)
+  - [x] 모든 라우터 import 및 등록 완료
+  - [x] TODO 주석 제거
+- [x] OpenAPI 스키마 자동 생성 확인
+  - [x] OpenAPI 스키마 생성 검증 완료
+  - [x] /docs, /openapi.json 엔드포인트 자동 생성 확인
+
+### Phase 7.9: API E2E 테스트 작성 및 검증
+- [x] `tests/test_api_e2e.py` 생성
+  - [x] test_parse_endpoint_e2e 테스트 작성
+  - [x] test_timeline_endpoint_e2e 테스트 작성
+  - [x] test_issues_endpoint_e2e 테스트 작성
+  - [x] test_snippets_endpoint_e2e 테스트 작성
+  - [x] test_export_endpoint_e2e 테스트 작성
+  - [x] test_full_pipeline_e2e 테스트 작성 (전체 파이프라인 통합)
+- [x] 모든 엔드포인트 E2E 테스트 작성 (실제 서버 실행)
+  - [x] httpx.Client 사용 확인 (TestClient 금지 준수)
+  - [x] 실제 서버 실행 확인 (test_server fixture 사용)
+- [x] 테스트 실행 검증 (필수)
+  - [x] 모든 테스트 통과 확인 (6개 테스트, 58.71초)
+- [x] 서버 로그 캡처 기능 추가 (2025-12-28)
+  - [x] `test_server` fixture에 서버 로그 파일 저장 기능 추가
+  - [x] 로그 파일 위치: `tests/logs/server_{timestamp}.log`
+  - [x] stdout/stderr를 파일로 리다이렉트
+  - [x] 서버 종료 시 로그 파일 경로 출력
+- [x] API E2E 테스트 상세 결과 저장 (2025-12-28)
+  - [x] `test_full_pipeline_e2e` 함수에 상세 결과 저장 로직 추가
+  - [x] 상세 결과에 session_meta, turns, events, timeline_sections, issue_cards, snippets 포함
+  - [x] 다른 E2E 테스트들과 동일한 형식으로 저장
+
+### Phase 7.10: Phase 완료 작업
+- [x] 서버 관리 개선 (포트 충돌 방지, 서버 로그 저장) (2025-12-28)
+  - [x] `test_server` fixture에 포트 충돌 방지 로직 추가 (psutil 또는 Windows netstat/taskkill 사용)
+  - [x] 서버 로그 파일 저장 기능 추가 (`tests/logs/server_{timestamp}.log`)
+  - [x] 커서룰에 서버 관리 규칙 추가 (`.cursor/rules/testing-strategy.mdc`)
+- [x] TODOs.md 최종 업데이트 (2025-12-28)
+- [ ] Git commit 실행
+
+### Phase 7.11: Pipeline Cache 통일 (프로젝트 전반 캐시 일관성 확보)
+
+**목표**: 프로젝트 전반(Phase 2-7)에서 pipeline_cache를 일관되게 사용하여 캐시 일관성 확보
+
+**배경**:
+- 현재 Phase 6 E2E 테스트만 pipeline_cache 사용 (fixtures를 통해)
+- Phase 2-5 E2E 테스트는 pipeline_cache 미사용 (직접 빌더 함수 호출)
+- Phase 7 API는 pipeline_cache 미사용 (직접 빌더 함수 호출)
+- 캐시 불일치로 인한 결과 차이 발생 가능
+
+**통일 전략**:
+- pipeline_cache를 프로젝트 전반에 사용 (이미 core 폴더에 존재)
+- Phase 2: pipeline_cache 적용 (옵션 A: get_or_create_parsed_data() 사용)
+- Phase 3, 4, 5: pipeline_cache 적용
+- Phase 6: 현재 유지 (이미 pipeline_cache 사용 중)
+- Phase 7 API: pipeline_cache 적용 (파일 내용 해시 기반)
+
+**구현 계획**:
+
+**Phase 7.11.1: pipeline_cache.py 수정 (파일 내용 해시 지원)** - ✅ 완료 (2025-12-28)
+- [x] `_generate_content_hash(content: bytes) -> str` 함수 추가
+- [x] `_generate_cache_key()` 함수 수정: `input_file: Optional[Path]` 또는 `content_hash: Optional[str]` 지원
+- [x] `get_or_create_parsed_data()` 함수 수정: `content_hash` 파라미터 추가
+- [x] `get_or_create_events()` 함수 수정: `content_hash` 파라미터 추가
+- [x] `get_or_create_timeline_sections()` 함수 수정: `content_hash` 파라미터 추가
+- [x] `get_or_create_issue_cards()` 함수 추가 (새로 생성)
+- [x] `get_cache_stats()` 함수 수정: `issue_cards` 통계 추가
+
+**Phase 7.11.2: Phase 2-5 테스트 파일 수정** - ✅ 완료 (2025-12-28)
+- [x] `tests/test_parser_e2e.py` 수정: `get_or_create_parsed_data()` 사용
+- [x] `tests/test_event_normalizer_e2e.py` 수정: `get_or_create_events()` 사용
+- [x] `tests/test_timeline_issues_e2e.py` 수정: `get_or_create_timeline_sections()`, `get_or_create_issue_cards()` 사용
+- [x] `tests/test_snippet_e2e.py` 수정: `get_or_create_issue_cards()` 사용
+
+**Phase 7.11.3: Phase 7 API 라우터 수정** - ✅ 완료 (2025-12-28)
+- [x] `backend/api/routes/parse.py` 수정:
+  - 파일 내용 해시 계산
+  - `get_or_create_parsed_data(content_hash=...)` 사용
+  - `get_or_create_events(..., content_hash=...)` 사용
+  - `ParseResponse`에 `content_hash` 필드 추가
+- [x] `backend/api/routes/timeline.py` 수정:
+  - `get_or_create_timeline_sections(..., content_hash=...)` 사용
+  - `TimelineRequest`에 `content_hash` 필드 추가 (Optional)
+  - 하위 호환성 유지 (content_hash 없으면 기존 방식 사용)
+- [x] `backend/api/routes/issues.py` 수정:
+  - `get_or_create_issue_cards(..., content_hash=...)` 사용
+  - `IssuesRequest`에 `content_hash` 필드 추가 (Optional)
+  - 하위 호환성 유지 (content_hash 없으면 기존 방식 사용)
+- [x] `tests/test_api_e2e.py` 수정: `content_hash` 전달 로직 추가
+
+**Phase 7.11.4: 검증** - ✅ 완료 (2025-12-28)
+- [x] Phase 2-5 E2E 테스트 실행 및 검증
+  - [x] 모든 테스트 통과 (Phase 2: 0.12초, Phase 3: 0.21초, Phase 4: 0.23초, Phase 5: 0.26초)
+  - [x] 캐시 동작 확인 (pipeline_cache 파일 생성: parsed 1개, events 2개, timeline_sections 2개, issue_cards 2개)
+- [x] Phase 7 API E2E 테스트 실행 및 검증
+  - [x] 테스트 통과 (13.53초, 서버 시작 포함)
+  - [x] 캐시 동작 확인 (파일 내용 해시 기반)
+  - [x] 결과 일관성 확인 (Phase 6 결과와 일치: timeline_sections 14개, issue_cards 2개)
+
+## Phase 8-9: 미완료 (간략 요약)
 
 ### Phase 8: 프론트엔드 UI 구현
 - [ ] Next.js 기반 웹 UI (메인 페이지, 입력 패널, 결과 미리보기, Export 패널)
@@ -642,7 +819,7 @@
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 6.1 진행 중 (이벤트 추출 최적화 - 배치 처리)
+**현재 Phase**: Phase 7 진행 중 (백엔드 API 구현, Pipeline Cache 통일)
 
 **마지막 업데이트**: 2025-12-28
 
@@ -679,21 +856,26 @@
   - 예상 비용 절감: 67번 호출 → 13-14번 호출 (약 80% 감소)
 
 **진행 중인 Phase**:
-- Phase 6: LLM 호출 최적화 (진행 중)
+- Phase 7: 백엔드 API 구현 (완료 준비)
+  - Phase 7.1-7.9: API 구현 완료 (2025-12-28)
+  - Phase 7.10: Phase 완료 작업 완료 (2025-12-28)
+  - Phase 7.11: Pipeline Cache 통일 완료 (2025-12-28)
+
+**완료된 Phase**:
+- Phase 6: LLM 호출 최적화 (2025-12-28 완료)
   - Phase 6.1: 이벤트 추출 최적화 (배치 처리) - ✅ 완료 (2025-12-27)
-    - Phase 6.1.1: ✅ 완료 - 배치 처리 LLM 함수 구현 (`classify_and_summarize_batch_with_llm()`)
-    - Phase 6.1.2: ✅ 완료 - 이벤트 정규화 모듈 수정 (`_normalize_turns_to_events_parallel()` 배치 처리로 변경)
-    - Phase 6.1.3: ✅ 완료 - 캐시 키 생성 로직 수정 (Phase 6.1.1에 포함)
-    - Phase 6.1.4: ✅ 완료 - Fallback 로직 구현 (Phase 6.1.2에 포함)
-    - Phase 6.1.5: ✅ 완료 - 테스트 작성 및 검증
   - Phase 6.2: 타임라인 구조화 최적화 (검증 로직 개선) - ✅ 기본 완료 (2025-12-28)
-    - 검증 로직 개선 완료
-    - LLM 결과 활용 확인 완료
-    - E2E 테스트 검증 완료
-    - 선택적 품질 테스트 남아있음
+- Phase 7: 백엔드 API 구현 (2025-12-28 완료)
+  - Phase 7.1-7.9: API 구현 완료 (2025-12-28)
+  - Phase 7.10: Phase 완료 작업 완료 (2025-12-28)
+  - Phase 7.11: Pipeline Cache 통일 완료 (2025-12-28)
+    - Phase 7.11.1: pipeline_cache.py 수정 완료
+    - Phase 7.11.2: Phase 2-5 테스트 파일 수정 완료
+    - Phase 7.11.3: Phase 7 API 라우터 수정 완료
+    - Phase 7.11.4: 검증 완료 (결과 일관성 확인)
 
 **다음 단계**:
-- Phase 6.2 선택적 작업 진행 또는 Phase 7 (백엔드 API 구현)로 진행
+- Phase 8 (프론트엔드 UI 구현) 진행 준비
 
 ---
 

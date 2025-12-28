@@ -9,8 +9,16 @@ import subprocess
 import time
 import httpx
 import logging
+import socket
 from pathlib import Path
 from datetime import datetime
+
+# psutil은 선택적 의존성 (없어도 동작하되 포트 충돌 방지 기능 제한)
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 from backend.core.pipeline_cache import (
     get_or_create_parsed_data,
@@ -26,34 +34,122 @@ def test_server():
     """
     실제 uvicorn 서버 실행 fixture (Phase 6+ API 테스트용)
 
+    서버 로그를 파일로 저장합니다 (캐싱 사용 여부 확인 및 디버깅 목적).
+
+    기존 서버가 실행 중인 경우 포트 충돌을 방지하기 위해 자동으로 종료합니다.
+
     Phase 2-5에서는 사용하지 않음 (모듈 직접 호출)
     """
-    # 서버 시작
-    process = subprocess.Popen(
-        ["poetry", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
-        cwd=Path(__file__).parent.parent,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    # 포트 8000 사용 중인 프로세스 확인 및 종료
+    port = 8000
+    logger = logging.getLogger(__name__)
 
-    # 서버 준비 대기
-    max_retries = 30
-    for _ in range(max_retries):
-        try:
-            response = httpx.get("http://localhost:8000/health", timeout=1.0)
-            if response.status_code == 200:
-                break
-        except:
-            time.sleep(0.5)
-    else:
+    # 포트가 사용 중인지 확인
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(0.1)
+    result = sock.connect_ex(('localhost', port))
+    sock.close()
+
+    if result == 0:
+        # 포트가 사용 중인 경우
+        logger.warning(f"Port {port} is already in use. Attempting to kill existing process...")
+
+        if HAS_PSUTIL:
+            # psutil을 사용하여 포트를 사용하는 프로세스 찾기 및 종료
+            for proc in psutil.process_iter(['pid', 'name', 'connections']):
+                try:
+                    connections = proc.info.get('connections')
+                    if connections:
+                        for conn in connections:
+                            if conn.status == 'LISTEN' and conn.laddr.port == port:
+                                logger.warning(f"Killing process {proc.info['pid']} ({proc.info['name']}) using port {port}")
+                                proc.terminate()
+                                proc.wait(timeout=5)
+                                logger.info(f"Process {proc.info['pid']} terminated successfully")
+                                break
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+                    continue
+
+            # 잠시 대기 (포트 해제 대기)
+            time.sleep(1)
+        else:
+            # Windows에서 netstat과 taskkill 사용 (psutil 없이도 동작)
+            import platform
+            if platform.system() == "Windows":
+                try:
+                    # netstat으로 포트를 사용하는 PID 찾기
+                    netstat_result = subprocess.run(
+                        ["netstat", "-ano"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    for line in netstat_result.stdout.splitlines():
+                        if f":{port}" in line and "LISTENING" in line:
+                            parts = line.split()
+                            if len(parts) >= 5:
+                                pid = parts[-1]
+                                try:
+                                    logger.warning(f"Killing process {pid} using port {port}")
+                                    subprocess.run(
+                                        ["taskkill", "/F", "/PID", pid],
+                                        capture_output=True,
+                                        timeout=5
+                                    )
+                                    logger.info(f"Process {pid} terminated successfully")
+                                except subprocess.TimeoutExpired:
+                                    logger.warning(f"Failed to kill process {pid}: timeout")
+                    time.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Failed to kill process using netstat/taskkill: {e}")
+            else:
+                # Windows가 아닌 경우 경고만 출력
+                logger.warning("psutil not available. Cannot automatically kill existing process on port 8000")
+                logger.warning("Please manually stop the process using port 8000 or install psutil")
+
+    # 서버 로그 파일 경로 생성
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    server_log_file = log_dir / f"server_{timestamp}.log"
+
+    # 서버 시작 (stdout/stderr를 파일로 리다이렉트)
+    # 파일은 프로세스가 실행되는 동안 열려 있어야 하므로 with 문 밖에서 열기
+    log_file = open(server_log_file, "w", encoding="utf-8")
+    try:
+        process = subprocess.Popen(
+            ["poetry", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
+            cwd=Path(__file__).parent.parent,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,  # stderr도 stdout으로 합쳐서 같은 파일에 저장
+        )
+
+        # 서버 준비 대기
+        max_retries = 30
+        for _ in range(max_retries):
+            try:
+                response = httpx.get("http://localhost:8000/health", timeout=1.0)
+                if response.status_code == 200:
+                    break
+            except:
+                time.sleep(0.5)
+        else:
+            process.terminate()
+            log_file.flush()  # 서버 시작 실패 시에도 로그 저장
+            log_file.close()
+            raise RuntimeError("Server failed to start")
+
+        yield process
+
+        # 서버 종료
         process.terminate()
-        raise RuntimeError("Server failed to start")
-
-    yield process
-
-    # 서버 종료
-    process.terminate()
-    process.wait()
+        process.wait()
+        log_file.flush()  # 서버 종료 시 로그 버퍼 모두 저장
+    finally:
+        # 서버 로그 파일 닫기
+        log_file.close()
+        # 서버 로그 파일 경로 출력
+        print(f"\n[LOG] Server log saved to: {server_log_file.absolute()}")
 
 
 @pytest.fixture
@@ -67,10 +163,14 @@ def client(test_server):
 
 
 # 모든 E2E 테스트에 자동 적용: 로그 파일 저장 (필수)
-@pytest.fixture(autouse=True)
+# ⚠️ 중요: session scope로 변경하여 session scope fixture보다 먼저 실행되도록 함
+@pytest.fixture(scope="session", autouse=True)
 def setup_test_logging(request):
     """
-    모든 E2E 테스트에 자동으로 로깅 설정 (필수)
+    모든 E2E 테스트에 자동으로 로깅 설정 (필수, session scope)
+
+    Session scope fixture가 실행되기 전에 로깅을 설정하여
+    timeline_sections 등의 fixture에서 발생하는 LLM 호출 로그가 기록되도록 합니다.
 
     로그 파일 위치: tests/logs/{test_name}_{timestamp}.log
     """

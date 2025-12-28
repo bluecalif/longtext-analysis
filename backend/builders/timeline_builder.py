@@ -154,8 +154,16 @@ def _extract_main_tasks_from_group(
 
     sections = []
 
-    # LLM 기반 작업 항목 추출
+    # LLM 기반 작업 항목 추출 (Phase 6.2: 부분 성공 처리)
     if use_llm:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(
+            f"[TIMELINE LLM] Starting LLM-based task extraction: "
+            f"phase={phase}, subphase={subphase}, events_count={len(group_events)}"
+        )
+
         try:
             from backend.core.llm_service import extract_main_tasks_with_llm
 
@@ -165,38 +173,146 @@ def _extract_main_tasks_from_group(
                 subphase=subphase,
             )
 
-            # LLM 결과를 TimelineSection으로 변환
+            # 빈 리스트 체크 추가
+            if not llm_tasks:
+                logger.warning(
+                    f"[TIMELINE LLM] LLM returned empty list, using fallback: "
+                    f"phase={phase}, subphase={subphase}, events_count={len(group_events)}"
+                )
+                # fallback으로 넘어감 (아래 패턴 기반 코드 실행)
+                raise ValueError("LLM returned empty list")
+
+            logger.info(
+                f"[TIMELINE LLM] LLM returned {len(llm_tasks)} tasks: "
+                f"phase={phase}, subphase={subphase}"
+            )
+
+            # LLM 결과를 TimelineSection으로 변환 (부분 성공 처리, Phase 6.2)
+            successful_sections = []
+            failed_tasks = []
+
             for idx, task in enumerate(llm_tasks):
                 event_seqs = task.get("event_seqs", [])
                 # event_seqs에 해당하는 이벤트 찾기
                 task_events = [e for e in group_events if e.seq in event_seqs]
+
                 if not task_events:
+                    failed_tasks.append(
+                        {
+                            "task_idx": idx,
+                            "task_title": task.get("title", "작업 항목"),
+                            "event_seqs": event_seqs,
+                            "reason": "No matching events found",
+                        }
+                    )
+                    logger.warning(
+                        f"[TIMELINE LLM] Task[{idx}] validation failed: "
+                        f"title='{task.get('title', '')[:50]}', "
+                        f"event_seqs={event_seqs}, "
+                        f"reason='No matching events found'"
+                    )
                     continue
 
-                section = TimelineSection(
-                    section_id=_generate_section_id(phase, subphase, len(sections) + 1),
-                    title=task.get("title", "작업 항목"),
-                    summary=task.get("summary", ""),
-                    phase=phase,
-                    subphase=subphase,
-                    events=event_seqs,
-                    has_issues=_check_has_issues(task_events, issue_cards),
-                    issue_refs=_extract_issue_refs(task_events, issue_cards),
-                    detailed_results=_extract_detailed_results(task_events),
+                try:
+                    section = TimelineSection(
+                        section_id=_generate_section_id(
+                            phase, subphase, len(successful_sections) + 1
+                        ),
+                        title=task.get("title", "작업 항목"),
+                        summary=task.get("summary", ""),
+                        phase=phase,
+                        subphase=subphase,
+                        events=event_seqs,
+                        has_issues=_check_has_issues(task_events, issue_cards),
+                        issue_refs=_extract_issue_refs(task_events, issue_cards),
+                        detailed_results=_extract_detailed_results(task_events),
+                    )
+                    successful_sections.append(section)
+                    logger.info(
+                        f"[TIMELINE LLM] Task[{idx}] converted to section: "
+                        f"section_id={section.section_id}, "
+                        f"title='{section.title[:50]}', "
+                        f"events_count={len(event_seqs)}"
+                    )
+                except Exception as section_error:
+                    failed_tasks.append(
+                        {
+                            "task_idx": idx,
+                            "task_title": task.get("title", "작업 항목"),
+                            "event_seqs": event_seqs,
+                            "reason": f"Section creation failed: {str(section_error)[:100]}",
+                        }
+                    )
+                    logger.warning(
+                        f"[TIMELINE LLM] Task[{idx}] section creation failed: "
+                        f"title='{task.get('title', '')[:50]}', "
+                        f"error={str(section_error)[:100]}"
+                    )
+
+            # 부분 성공 처리: 성공한 섹션은 사용, 실패한 부분만 Fallback (Phase 6.2)
+            if successful_sections:
+                logger.info(
+                    f"[TIMELINE LLM] LLM extraction partially successful: "
+                    f"successful_sections={len(successful_sections)}, "
+                    f"failed_tasks={len(failed_tasks)}, "
+                    f"total_tasks={len(llm_tasks)}"
                 )
-                sections.append(section)
 
-            if sections:
-                return sections
-            # LLM 결과가 없거나 실패하면 패턴 기반으로 fallback
+                # 실패한 task의 이벤트를 fallback으로 처리
+                if failed_tasks:
+                    failed_event_seqs = set()
+                    for failed_task in failed_tasks:
+                        failed_event_seqs.update(failed_task.get("event_seqs", []))
+
+                    # 성공한 섹션에 포함된 이벤트 제외
+                    successful_event_seqs = set()
+                    for section in successful_sections:
+                        successful_event_seqs.update(section.events)
+
+                    remaining_event_seqs = failed_event_seqs - successful_event_seqs
+
+                    if remaining_event_seqs:
+                        logger.info(
+                            f"[TIMELINE LLM] Processing {len(remaining_event_seqs)} remaining events "
+                            f"with fallback: seqs={sorted(remaining_event_seqs)}"
+                        )
+                        remaining_events = [
+                            e for e in group_events if e.seq in remaining_event_seqs
+                        ]
+                        if remaining_events:
+                            # 패턴 기반 fallback으로 남은 이벤트 처리
+                            fallback_sections = _extract_main_tasks_from_group(
+                                remaining_events,
+                                phase,
+                                subphase,
+                                session_meta,
+                                issue_cards,
+                                use_llm=False,
+                            )
+                            successful_sections.extend(fallback_sections)
+                            logger.info(
+                                f"[TIMELINE LLM] Added {len(fallback_sections)} fallback sections "
+                                f"for remaining events"
+                            )
+
+                return successful_sections
+            else:
+                # 모든 task가 실패한 경우에만 전체 fallback
+                logger.warning(
+                    f"[TIMELINE LLM] All {len(llm_tasks)} tasks failed validation, "
+                    f"using full fallback: phase={phase}, subphase={subphase}"
+                )
         except Exception as e:
-            import logging
-
             logger = logging.getLogger(__name__)
-            logger.warning(
-                f"[WARNING] LLM-based task extraction failed: {e}, "
-                f"falling back to pattern-based"
+            error_type = type(e).__name__
+            logger.error(
+                f"[TIMELINE LLM] LLM-based task extraction failed with exception: "
+                f"{error_type}: {str(e)[:200]}, "
+                f"falling back to pattern-based: phase={phase}, subphase={subphase}"
             )
+            import traceback
+
+            logger.debug(f"[TIMELINE LLM] Exception traceback: {traceback.format_exc()}")
 
     # 패턴 기반 작업 항목 추출 (기본 또는 fallback)
 

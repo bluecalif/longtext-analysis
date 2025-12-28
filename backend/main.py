@@ -4,10 +4,26 @@ FastAPI 애플리케이션 진입점
 이 모듈은 FastAPI 앱을 초기화하고, CORS 설정, 라우터 등록, 예외 처리를 구성합니다.
 """
 
+import logging
+import sys
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import Dict, Any
+
+# 로깅 설정 (FastAPI 앱 생성 전)
+# stdout으로 출력하여 subprocess에서 캡처되도록 함
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # stdout으로 출력 (subprocess에서 캡처됨)
+    ]
+)
+
+# LLM 서비스 로거 설정 (INFO 레벨로 설정하여 CACHE HIT/MISS 로그 포함)
+llm_logger = logging.getLogger("backend.core.llm_service")
+llm_logger.setLevel(logging.INFO)
 
 # FastAPI 앱 인스턴스 생성
 app = FastAPI(
@@ -66,17 +82,13 @@ async def health_check() -> Dict[str, str]:
 
 
 # 라우터 등록
-# Phase 6에서 실제 라우터 구현 예정
-# 현재는 구조만 준비
+from backend.api.routes import parse, timeline, issues, snippets, export
 
-# TODO: Phase 6에서 구현 예정
-# from backend.api.routes import parse, timeline, issues, snippets, export
-#
-# app.include_router(parse.router)
-# app.include_router(timeline.router)
-# app.include_router(issues.router)
-# app.include_router(snippets.router)
-# app.include_router(export.router)
+app.include_router(parse.router)
+app.include_router(timeline.router)
+app.include_router(issues.router)
+app.include_router(snippets.router)
+app.include_router(export.router)
 
 
 # 루트 엔드포인트

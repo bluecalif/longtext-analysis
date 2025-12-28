@@ -15,15 +15,14 @@ from dotenv import load_dotenv
 # .env 파일 자동 로드
 load_dotenv()
 
-from backend.parser import parse_markdown
-from backend.builders.event_normalizer import normalize_turns_to_events
+from backend.core.pipeline_cache import get_or_create_parsed_data, get_or_create_events
 from backend.builders.evaluation import (
     create_manual_review_dataset,
     evaluate_manual_review,
     create_golden_file,
     compare_with_golden
 )
-from backend.core.models import EventType
+from backend.core.models import EventType, Turn
 
 
 # 실제 입력 데이터 경로
@@ -43,28 +42,30 @@ def test_event_normalizer_e2e_pattern():
     if not INPUT_FILE.exists():
         pytest.skip(f"Input file not found: {INPUT_FILE}")
 
-    text = INPUT_FILE.read_text(encoding="utf-8")
+    # 2. 파싱 실행 (Phase 2 결과, pipeline_cache 사용)
+    parsed_data = get_or_create_parsed_data(input_file=INPUT_FILE)
 
-    # 2. 파싱 실행 (Phase 2 결과)
-    parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
-
-    # 3. 이벤트 정규화 실행 (정규식 기반)
-    session_meta = parse_result["session_meta"]
-    events = normalize_turns_to_events(
-        parse_result["turns"], session_meta=session_meta, use_llm=False
+    # 3. 이벤트 정규화 실행 (정규식 기반, pipeline_cache 사용)
+    events, session_meta = get_or_create_events(
+        parsed_data=parsed_data,
+        input_file=INPUT_FILE,
+        use_llm=False
     )
+
+    # Turn 모델 변환
+    turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
 
     # 4. 정합성 검증
     assert len(events) > 0, "이벤트가 생성되지 않음"
     # 우선순위 기반 단일 이벤트 생성이므로 이벤트 수는 Turn 수와 같아야 함
     assert len(events) == len(
-        parse_result["turns"]
-    ), f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음"
+        turns
+    ), f"이벤트 수({len(events)})가 Turn 수({len(turns)})와 일치하지 않음"
 
     # Turn → Event 변환 정확성 (모든 Turn이 이벤트로 변환되었는지 확인)
     turn_refs = [event.turn_ref for event in events]
     unique_turn_refs = set(turn_refs)
-    assert len(unique_turn_refs) == len(parse_result["turns"]), "모든 Turn이 이벤트로 변환되지 않음"
+    assert len(unique_turn_refs) == len(turns), "모든 Turn이 이벤트로 변환되지 않음"
 
     # 중복 이벤트 확인 (같은 turn_ref가 여러 번 나타나면 안 됨)
     assert len(turn_refs) == len(unique_turn_refs), "중복된 turn_ref가 있음 (단일 이벤트 생성 실패)"
@@ -85,7 +86,6 @@ def test_event_normalizer_e2e_pattern():
         assert event_type in valid_types, f"유효하지 않은 이벤트 타입: {event_type}"
 
     # Phase/Subphase 연결 정확성 (SessionMeta에서 가져옴)
-    session_meta = parse_result["session_meta"]
     # Phase/Subphase는 Timeline 빌더에서 연결되므로 여기서는 기본 구조만 확인
 
     # Code Generation 연결 정확성
@@ -93,7 +93,7 @@ def test_event_normalizer_e2e_pattern():
     if code_generation_events:
         for event in code_generation_events:
             # 코드 블록이 있으면 snippet_refs가 있어야 함 (필수)
-            turn = parse_result["turns"][event.turn_ref]
+            turn = turns[event.turn_ref]
             if turn.code_blocks:
                 assert len(event.snippet_refs) > 0, "CODE_GENERATION 타입 이벤트에 코드 블록이 있지만 snippet_refs가 비어있음"
             # 파일 경로가 있으면 artifacts가 있어야 함 (선택적)
@@ -124,7 +124,7 @@ def test_event_normalizer_e2e_pattern():
 
     # 연결 관계의 정확성
     # Code Generation 연결률 계산 (코드 블록이 있는 Turn 중 code_generation 타입으로 분류된 비율)
-    turns_with_code_blocks = [t for t in parse_result["turns"] if t.code_blocks]
+    turns_with_code_blocks = [t for t in turns if t.code_blocks]
     code_generation_linking_rate = (
         len(code_generation_events) / len(turns_with_code_blocks) if turns_with_code_blocks else 0.0
     )
@@ -139,7 +139,7 @@ def test_event_normalizer_e2e_pattern():
         "timestamp": timestamp,
         "input_file": str(INPUT_FILE),
         "results": {
-            "total_turns": len(parse_result["turns"]),
+            "total_turns": len(turns),
             "total_events": len(events),
             "event_type_distribution": event_type_distribution,
             "code_generation_events_count": len(code_generation_events),
@@ -151,9 +151,9 @@ def test_event_normalizer_e2e_pattern():
     }
 
     # 문제 발견 시 경고 추가
-    if len(events) != len(parse_result["turns"]):
+    if len(events) != len(turns):
         report["warnings"].append(
-            f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음 (단일 이벤트 생성 실패)"
+            f"이벤트 수({len(events)})가 Turn 수({len(turns)})와 일치하지 않음 (단일 이벤트 생성 실패)"
         )
 
     # 중복 이벤트 확인
@@ -185,8 +185,8 @@ def test_event_normalizer_e2e_pattern():
     results_file = RESULTS_DIR / f"event_normalizer_e2e_{timestamp}.json"
 
     detailed_results = {
-        "session_meta": parse_result["session_meta"].model_dump(),
-        "turns_count": len(parse_result["turns"]),
+        "session_meta": session_meta.model_dump(),
+        "turns_count": len(turns),
         "events": [event.model_dump() for event in events],
         "event_type_distribution": event_type_distribution,
         "test_metadata": {
@@ -217,23 +217,25 @@ def test_event_normalizer_e2e_with_llm():
     if not INPUT_FILE.exists():
         pytest.skip(f"Input file not found: {INPUT_FILE}")
 
-    text = INPUT_FILE.read_text(encoding="utf-8")
+    # 2. 파싱 실행 (Phase 2 결과, pipeline_cache 사용)
+    parsed_data = get_or_create_parsed_data(input_file=INPUT_FILE)
 
-    # 2. 파싱 실행 (Phase 2 결과)
-    parse_result = parse_markdown(text, source_doc=str(INPUT_FILE))
-
-    # 3. 이벤트 정규화 실행 (LLM 기반, 병렬 처리)
+    # 3. 이벤트 정규화 실행 (LLM 기반, pipeline_cache 사용)
     from backend.core.llm_service import reset_cache_stats, get_cache_stats
 
     # 캐시 통계 초기화
     reset_cache_stats()
 
-    session_meta = parse_result["session_meta"]
     start_time = time.time()
-    events = normalize_turns_to_events(
-        parse_result["turns"], session_meta=session_meta, use_llm=True
+    events, session_meta = get_or_create_events(
+        parsed_data=parsed_data,
+        input_file=INPUT_FILE,
+        use_llm=True
     )
     elapsed_time = time.time() - start_time
+
+    # Turn 모델 변환
+    turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
 
     # 실행 중 캐시 통계 수집
     runtime_cache_stats = get_cache_stats()
@@ -241,8 +243,8 @@ def test_event_normalizer_e2e_with_llm():
     # 4. 정합성 검증
     assert len(events) > 0, "이벤트가 생성되지 않음"
     assert len(events) == len(
-        parse_result["turns"]
-    ), f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음"
+        turns
+    ), f"이벤트 수({len(events)})가 Turn 수({len(turns)})와 일치하지 않음"
 
     # 처리 방법 확인 (배치 처리이므로 "llm_batch")
     processing_methods = [getattr(event, "processing_method", "regex") for event in events]
@@ -253,14 +255,14 @@ def test_event_normalizer_e2e_with_llm():
     # Turn → Event 변환 정확성
     turn_refs = [event.turn_ref for event in events]
     unique_turn_refs = set(turn_refs)
-    assert len(unique_turn_refs) == len(parse_result["turns"]), "모든 Turn이 이벤트로 변환되지 않음"
+    assert len(unique_turn_refs) == len(turns), "모든 Turn이 이벤트로 변환되지 않음"
     assert len(turn_refs) == len(unique_turn_refs), "중복된 turn_ref가 있음"
 
     # 병렬 처리 후 순서 유지 확인 (turn_ref가 순차적으로 증가하는지 확인)
     for i, event in enumerate(events):
         assert (
-            event.turn_ref == parse_result["turns"][i].turn_index
-        ), f"이벤트 순서가 올바르지 않음: 인덱스 {i}에서 turn_ref {event.turn_ref} != turn_index {parse_result['turns'][i].turn_index}"
+            event.turn_ref == turns[i].turn_index
+        ), f"이벤트 순서가 올바르지 않음: 인덱스 {i}에서 turn_ref {event.turn_ref} != turn_index {turns[i].turn_index}"
 
     # Event 타입 분류 정확성
     event_types = [event.type for event in events]
@@ -284,7 +286,7 @@ def test_event_normalizer_e2e_with_llm():
     if code_generation_events:
         for event in code_generation_events:
             # 해당 Turn에 실제 코드 블록이 있는지 확인
-            turn = parse_result["turns"][event.turn_ref]
+            turn = turns[event.turn_ref]
             if turn.code_blocks:
                 # 코드 블록이 있으면 snippet_refs 배열에도 포함되어야 함
                 assert (
@@ -305,7 +307,7 @@ def test_event_normalizer_e2e_with_llm():
         )
 
     # Code Generation 연결률 계산 (코드 블록이 있는 Turn 중 code_generation 타입으로 분류된 비율)
-    turns_with_code_blocks = [t for t in parse_result["turns"] if t.code_blocks]
+    turns_with_code_blocks = [t for t in turns if t.code_blocks]
     code_generation_linking_rate = (
         len(code_generation_events) / len(turns_with_code_blocks) if turns_with_code_blocks else 0.0
     )
@@ -319,7 +321,7 @@ def test_event_normalizer_e2e_with_llm():
     runtime_cache_saves = runtime_cache_stats["saves"]
     # 배치 처리이므로 배치 단위로 히트율 계산 (Phase 6.1)
     BATCH_SIZE = 5
-    total_batches = (len(parse_result["turns"]) + BATCH_SIZE - 1) // BATCH_SIZE
+    total_batches = (len(turns) + BATCH_SIZE - 1) // BATCH_SIZE
     runtime_cache_hit_rate = (
         runtime_cache_hits / total_batches if total_batches > 0 else 0.0
     )
@@ -331,8 +333,8 @@ def test_event_normalizer_e2e_with_llm():
     file_based_batch_cache_hits = 0
     file_based_batch_cache_misses = 0
 
-    for i in range(0, len(parse_result["turns"]), BATCH_SIZE):
-        batch = parse_result["turns"][i : i + BATCH_SIZE]
+    for i in range(0, len(turns), BATCH_SIZE):
+        batch = turns[i : i + BATCH_SIZE]
         # 배치 캐시 키 생성 (classify_and_summarize_batch_with_llm과 동일한 로직)
         batch_texts = []
         for turn in batch:
@@ -401,9 +403,9 @@ def test_event_normalizer_e2e_with_llm():
     }
 
     # 문제 발견 시 경고 추가
-    if len(events) != len(parse_result["turns"]):
+    if len(events) != len(turns):
         report["warnings"].append(
-            f"이벤트 수({len(events)})가 Turn 수({len(parse_result['turns'])})와 일치하지 않음"
+            f"이벤트 수({len(events)})가 Turn 수({len(turns)})와 일치하지 않음"
         )
 
     turn_refs = [event.turn_ref for event in events]
@@ -434,8 +436,8 @@ def test_event_normalizer_e2e_with_llm():
     results_file = RESULTS_DIR / f"event_normalizer_e2e_llm_{timestamp}.json"
 
     detailed_results = {
-        "session_meta": parse_result["session_meta"].model_dump(),
-        "turns_count": len(parse_result["turns"]),
+        "session_meta": session_meta.model_dump(),
+        "turns_count": len(turns),
         "events": [event.model_dump() for event in events],
         "event_type_distribution": event_type_distribution,
         "test_metadata": {
@@ -459,7 +461,7 @@ def test_event_normalizer_e2e_with_llm():
 
     manual_review_dataset = create_manual_review_dataset(
         events=events,
-        turns=parse_result["turns"],
+        turns=turns,
         output_file=MANUAL_REVIEW_DIR / f"manual_review_dataset_{timestamp}.json",
         sample_size=30,
         min_per_type=3

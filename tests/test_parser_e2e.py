@@ -8,7 +8,8 @@ import pytest
 import json
 from pathlib import Path
 from datetime import datetime
-from backend.parser import parse_markdown
+from backend.core.pipeline_cache import get_or_create_parsed_data
+from backend.core.models import SessionMeta, Turn
 from backend.parser.turns import check_parse_health
 
 
@@ -26,40 +27,41 @@ def test_parser_e2e():
     if not INPUT_FILE.exists():
         pytest.skip(f"Input file not found: {INPUT_FILE}")
 
-    text = INPUT_FILE.read_text(encoding="utf-8")
+    # 2. 파싱 실행 (pipeline_cache 사용)
+    parsed_data = get_or_create_parsed_data(input_file=INPUT_FILE)
 
-    # 2. 파싱 실행
-    result = parse_markdown(text, source_doc=str(INPUT_FILE))
+    # 딕셔너리를 모델로 변환
+    session_meta = SessionMeta(**parsed_data["session_meta"])
+    turns = [Turn(**turn_dict) for turn_dict in parsed_data["turns"]]
 
     # 3. 정합성 검증
-    assert result["session_meta"] is not None, "session_meta가 없음"
-    assert result["session_meta"].session_id is not None, "session_id가 없음"
-    assert len(result["turns"]) > 0, "turns가 비어있음"
+    assert session_meta is not None, "session_meta가 없음"
+    assert session_meta.session_id is not None, "session_id가 없음"
+    assert len(turns) > 0, "turns가 비어있음"
 
     # Session Meta 추출 정확성
-    session_meta = result["session_meta"]
     assert session_meta.source_doc == str(INPUT_FILE), "source_doc가 올바르지 않음"
     # phase, subphase, exported_at, cursor_version은 있을 수도 없을 수도 있음
 
     # Turn 블록 분할 정확성
-    user_turns = [t for t in result["turns"] if t.speaker == "User"]
-    cursor_turns = [t for t in result["turns"] if t.speaker == "Cursor"]
-    unknown_turns = [t for t in result["turns"] if t.speaker == "Unknown"]
+    user_turns = [t for t in turns if t.speaker == "User"]
+    cursor_turns = [t for t in turns if t.speaker == "Cursor"]
+    unknown_turns = [t for t in turns if t.speaker == "Unknown"]
 
     assert len(user_turns) > 0, "User turns가 없음"
     assert len(cursor_turns) > 0, "Cursor turns가 없음"
 
     # 코드 스니펫 추출 정확성
-    all_code_blocks = result["code_blocks"]
+    all_code_blocks = parsed_data["code_blocks"]
     # 코드 블록이 있을 수도 없을 수도 있음
 
     # Artifact 추출 정확성
-    all_artifacts = result["artifacts"]
+    all_artifacts = parsed_data["artifacts"]
     # Artifact가 있을 수도 없을 수도 있음
 
     # 4. 타당성 검증
     # 파싱 실패율 검증
-    health = check_parse_health(result["turns"])
+    health = check_parse_health(turns)
     unknown_ratio = health["unknown_ratio"]
 
     assert unknown_ratio < 0.2, f"파싱 실패율이 너무 높음: {unknown_ratio:.1%}"
@@ -69,7 +71,7 @@ def test_parser_e2e():
         "test_name": "parser_e2e",
         "input_file": str(INPUT_FILE),
         "results": {
-            "total_turns": len(result["turns"]),
+            "total_turns": len(turns),
             "user_turns": len(user_turns),
             "cursor_turns": len(cursor_turns),
             "unknown_turns": len(unknown_turns),
@@ -111,9 +113,9 @@ def test_parser_e2e():
 
     detailed_results = {
         "session_meta": session_meta.model_dump(),
-        "turns": [turn.model_dump() for turn in result["turns"]],
-        "code_blocks": [block.model_dump() for block in result["code_blocks"]],
-        "artifacts": result["artifacts"],
+        "turns": [turn.model_dump() for turn in turns],
+        "code_blocks": parsed_data["code_blocks"],
+        "artifacts": parsed_data["artifacts"],
         "test_metadata": {
             "timestamp": timestamp,
             "input_file": str(INPUT_FILE),

@@ -71,15 +71,44 @@ tests/
 - `conftest.py` 파일에 fixture를 정의하거나
 - `conftest_e2e.py`의 내용을 `conftest.py`로 병합
 
+**⚠️ 중요: 서버 관리 규칙**:
+
+1. **포트 충돌 방지 (필수)**
+   - 서버 시작 전에 포트 8000이 사용 중인지 확인
+   - 포트가 사용 중인 경우 기존 프로세스를 자동으로 종료
+   - psutil이 있으면 psutil 사용, 없으면 Windows에서는 netstat/taskkill 사용
+   - 이 규칙을 준수하지 않으면 테스트 실행 시 포트 충돌로 인한 오류 발생 가능
+
+2. **서버 로그 파일 저장 (필수)**
+   - 서버 stdout/stderr를 파일로 리다이렉트하여 저장
+   - 로그 파일 위치: `tests/logs/server_{timestamp}.log`
+   - 디버깅 및 캐시 사용 여부 확인 목적
+   - **FastAPI 앱 로깅 설정**: `backend/main.py`에 `logging.basicConfig()` 추가 (INFO 레벨)
+   - **LLM 서비스 로그**: CACHE HIT/MISS 로그는 INFO 레벨로 출력 (서버 로그에 포함)
+   - **API 엔드포인트 로깅**: 각 라우터에서 `use_llm` 파라미터와 결과 로깅
+
+3. **서버 종료 보장 (필수)**
+   - 테스트 완료 후 반드시 서버 프로세스 종료
+   - finally 블록에서 서버 종료 및 로그 파일 닫기 처리
+
 ```python
-# tests/conftest.py (또는 tests/conftest_e2e.py를 conftest.py로 이름 변경)
+# tests/conftest.py
 import pytest
 import subprocess
 import time
 import httpx
 import logging
+import socket
+import platform
 from pathlib import Path
 from datetime import datetime
+
+# psutil은 선택적 의존성 (없어도 동작하되 포트 충돌 방지 기능 제한)
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 # Phase 6+ 전용: 실제 서버 실행 fixture
 @pytest.fixture(scope="session")
@@ -87,34 +116,113 @@ def test_server():
     """
     실제 uvicorn 서버 실행 fixture (Phase 6+ API 테스트용)
     
+    서버 로그를 파일로 저장합니다 (캐싱 사용 여부 확인 및 디버깅 목적).
+    
+    기존 서버가 실행 중인 경우 포트 충돌을 방지하기 위해 자동으로 종료합니다.
+    
     Phase 2-5에서는 사용하지 않음 (모듈 직접 호출)
     """
-    # 서버 시작
-    process = subprocess.Popen(
-        ["poetry", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
-        cwd=Path(__file__).parent.parent,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    # 포트 8000 사용 중인 프로세스 확인 및 종료
+    port = 8000
+    logger = logging.getLogger(__name__)
     
-    # 서버 준비 대기
-    max_retries = 30
-    for _ in range(max_retries):
-        try:
-            response = httpx.get("http://localhost:8000/health", timeout=1.0)
-            if response.status_code == 200:
-                break
-        except:
-            time.sleep(0.5)
-    else:
+    # 포트가 사용 중인지 확인
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(0.1)
+    result = sock.connect_ex(('localhost', port))
+    sock.close()
+    
+    if result == 0:
+        # 포트가 사용 중인 경우
+        logger.warning(f"Port {port} is already in use. Attempting to kill existing process...")
+        
+        if HAS_PSUTIL:
+            # psutil을 사용하여 포트를 사용하는 프로세스 찾기 및 종료
+            for proc in psutil.process_iter(['pid', 'name', 'connections']):
+                try:
+                    connections = proc.info.get('connections')
+                    if connections:
+                        for conn in connections:
+                            if conn.status == 'LISTEN' and conn.laddr.port == port:
+                                logger.warning(f"Killing process {proc.info['pid']} ({proc.info['name']}) using port {port}")
+                                proc.terminate()
+                                proc.wait(timeout=5)
+                                logger.info(f"Process {proc.info['pid']} terminated successfully")
+                                break
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+                    continue
+            time.sleep(1)
+        elif platform.system() == "Windows":
+            # Windows에서 netstat과 taskkill 사용 (psutil 없이도 동작)
+            try:
+                netstat_result = subprocess.run(
+                    ["netstat", "-ano"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                for line in netstat_result.stdout.splitlines():
+                    if f":{port}" in line and "LISTENING" in line:
+                        parts = line.split()
+                        if len(parts) >= 5:
+                            pid = parts[-1]
+                            try:
+                                logger.warning(f"Killing process {pid} using port {port}")
+                                subprocess.run(
+                                    ["taskkill", "/F", "/PID", pid],
+                                    capture_output=True,
+                                    timeout=5
+                                )
+                                logger.info(f"Process {pid} terminated successfully")
+                            except subprocess.TimeoutExpired:
+                                logger.warning(f"Failed to kill process {pid}: timeout")
+                time.sleep(1)
+            except Exception as e:
+                logger.warning(f"Failed to kill process using netstat/taskkill: {e}")
+        else:
+            logger.warning("psutil not available. Cannot automatically kill existing process on port 8000")
+    
+    # 서버 로그 파일 경로 생성
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    server_log_file = log_dir / f"server_{timestamp}.log"
+    
+    # 서버 시작 (stdout/stderr를 파일로 리다이렉트)
+    log_file = open(server_log_file, "w", encoding="utf-8")
+    try:
+        process = subprocess.Popen(
+            ["poetry", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
+            cwd=Path(__file__).parent.parent,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,  # stderr도 stdout으로 합쳐서 같은 파일에 저장
+        )
+        
+        # 서버 준비 대기
+        max_retries = 30
+        for _ in range(max_retries):
+            try:
+                response = httpx.get("http://localhost:8000/health", timeout=1.0)
+                if response.status_code == 200:
+                    break
+            except:
+                time.sleep(0.5)
+        else:
+            process.terminate()
+            log_file.flush()
+            log_file.close()
+            raise RuntimeError("Server failed to start")
+        
+        yield process
+        
+        # 서버 종료
         process.terminate()
-        raise RuntimeError("Server failed to start")
-    
-    yield process
-    
-    # 서버 종료
-    process.terminate()
-    process.wait()
+        process.wait()
+        log_file.flush()
+    finally:
+        # 서버 로그 파일 닫기
+        log_file.close()
+        print(f"\n[LOG] Server log saved to: {server_log_file.absolute()}")
 
 @pytest.fixture
 def client(test_server):
@@ -609,6 +717,14 @@ def test_full_pipeline_e2e(client: httpx.Client):
 - [ ] 결과 분석 및 리포트 생성
 - [ ] 로그 파일 저장 (자동 적용, `setup_test_logging` fixture)
 - [ ] 실행 결과 저장 (필수, `tests/results/` 디렉토리)
+
+### ⚠️ 테스트 실행 검증 (필수)
+**절대 금지**: 테스트 파일만 작성하고 실행하지 않은 채 완료 보고
+
+- [ ] **테스트 실제 실행**: `poetry run pytest tests/test_xxx.py -v` (반드시 실행)
+- [ ] **테스트 통과 확인**: 모든 테스트가 PASS 상태인지 확인
+- [ ] **결과 파일 확인**: `tests/logs/`, `tests/results/` 디렉토리에 파일 생성 확인
+- [ ] **완료 보고에 포함**: 테스트 실행 명령어 및 결과 상태 명시
 
 ### 테스트 실행 후
 - [ ] 자동으로 상세 보고 출력
