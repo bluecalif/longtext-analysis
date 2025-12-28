@@ -301,18 +301,21 @@
 **목표**: 3열 레이아웃 구성 (입력 패널 | 미리보기 | Export 패널)
 
 **구현 계획**:
-- [ ] `frontend/app/page.tsx` 수정
-  - [ ] 상태 관리 (React hooks)
-    - [ ] `sessionMeta`, `turns`, `events` 상태
-    - [ ] `timelineSections`, `issueCards`, `snippets` 상태
-    - [ ] `activeTab` 상태 (timeline | issues | snippets)
-    - [ ] `isProcessing` 상태 (로딩 표시)
-  - [ ] 3열 레이아웃 구성 (Tailwind CSS Grid)
-    - [ ] 좌측: 입력 패널 (고정 너비)
-    - [ ] 중앙: 결과 미리보기 (가변 너비)
-    - [ ] 우측: Export 패널 (고정 너비)
-  - [ ] 파이프라인 실행 로직
-    - [ ] 파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Snippets 처리 순서
+- [x] `frontend/app/page.tsx` 수정
+  - [x] 상태 관리 (React hooks)
+    - [x] `sessionMeta`, `turns`, `events` 상태
+    - [x] `timelineSections`, `issueCards`, `snippets` 상태
+    - [x] `activeTab` 상태 (timeline | issues | snippets)
+    - [x] `isProcessing` 상태 (로딩 표시)
+  - [x] 3열 레이아웃 구성 (Tailwind CSS Flex)
+    - [x] 좌측: 입력 패널 (고정 너비 320px)
+    - [x] 중앙: 결과 미리보기 (가변 너비 flex-1)
+    - [x] 우측: Export 패널 (고정 너비 288px)
+  - [x] 파이프라인 실행 로직
+    - [x] 파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Snippets 처리 순서
+  - [x] 드래그&드롭 파일 업로드 지원
+  - [x] 처리 상태 표시 (로딩, 에러 메시지)
+  - [x] 세션 메타 정보 및 통계 표시
 
 **브라우저 확인**:
 - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`

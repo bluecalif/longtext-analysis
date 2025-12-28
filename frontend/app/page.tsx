@@ -2,17 +2,38 @@
 
 import { useState } from 'react'
 import { api, ApiError } from '@/lib/api'
+import type {
+  SessionMeta,
+  Turn,
+  Event,
+  TimelineSection,
+  IssueCard,
+  Snippet,
+  ParseResponse,
+  TimelineResponse,
+  IssuesResponse,
+  SnippetsProcessResponse,
+} from '@/types/api'
 
 /**
- * Phase 8.2 브라우저 확인용 임시 페이지
- *
- * API 클라이언트를 브라우저에서 테스트할 수 있도록 구성
- * - 콘솔에서 `window.api`로 접근 가능
- * - 파일 업로드 테스트 버튼 제공
+ * 메인 페이지 - 3열 레이아웃
+ * 
+ * 좌측: 입력 패널 (파일 업로드, 세션 메타)
+ * 중앙: 결과 미리보기 (Timeline, Issues, Snippets 탭)
+ * 우측: Export 패널 (다운로드 기능)
  */
 export default function Home() {
-  const [status, setStatus] = useState<string>('Ready')
+  // 상태 관리
+  const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
+  const [turns, setTurns] = useState<Turn[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [timelineSections, setTimelineSections] = useState<TimelineSection[]>([])
+  const [issueCards, setIssueCards] = useState<IssueCard[]>([])
+  const [snippets, setSnippets] = useState<Snippet[]>([])
+  const [activeTab, setActiveTab] = useState<'timeline' | 'issues' | 'snippets'>('timeline')
+  const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [processingStep, setProcessingStep] = useState<string>('')
 
   // window 객체에 api 노출 (브라우저 콘솔에서 테스트용)
   if (typeof window !== 'undefined') {
@@ -20,92 +41,375 @@ export default function Home() {
     ;(window as any).ApiError = ApiError
   }
 
+  /**
+   * 전체 파이프라인 실행
+   * 파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Snippets 처리
+   */
+  const runPipeline = async (file: File) => {
+    setIsProcessing(true)
+    setError(null)
+    setProcessingStep('파일 업로드 중...')
+
+    try {
+      // 1. 파일 업로드 및 파싱
+      setProcessingStep('파일 파싱 중...')
+      const parseResult: ParseResponse = await api.parseFile(file)
+      setSessionMeta(parseResult.session_meta)
+      setTurns(parseResult.turns)
+      setEvents(parseResult.events)
+
+      // 2. Timeline 생성
+      setProcessingStep('Timeline 생성 중...')
+      const timelineResult: TimelineResponse = await api.createTimeline({
+        session_meta: parseResult.session_meta,
+        events: parseResult.events,
+        content_hash: parseResult.content_hash,
+      })
+      setTimelineSections(timelineResult.sections)
+
+      // 3. Issues 생성
+      setProcessingStep('Issues 생성 중...')
+      const issuesResult: IssuesResponse = await api.createIssues({
+        session_meta: parseResult.session_meta,
+        turns: parseResult.turns,
+        events: parseResult.events,
+        content_hash: parseResult.content_hash,
+      })
+      setIssueCards(issuesResult.issues)
+
+      // 4. Snippets 처리
+      setProcessingStep('Snippets 처리 중...')
+      const snippetsResult: SnippetsProcessResponse = await api.processSnippets({
+        session_meta: parseResult.session_meta,
+        turns: parseResult.turns,
+        events: parseResult.events,
+        issue_cards: issuesResult.issues,
+      })
+      setSnippets(snippetsResult.snippets)
+
+      setProcessingStep('완료!')
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`API 오류 (${err.statusCode}): ${err.detail || err.message}`)
+      } else {
+        setError(`오류: ${err instanceof Error ? err.message : String(err)}`)
+      }
+      setProcessingStep('실패')
+      console.error('Pipeline error:', err)
+    } finally {
+      setIsProcessing(false)
+      // 완료 후 1초 뒤에 processingStep 초기화
+      setTimeout(() => setProcessingStep(''), 1000)
+    }
+  }
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setStatus('Uploading...')
-    setError(null)
+    // 파일 검증
+    if (!file.name.endsWith('.md')) {
+      setError('마크다운 파일(.md)만 업로드할 수 있습니다.')
+      return
+    }
 
-    try {
-      const result = await api.parseFile(file)
-      setStatus(`Success! Session ID: ${result.session_meta.session_id}`)
-      console.log('Parse result:', result)
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(`API Error (${err.statusCode}): ${err.detail || err.message}`)
-      } else {
-        setError(`Error: ${err instanceof Error ? err.message : String(err)}`)
-      }
-      setStatus('Failed')
-      console.error('Parse error:', err)
+    // 파일 크기 제한 (예: 10MB)
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      setError(`파일 크기는 ${MAX_SIZE / 1024 / 1024}MB를 초과할 수 없습니다.`)
+      return
+    }
+
+    await runPipeline(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      await runPipeline(file)
     }
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Longtext Analysis - API Client Test</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <h1 className="text-2xl font-bold text-gray-900">Longtext Analysis</h1>
+        <p className="text-sm text-gray-600 mt-1">Cursor IDE 세션 분석 도구</p>
+      </header>
 
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Phase 8.2: API Client Browser Test</h2>
+      {/* 메인 컨텐츠 - 3열 레이아웃 */}
+      <main className="flex gap-4 p-4 h-[calc(100vh-80px)]">
+        {/* 좌측: 입력 패널 */}
+        <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
+          <h2 className="text-lg font-semibold mb-4">입력 패널</h2>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
-              Test File Upload (Markdown file)
-            </label>
+          {/* 파일 업로드 */}
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
             <input
               type="file"
               accept=".md"
               onChange={handleFileSelect}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              disabled={isProcessing}
+              className="hidden"
+              id="file-upload"
             />
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer block"
+            >
+              <div className="text-gray-400 mb-2">
+                <svg
+                  className="mx-auto h-12 w-12"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div className="text-sm text-gray-600">
+                {isProcessing ? '처리 중...' : '파일을 드래그하거나 클릭하여 업로드'}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">.md 파일만 지원</div>
+            </label>
           </div>
 
-          <div className="mb-4">
-            <div className="text-sm font-medium mb-1">Status:</div>
-            <div className={`p-2 rounded ${status === 'Ready' ? 'bg-gray-100' : status.includes('Success') ? 'bg-green-100' : status === 'Failed' ? 'bg-red-100' : 'bg-yellow-100'}`}>
-              {status}
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-4">
-              <div className="text-sm font-medium mb-1 text-red-600">Error:</div>
-              <div className="p-2 rounded bg-red-50 text-red-700 text-sm">
-                {error}
+          {/* 처리 상태 */}
+          {isProcessing && processingStep && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <div className="text-sm font-medium text-blue-900">{processingStep}</div>
+              <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
               </div>
             </div>
           )}
 
-          <div className="mt-6 p-4 bg-blue-50 rounded">
-            <h3 className="font-semibold mb-2">Browser Console Test:</h3>
-            <p className="text-sm text-gray-700 mb-2">
-              Open browser console (F12) and try:
-            </p>
-            <code className="block text-xs bg-white p-2 rounded mb-2">
-              window.api.parseFile(file)
-            </code>
-            <code className="block text-xs bg-white p-2 rounded">
-              // Check Network tab for use_llm query parameter (snake_case)
-            </code>
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 rounded-lg">
+              <div className="text-sm font-medium text-red-900">오류</div>
+              <div className="text-xs text-red-700 mt-1">{error}</div>
+            </div>
+          )}
+
+          {/* 세션 메타 정보 */}
+          {sessionMeta && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-semibold mb-2">세션 정보</h3>
+              <div className="text-xs space-y-1">
+                <div>
+                  <span className="font-medium">Session ID:</span>
+                  <div className="text-gray-600 break-all">{sessionMeta.session_id}</div>
+                </div>
+                {sessionMeta.phase !== undefined && (
+                  <div>
+                    <span className="font-medium">Phase:</span> {sessionMeta.phase}
+                    {sessionMeta.subphase !== undefined && `-${sessionMeta.subphase}`}
+                  </div>
+                )}
+                {sessionMeta.exported_at && (
+                  <div>
+                    <span className="font-medium">Exported:</span> {sessionMeta.exported_at}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 통계 정보 */}
+          {(turns.length > 0 || events.length > 0) && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-semibold mb-2">통계</h3>
+              <div className="text-xs space-y-1">
+                <div>Turns: {turns.length}</div>
+                <div>Events: {events.length}</div>
+                <div>Timeline Sections: {timelineSections.length}</div>
+                <div>Issue Cards: {issueCards.length}</div>
+                <div>Snippets: {snippets.length}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 중앙: 결과 미리보기 */}
+        <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          {/* 탭 헤더 */}
+          <div className="border-b border-gray-200 px-4 py-2 flex gap-2">
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === 'timeline'
+                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Timeline ({timelineSections.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('issues')}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === 'issues'
+                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Issues ({issueCards.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('snippets')}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === 'snippets'
+                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Snippets ({snippets.length})
+            </button>
+          </div>
+
+          {/* 탭 컨텐츠 */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {activeTab === 'timeline' && (
+              <div>
+                {timelineSections.length === 0 ? (
+                  <div className="text-center text-gray-400 py-12">
+                    Timeline 데이터가 없습니다. 파일을 업로드하세요.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {timelineSections.map((section, idx) => (
+                      <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold mb-2">{section.title}</h3>
+                        <div className="text-sm text-gray-600">
+                          {section.events.length}개 이벤트
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'issues' && (
+              <div>
+                {issueCards.length === 0 ? (
+                  <div className="text-center text-gray-400 py-12">
+                    Issue Cards 데이터가 없습니다. 파일을 업로드하세요.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {issueCards.map((card) => (
+                      <div key={card.issue_id} className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold mb-2">{card.title}</h3>
+                        <div className="text-sm text-gray-600">
+                          증상: {card.symptoms.length}개
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'snippets' && (
+              <div>
+                {snippets.length === 0 ? (
+                  <div className="text-center text-gray-400 py-12">
+                    Snippets 데이터가 없습니다. 파일을 업로드하세요.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {snippets.map((snippet) => (
+                      <div key={snippet.snippet_id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="text-sm font-mono text-gray-600 mb-2">
+                          {snippet.snippet_id} ({snippet.lang})
+                        </div>
+                        <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                          {snippet.code.substring(0, 200)}...
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">API Client Functions Available:</h2>
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            <li><code>api.parseFile(file, use_llm?)</code></li>
-            <li><code>api.createTimeline(request, use_llm?)</code></li>
-            <li><code>api.createIssues(request, use_llm?)</code></li>
-            <li><code>api.processSnippets(request)</code></li>
-            <li><code>api.getSnippet(snippetId)</code></li>
-            <li><code>api.exportTimeline(request)</code></li>
-            <li><code>api.exportIssues(request)</code></li>
-            <li><code>api.exportAll(request)</code></li>
-          </ul>
+        {/* 우측: Export 패널 */}
+        <div className="w-72 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
+          <h2 className="text-lg font-semibold mb-4">Export</h2>
+
+          {!sessionMeta ? (
+            <div className="text-sm text-gray-400 text-center py-8">
+              파일을 업로드한 후<br />Export 기능을 사용할 수 있습니다.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium mb-2">Timeline</h3>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                    disabled={timelineSections.length === 0}
+                  >
+                    JSON
+                  </button>
+                  <button
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                    disabled={timelineSections.length === 0}
+                  >
+                    MD
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium mb-2">Issues</h3>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                    disabled={issueCards.length === 0}
+                  >
+                    JSON
+                  </button>
+                  <button
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                    disabled={issueCards.length === 0}
+                  >
+                    MD
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium mb-2">전체</h3>
+                <button
+                  className="w-full px-3 py-2 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+                  disabled={!sessionMeta}
+                >
+                  ZIP 다운로드
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
