@@ -10,7 +10,7 @@ interface SessionMetaPreviewProps {
 
 /**
  * 세션 메타 정보 표시 컴포넌트
- * 
+ *
  * Session Meta 정보를 표시하고, Phase/Subphase를 수동으로 입력할 수 있는 기능 제공
  */
 export function SessionMetaPreview({

@@ -115,6 +115,21 @@ export default function Home() {
     }
   }
 
+  /**
+   * 모든 상태 초기화 (파일 업로드 및 결과 삭제)
+   */
+  const handleReset = () => {
+    setSessionMeta(null)
+    setTurns([])
+    setEvents([])
+    setTimelineSections([])
+    setIssueCards([])
+    setSnippets([])
+    setActiveTab('timeline')
+    setError(null)
+    setProcessingStep('')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
