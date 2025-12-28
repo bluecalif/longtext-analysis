@@ -264,13 +264,21 @@
 - 백엔드 API 엔드포인트와 Query 파라미터 이름 일치 확인
 - 타입 안전성 확인 (TypeScript 컴파일 오류 없음)
 
-**브라우저 확인**:
-- [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-- [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
-- [ ] 브라우저 개발자 도구 콘솔에서 API 클라이언트 함수 직접 호출 테스트
-  - 예: `api.parseFile(file)` 또는 간단한 테스트 페이지에서 호출
-- [ ] 네트워크 탭에서 API 요청 확인 (Query 파라미터 `use_llm` snake_case 확인)
-- [ ] API 응답 타입 일치 확인 (콘솔에서 응답 객체 구조 확인)
+**브라우저 확인** (⚠️ 필수):
+- [x] 테스트 페이지 구현 완료 (`frontend/app/page.tsx` - API 클라이언트 테스트용)
+- [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+- [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
+- [x] 브라우저에서 `http://localhost:3000` 접속
+- [x] 브라우저 개발자 도구 콘솔에서 API 클라이언트 함수 직접 호출 테스트
+  - `window.api.parseFile(file)` 또는 테스트 페이지에서 파일 업로드
+- [x] 네트워크 탭에서 API 요청 확인 (Query 파라미터 `use_llm` snake_case 확인)
+  - Request URL: `http://localhost:8000/api/parse?use_llm=true` (snake_case 확인)
+- [x] API 응답 타입 일치 확인 (콘솔에서 응답 객체 구조 확인)
+  - `result.session_meta`, `result.turns`, `result.events`, `result.content_hash` 확인
+- [x] 브라우저 확인 결과 문서화 (성공/실패, 발견된 문제점)
+  - ✅ 확인 결과: 양호 (2025-12-28)
+
+**참고**: 상세 브라우저 확인 가이드는 `docs/phase8_2_browser_test.md` 참조
 
 ### Phase 8.3: 상수 정의 (필요 시)
 
