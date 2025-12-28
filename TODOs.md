@@ -277,9 +277,9 @@
 **목표**: 백엔드 상수와 동기화
 
 **구현 계획**:
-- [ ] `frontend/lib/constants.ts` 생성 (필요한 경우)
-  - [ ] `USE_LLM_BY_DEFAULT = true` (백엔드와 동일)
-  - [ ] 기타 상수 (필요 시)
+- [x] `frontend/lib/constants.ts` 생성
+  - [x] `USE_LLM_BY_DEFAULT = true` (백엔드와 동일)
+  - [x] API 클라이언트에서 상수 사용 (`frontend/lib/api.ts`에 import 및 적용)
 
 **검증 방법**:
 - 백엔드 `backend/core/constants.py`와 값 일치 확인

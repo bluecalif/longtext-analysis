@@ -1,6 +1,6 @@
 /**
  * API 클라이언트
- * 
+ *
  * 백엔드 API와 통신하는 타입 안전한 클라이언트
  * Query 파라미터는 snake_case 유지 (use_llm)
  */
@@ -18,6 +18,7 @@ import type {
   ExportIssuesRequest,
   ExportAllRequest,
 } from '@/types/api'
+import { USE_LLM_BY_DEFAULT } from './constants'
 
 // API 기본 URL (환경 변수에서 가져오기)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -41,13 +42,13 @@ export class ApiError extends Error {
  */
 function buildQueryString(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams()
-  
+
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null) {
       searchParams.append(key, String(value))
     }
   }
-  
+
   const queryString = searchParams.toString()
   return queryString ? `?${queryString}` : ''
 }
@@ -58,21 +59,21 @@ function buildQueryString(params: Record<string, unknown>): string {
 export const api = {
   /**
    * 파일 업로드 및 파싱
-   * 
+   *
    * @param file 업로드할 마크다운 파일
    * @param use_llm LLM 사용 여부 (기본값: true, snake_case 유지)
    * @returns ParseResponse
    */
   async parseFile(
     file: File,
-    use_llm: boolean = true
+    use_llm: boolean = USE_LLM_BY_DEFAULT
   ): Promise<ParseResponse> {
     const formData = new FormData()
     formData.append('file', file)
-    
+
     const queryString = buildQueryString({ use_llm })
     const url = `/api/parse${queryString}`
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
       body: formData,
@@ -87,7 +88,7 @@ export const api = {
       } catch {
         detail = response.statusText
       }
-      
+
       throw new ApiError(
         `Parse failed: ${response.statusText}`,
         response.status,
@@ -100,14 +101,14 @@ export const api = {
 
   /**
    * Timeline 생성
-   * 
+   *
    * @param request TimelineRequest
    * @param use_llm LLM 사용 여부 (기본값: true, snake_case 유지)
    * @returns TimelineResponse
    */
   async createTimeline(
     request: TimelineRequest,
-    use_llm: boolean = true
+    use_llm: boolean = USE_LLM_BY_DEFAULT
   ): Promise<TimelineResponse> {
     const queryString = buildQueryString({ use_llm })
     return apiRequest<TimelineResponse>(
@@ -121,14 +122,14 @@ export const api = {
 
   /**
    * Issue Cards 생성
-   * 
+   *
    * @param request IssuesRequest
    * @param use_llm LLM 사용 여부 (기본값: true, snake_case 유지)
    * @returns IssuesResponse
    */
   async createIssues(
     request: IssuesRequest,
-    use_llm: boolean = true
+    use_llm: boolean = USE_LLM_BY_DEFAULT
   ): Promise<IssuesResponse> {
     const queryString = buildQueryString({ use_llm })
     return apiRequest<IssuesResponse>(
@@ -142,7 +143,7 @@ export const api = {
 
   /**
    * 스니펫 처리
-   * 
+   *
    * @param request SnippetsProcessRequest
    * @returns SnippetsProcessResponse
    */
@@ -160,7 +161,7 @@ export const api = {
 
   /**
    * 스니펫 조회
-   * 
+   *
    * @param snippetId 스니펫 ID
    * @returns SnippetResponse
    */
@@ -175,7 +176,7 @@ export const api = {
 
   /**
    * Timeline 다운로드
-   * 
+   *
    * @param request ExportTimelineRequest
    * @returns Blob (JSON 또는 MD 파일)
    */
@@ -191,7 +192,7 @@ export const api = {
 
   /**
    * Issues 다운로드
-   * 
+   *
    * @param request ExportIssuesRequest
    * @returns Blob (JSON 또는 MD 파일)
    */
@@ -207,7 +208,7 @@ export const api = {
 
   /**
    * 전체 산출물 다운로드
-   * 
+   *
    * @param request ExportAllRequest
    * @returns Blob (ZIP 파일)
    */
@@ -230,7 +231,7 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -247,7 +248,7 @@ async function apiRequest<T>(
     } catch {
       detail = response.statusText
     }
-    
+
     throw new ApiError(
       `API request failed: ${response.statusText}`,
       response.status,
