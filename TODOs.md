@@ -424,27 +424,31 @@
   - [x] Blob 다운로드 헬퍼 함수 (`downloadBlob`)
   - [x] 에러 처리
 
-**브라우저 확인**:
-- [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-- [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
-- [ ] 브라우저에서 `http://localhost:3000` 접속
-- [ ] 파일 업로드 후 전체 파이프라인 실행 완료
-- [ ] Export 패널 확인:
-  - [ ] Timeline 다운로드 버튼 동작 확인 (JSON/MD 선택)
-  - [ ] Issues 다운로드 버튼 동작 확인 (JSON/MD 선택)
-  - [ ] 전체 다운로드 버튼 동작 확인 (ZIP)
-  - [ ] 다운로드 진행 상태 표시 확인
-  - [ ] 다운로드된 파일명 확인 (session_id 기반)
-  - [ ] 다운로드된 파일 내용 확인 (JSON/MD/ZIP 형식 검증)
+**브라우저 확인** (⚠️ 필수):
+- [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+- [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
+- [x] 브라우저에서 `http://localhost:3000` 접속
+- [x] 파일 업로드 후 전체 파이프라인 실행 완료
+- [x] Export 패널 확인:
+  - [x] Timeline 다운로드 버튼 동작 확인 (JSON/MD 선택)
+  - [x] Issues 다운로드 버튼 동작 확인 (JSON/MD 선택)
+  - [x] 전체 다운로드 버튼 동작 확인 (ZIP)
+  - [x] 다운로드 진행 상태 표시 확인
+  - [x] 다운로드된 파일명 확인 (session_id 기반)
+  - [x] 다운로드된 파일 내용 확인 (JSON/MD/ZIP 형식 검증)
+- [x] 브라우저 확인 결과 문서화 (성공/실패, 발견된 문제점)
+  - ✅ 확인 결과: 양호 (2025-12-28)
 
 ### Phase 8.8: 환경 변수 설정
 
 **목표**: API URL 등 환경 변수 설정
 
 **구현 계획**:
-- [ ] `frontend/.env.local` 생성 (또는 `.env.local.example`)
-  - [ ] `NEXT_PUBLIC_API_URL=http://localhost:8000` 설정
-- [ ] 환경 변수 사용 확인 (`frontend/lib/api.ts`)
+- [x] `frontend/.env.local.example` 생성
+  - [x] `NEXT_PUBLIC_API_URL=http://localhost:8000` 설정 (예제)
+- [x] 환경 변수 사용 확인 (`frontend/lib/api.ts`)
+  - [x] `process.env.NEXT_PUBLIC_API_URL` 사용 확인
+  - [x] 기본값 `http://localhost:8000` 설정 확인
 
 **브라우저 확인**:
 - [ ] 프론트엔드 개발 서버 재시작: `npm --prefix frontend run dev`
