@@ -4,6 +4,8 @@
 .env*.local
 .env.production
 .env.development
+# 예제 파일은 커밋 (예외)
+!.env*.example
 
 # Python
 __pycache__/
