@@ -330,15 +330,18 @@
 **목표**: 파일 업로드 및 세션 메타 표시
 
 **구현 계획**:
-- [ ] `frontend/components/FileUpload.tsx` 생성
-  - [ ] 드래그&드롭 기능
-  - [ ] 파일 선택 기능
-  - [ ] 파일 검증 (.md 확장자, 크기 제한)
-  - [ ] 업로드 진행 상태 표시
-  - [ ] 에러 메시지 표시
-- [ ] `frontend/components/SessionMetaPreview.tsx` 생성
-  - [ ] Session Meta 표시 (session_id, phase, subphase, exported_at 등)
-  - [ ] Phase/Subphase 수동 입력 기능 (누락 시, 선택적)
+- [x] `frontend/components/FileUpload.tsx` 생성
+  - [x] 드래그&드롭 기능
+  - [x] 파일 선택 기능
+  - [x] 파일 검증 (.md 확장자, 크기 제한 10MB)
+  - [x] 업로드 진행 상태 표시
+  - [x] 에러 메시지 표시
+- [x] `frontend/components/SessionMetaPreview.tsx` 생성
+  - [x] Session Meta 표시 (session_id, phase, subphase, exported_at 등)
+  - [x] Phase/Subphase 수동 입력 기능 (누락 시, 선택적)
+- [x] `frontend/app/page.tsx` 리팩토링
+  - [x] FileUpload 컴포넌트 사용
+  - [x] SessionMetaPreview 컴포넌트 사용
 
 **브라우저 확인**:
 - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { api, ApiError } from '@/lib/api'
+import { FileUpload } from '@/components/FileUpload'
+import { SessionMetaPreview } from '@/components/SessionMetaPreview'
 import type {
   SessionMeta,
   Turn,
@@ -17,7 +19,7 @@ import type {
 
 /**
  * 메인 페이지 - 3열 레이아웃
- * 
+ *
  * 좌측: 입력 패널 (파일 업로드, 세션 메타)
  * 중앙: 결과 미리보기 (Timeline, Issues, Snippets 탭)
  * 우측: Export 패널 (다운로드 기능)
@@ -103,35 +105,13 @@ export default function Home() {
     }
   }
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // 파일 검증
-    if (!file.name.endsWith('.md')) {
-      setError('마크다운 파일(.md)만 업로드할 수 있습니다.')
-      return
-    }
-
-    // 파일 크기 제한 (예: 10MB)
-    const MAX_SIZE = 10 * 1024 * 1024
-    if (file.size > MAX_SIZE) {
-      setError(`파일 크기는 ${MAX_SIZE / 1024 / 1024}MB를 초과할 수 없습니다.`)
-      return
-    }
-
+  const handleFileSelect = async (file: File) => {
     await runPipeline(file)
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      await runPipeline(file)
+  const handleMetaUpdate = (updates: Partial<SessionMeta>) => {
+    if (sessionMeta) {
+      setSessionMeta({ ...sessionMeta, ...updates })
     }
   }
 
@@ -149,45 +129,12 @@ export default function Home() {
         <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-y-auto">
           <h2 className="text-lg font-semibold mb-4">입력 패널</h2>
 
-          {/* 파일 업로드 */}
-          <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              accept=".md"
-              onChange={handleFileSelect}
-              disabled={isProcessing}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer block"
-            >
-              <div className="text-gray-400 mb-2">
-                <svg
-                  className="mx-auto h-12 w-12"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div className="text-sm text-gray-600">
-                {isProcessing ? '처리 중...' : '파일을 드래그하거나 클릭하여 업로드'}
-              </div>
-              <div className="text-xs text-gray-400 mt-1">.md 파일만 지원</div>
-            </label>
-          </div>
+          {/* 파일 업로드 컴포넌트 */}
+          <FileUpload
+            onFileSelect={handleFileSelect}
+            isProcessing={isProcessing}
+            disabled={false}
+          />
 
           {/* 처리 상태 */}
           {isProcessing && processingStep && (
@@ -207,29 +154,13 @@ export default function Home() {
             </div>
           )}
 
-          {/* 세션 메타 정보 */}
-          {sessionMeta && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-semibold mb-2">세션 정보</h3>
-              <div className="text-xs space-y-1">
-                <div>
-                  <span className="font-medium">Session ID:</span>
-                  <div className="text-gray-600 break-all">{sessionMeta.session_id}</div>
-                </div>
-                {sessionMeta.phase !== undefined && (
-                  <div>
-                    <span className="font-medium">Phase:</span> {sessionMeta.phase}
-                    {sessionMeta.subphase !== undefined && `-${sessionMeta.subphase}`}
-                  </div>
-                )}
-                {sessionMeta.exported_at && (
-                  <div>
-                    <span className="font-medium">Exported:</span> {sessionMeta.exported_at}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* 세션 메타 정보 컴포넌트 */}
+          <div className="mt-4">
+            <SessionMetaPreview
+              sessionMeta={sessionMeta}
+              onMetaUpdate={handleMetaUpdate}
+            />
+          </div>
 
           {/* 통계 정보 */}
           {(turns.length > 0 || events.length > 0) && (
