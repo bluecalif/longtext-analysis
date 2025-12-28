@@ -387,26 +387,28 @@
   - [x] IssuesPreview 컴포넌트 사용
   - [x] SnippetsPreview 컴포넌트 사용
 
-**브라우저 확인**:
-- [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
-- [ ] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
-- [ ] 브라우저에서 `http://localhost:3000` 접속
-- [ ] 파일 업로드 후 전체 파이프라인 실행 (파싱 → Timeline → Issues → Snippets)
-- [ ] TimelinePreview 컴포넌트 확인:
-  - [ ] Timeline Section 리스트 표시 확인
-  - [ ] 각 Section의 이벤트 표시 확인
-  - [ ] 이슈 연결 표시 확인 (has_issues, issue_refs)
-  - [ ] 작업 결과 연결 정보 표시 확인 (코드 스니펫, 파일, Artifact)
-- [ ] IssuesPreview 컴포넌트 확인:
-  - [ ] Issue Card 리스트 표시 확인
-  - [ ] 카드 클릭 시 상세 정보 표시 확인 (증상, 원인, 조치, 검증)
-  - [ ] 관련 스니펫 링크 표시 확인
-  - [ ] Timeline Section 연결 표시 확인
-- [ ] SnippetsPreview 컴포넌트 확인:
-  - [ ] 언어별 필터 동작 확인
-  - [ ] 스니펫 목록 표시 확인
-  - [ ] 코드 접기/펼치기 기능 확인
-  - [ ] 스니펫 상세 조회 동작 확인 (API 호출)
+**브라우저 확인** (⚠️ 필수):
+- [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+- [x] 프론트엔드 개발 서버 실행: `npm --prefix frontend run dev`
+- [x] 브라우저에서 `http://localhost:3000` 접속
+- [x] 파일 업로드 후 전체 파이프라인 실행 (파싱 → Timeline → Issues → Snippets)
+- [x] TimelinePreview 컴포넌트 확인:
+  - [x] Timeline Section 리스트 표시 확인
+  - [x] 각 Section의 이벤트 표시 확인 (접기/펼치기)
+  - [x] 이슈 연결 표시 확인 (has_issues, issue_refs)
+  - [x] 작업 결과 연결 정보 표시 확인 (코드 스니펫, 파일, Artifact)
+- [x] IssuesPreview 컴포넌트 확인:
+  - [x] Issue Card 리스트 표시 확인
+  - [x] 카드 클릭 시 상세 정보 표시 확인 (증상, 원인, 조치, 검증)
+  - [x] 관련 스니펫 링크 표시 확인
+  - [x] Timeline Section 연결 표시 확인
+- [x] SnippetsPreview 컴포넌트 확인:
+  - [x] 언어별 필터 동작 확인
+  - [x] 스니펫 목록 표시 확인
+  - [x] 코드 접기/펼치기 기능 확인
+  - [x] 스니펫 상세 조회 동작 확인 (API 호출)
+- [x] 브라우저 확인 결과 문서화 (성공/실패, 발견된 문제점)
+  - ✅ 확인 결과: 아주 좋음 (2025-12-28)
 
 ### Phase 8.7: Export 패널 구현
 
