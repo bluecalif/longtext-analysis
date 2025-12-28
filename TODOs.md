@@ -541,11 +541,11 @@
 - [x] Export 다운로드 동작
 
 **Phase 8 완료 시 필수 작업**:
-1. Phase 8.10 통합 테스트 완료 (수동 테스트 시나리오 실행)
-2. API contract 일치 확인 (타입, 필드명, Enum 값, Query 파라미터)
-3. TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
-4. `git add .` → `git commit -m "feat: Phase 8 완료 - 프론트엔드 UI 구현"` → `git push origin main`
-5. 사용자 피드백 요청
+1. [x] Phase 8.10 통합 테스트 완료 (수동 테스트 시나리오 실행)
+2. [x] API contract 일치 확인 (타입, 필드명, Enum 값, Query 파라미터)
+3. [x] TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
+4. [ ] `git add .` → `git commit -m "feat: Phase 8 완료 - 프론트엔드 UI 구현"` → `git push origin main`
+5. [ ] 사용자 피드백 요청
 
 ---
 
