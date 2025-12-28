@@ -10,7 +10,7 @@ interface SnippetsPreviewProps {
 
 /**
  * Snippets 미리보기 컴포넌트
- * 
+ *
  * 언어별 필터 (sql/ts/py 등)
  * 스니펫 목록 표시 (snippet_id, 언어, 코드 일부)
  * 코드 접기/펼치기 기능

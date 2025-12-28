@@ -9,7 +9,7 @@ interface IssuesPreviewProps {
 
 /**
  * Issues 미리보기 컴포넌트
- * 
+ *
  * Issue Card 리스트 표시
  * 카드 클릭 시 상세 정보 표시 (증상, 원인, 조치, 검증)
  * 관련 스니펫 링크 표시

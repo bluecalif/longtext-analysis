@@ -415,12 +415,14 @@
 **목표**: 다운로드 기능 구현
 
 **구현 계획**:
-- [ ] Export 패널 컴포넌트 생성 (`frontend/app/page.tsx` 내부 또는 별도 컴포넌트)
-  - [ ] Timeline 다운로드 버튼 (JSON/MD 선택)
-  - [ ] Issues 다운로드 버튼 (JSON/MD 선택)
-  - [ ] 전체 다운로드 버튼 (ZIP)
-  - [ ] 다운로드 진행 상태 표시
-  - [ ] 파일명 생성 로직 (session_id 기반)
+- [x] Export 패널 컴포넌트 구현 (`frontend/app/page.tsx` 내부)
+  - [x] Timeline 다운로드 버튼 (JSON/MD 선택)
+  - [x] Issues 다운로드 버튼 (JSON/MD 선택)
+  - [x] 전체 다운로드 버튼 (ZIP)
+  - [x] 다운로드 진행 상태 표시 (`isExporting` 상태)
+  - [x] 파일명 생성 로직 (session_id 기반)
+  - [x] Blob 다운로드 헬퍼 함수 (`downloadBlob`)
+  - [x] 에러 처리
 
 **브라우저 확인**:
 - [ ] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000`

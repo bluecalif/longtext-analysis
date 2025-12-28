@@ -12,12 +12,14 @@ import type {
   Turn,
   Event,
   TimelineSection,
+  TimelineEvent,
   IssueCard,
   Snippet,
   ParseResponse,
   TimelineResponse,
   IssuesResponse,
   SnippetsProcessResponse,
+  ExportFormat,
 } from '@/types/api'
 
 /**
@@ -33,10 +35,12 @@ export default function Home() {
   const [turns, setTurns] = useState<Turn[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [timelineSections, setTimelineSections] = useState<TimelineSection[]>([])
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
   const [issueCards, setIssueCards] = useState<IssueCard[]>([])
   const [snippets, setSnippets] = useState<Snippet[]>([])
   const [activeTab, setActiveTab] = useState<'timeline' | 'issues' | 'snippets'>('timeline')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [processingStep, setProcessingStep] = useState<string>('')
 
@@ -71,6 +75,7 @@ export default function Home() {
         content_hash: parseResult.content_hash,
       })
       setTimelineSections(timelineResult.sections)
+      setTimelineEvents(timelineResult.events)
 
       // 3. Issues 생성
       setProcessingStep('Issues 생성 중...')
@@ -126,11 +131,124 @@ export default function Home() {
     setTurns([])
     setEvents([])
     setTimelineSections([])
+    setTimelineEvents([])
     setIssueCards([])
     setSnippets([])
     setActiveTab('timeline')
     setError(null)
     setProcessingStep('')
+  }
+
+  /**
+   * Blob을 파일로 다운로드
+   */
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
+  /**
+   * Timeline 다운로드
+   */
+  const handleExportTimeline = async (format: ExportFormat) => {
+    if (!sessionMeta || timelineSections.length === 0) {
+      return
+    }
+
+    setIsExporting(true)
+    setError(null)
+
+    try {
+      const blob = await api.exportTimeline({
+        session_meta: sessionMeta,
+        sections: timelineSections,
+        events: timelineEvents,
+        format,
+      })
+
+      const extension = format === 'json' ? 'json' : 'md'
+      const filename = `${sessionMeta.session_id}_timeline.${extension}`
+      downloadBlob(blob, filename)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`Export 오류 (${err.statusCode}): ${err.detail || err.message}`)
+      } else {
+        setError(`Export 오류: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  /**
+   * Issues 다운로드
+   */
+  const handleExportIssues = async (format: ExportFormat) => {
+    if (!sessionMeta || issueCards.length === 0) {
+      return
+    }
+
+    setIsExporting(true)
+    setError(null)
+
+    try {
+      const blob = await api.exportIssues({
+        session_meta: sessionMeta,
+        issues: issueCards,
+        format,
+      })
+
+      const extension = format === 'json' ? 'json' : 'md'
+      const filename = `${sessionMeta.session_id}_issues.${extension}`
+      downloadBlob(blob, filename)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`Export 오류 (${err.statusCode}): ${err.detail || err.message}`)
+      } else {
+        setError(`Export 오류: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  /**
+   * 전체 다운로드 (ZIP)
+   */
+  const handleExportAll = async () => {
+    if (!sessionMeta) {
+      return
+    }
+
+    setIsExporting(true)
+    setError(null)
+
+    try {
+      const blob = await api.exportAll({
+        session_meta: sessionMeta,
+        sections: timelineSections,
+        events: timelineEvents,
+        issues: issueCards,
+        snippets: snippets,
+      })
+
+      const filename = `${sessionMeta.session_id}_all.zip`
+      downloadBlob(blob, filename)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`Export 오류 (${err.statusCode}): ${err.detail || err.message}`)
+      } else {
+        setError(`Export 오류: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -265,18 +383,27 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Export 진행 상태 */}
+              {isExporting && (
+                <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700 text-center">
+                  다운로드 중...
+                </div>
+              )}
+
               <div>
                 <h3 className="text-sm font-medium mb-2">Timeline</h3>
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
-                    disabled={timelineSections.length === 0}
+                    onClick={() => handleExportTimeline('json')}
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={timelineSections.length === 0 || isExporting}
                   >
                     JSON
                   </button>
                   <button
-                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
-                    disabled={timelineSections.length === 0}
+                    onClick={() => handleExportTimeline('md')}
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={timelineSections.length === 0 || isExporting}
                   >
                     MD
                   </button>
@@ -287,14 +414,16 @@ export default function Home() {
                 <h3 className="text-sm font-medium mb-2">Issues</h3>
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
-                    disabled={issueCards.length === 0}
+                    onClick={() => handleExportIssues('json')}
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={issueCards.length === 0 || isExporting}
                   >
                     JSON
                   </button>
                   <button
-                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
-                    disabled={issueCards.length === 0}
+                    onClick={() => handleExportIssues('md')}
+                    className="flex-1 px-3 py-2 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={issueCards.length === 0 || isExporting}
                   >
                     MD
                   </button>
@@ -304,8 +433,9 @@ export default function Home() {
               <div>
                 <h3 className="text-sm font-medium mb-2">전체</h3>
                 <button
-                  className="w-full px-3 py-2 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
-                  disabled={!sessionMeta}
+                  onClick={handleExportAll}
+                  className="w-full px-3 py-2 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!sessionMeta || isExporting}
                 >
                   ZIP 다운로드
                 </button>

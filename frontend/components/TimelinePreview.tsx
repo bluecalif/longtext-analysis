@@ -10,7 +10,7 @@ interface TimelinePreviewProps {
 
 /**
  * Timeline 미리보기 컴포넌트
- * 
+ *
  * Timeline Section 리스트 표시
  * 각 Section의 이벤트 표시
  * 이슈 연결 표시 (has_issues, issue_refs)
