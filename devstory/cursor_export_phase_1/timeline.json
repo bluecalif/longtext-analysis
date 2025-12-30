@@ -1,0 +1,4925 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_4730",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 1,
+    "subphase": null,
+    "source_doc": "longcontext_phase_1.md"
+  },
+  "sections": [
+    {
+      "section_id": "1.?-main-task-1",
+      "title": "Phase 1 프로젝트 초기 상태 점검 및 규칙 검토",
+      "summary": "프로젝트의 현재 상태를 TODOs.md, PRD, AGENTS.md 및 관련 커서 룰 문서들을 통해 상세히 검토하고, 프로젝트 진행 원칙, 테스트 전략, API 계약, 백엔드 및 프론트엔드 구조 규칙 등 주요 규칙을 파악하였다. 이를 바탕으로 Phase 1 작업 시 준수할 규칙과 다음 작업 계획을 수립하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_5_block_1",
+          "turn_5_block_0",
+          "turn_4_block_1",
+          "turn_4_block_0"
+        ],
+        "files": [
+          ".cursor/rules/parser-rules.md",
+          "backend-api-design.md",
+          "event-normalization.md",
+          "api-contract-sync.md",
+          "docs/instruction_detail.md",
+          "parser-rules.md",
+          ".cursor/rules/testing-strategy.md",
+          "AGENTS.md",
+          "types/api.ts",
+          "constants.ts",
+          "README.md",
+          "app/page.ts",
+          "TODOs.md",
+          ".cursor/rules/backend-api-design.md",
+          "api.ts",
+          ".cursor/rules/event-normalization.md",
+          "docs/cursor_phase_6_3.md",
+          "testing-strategy.md",
+          "frontend-components.md",
+          "docs/PRD_longtext.md",
+          "constants.py",
+          ".cursor/rules/frontend-components.md",
+          "models.py",
+          "docs/instruction_moredetail.md"
+        ],
+        "artifacts": [
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": ".cursor/rules/frontend-components.md",
+            "action": "read"
+          },
+          {
+            "path": ".cursor/rules/event-normalization.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": ".cursor/rules/parser-rules.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/PRD_longtext.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/instruction_detail.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": ".cursor/rules/testing-strategy.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": ".cursor/rules/backend-api-design.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/instruction_moredetail.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "api.ts",
+            "action": "create"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "create"
+          },
+          {
+            "path": "testing-strategy.md",
+            "action": "create"
+          },
+          {
+            "path": "constants.ts",
+            "action": "create"
+          },
+          {
+            "path": "app/page.ts",
+            "action": "create"
+          },
+          {
+            "path": "api-contract-sync.md",
+            "action": "create"
+          },
+          {
+            "path": "backend-api-design.md",
+            "action": "create"
+          },
+          {
+            "path": "event-normalization.md",
+            "action": "create"
+          },
+          {
+            "path": "frontend-components.md",
+            "action": "create"
+          },
+          {
+            "path": "parser-rules.md",
+            "action": "create"
+          },
+          {
+            "path": "constants.py",
+            "action": "create"
+          },
+          {
+            "path": "models.py",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "types/api.ts",
+            "action": "create"
+          },
+          {
+            "path": "api.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.ts",
+            "action": "create"
+          },
+          {
+            "path": "app/page.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.py",
+            "action": "create"
+          },
+          {
+            "path": "models.py",
+            "action": "create"
+          },
+          {
+            "path": "types/api.ts",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-2",
+      "title": "Phase 1 초기 프로젝트 설정 및 문서 작성",
+      "summary": "백엔드 및 프론트엔드 디렉토리 구조 생성, 의존성 설치, 환경 설정, 테스트 디렉토리 생성 등 초기 프로젝트 설정 작업을 수행하고 README.md, PRD_longtext.md, TODOs.md 등의 문서를 작성하여 프로젝트 기본 구조와 개발 환경을 마련하였다. 작업 완료 후 관련 작업 규칙을 TODOs.md와 AGENTS.md에 반영하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_7_block_2",
+          "turn_7_block_13",
+          "turn_7_block_12",
+          "turn_7_block_3",
+          "turn_7_block_1",
+          "turn_7_block_4",
+          "turn_7_block_0",
+          "turn_7_block_9",
+          "turn_7_block_10",
+          "turn_7_block_8",
+          "turn_7_block_6",
+          "turn_7_block_11",
+          "turn_7_block_14",
+          "turn_7_block_7",
+          "turn_7_block_5",
+          "turn_10_block_0"
+        ],
+        "files": [
+          "docs/instruction_moredetail.md",
+          "docs/cursor_phase_6_3.md",
+          "README.md",
+          "api-contract-sync.md",
+          "docs/PRD_longtext.md",
+          "backend-api.md",
+          "docs/instruction_detail.md",
+          "parser-rules.md",
+          "TODOs.md",
+          "AGENTS.md",
+          "cursor_phase_6_3.md"
+        ],
+        "artifacts": [
+          {
+            "path": "README.md",
+            "action": "create"
+          },
+          {
+            "path": "docs/PRD_longtext.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "cursor_phase_6_3.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/instruction_moredetail.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/PRD_longtext.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/instruction_detail.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "api-contract-sync.md",
+            "action": "read"
+          },
+          {
+            "path": "backend-api.md",
+            "action": "read"
+          },
+          {
+            "path": "parser-rules.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-3",
+      "title": "Phase 2~8 개발 단계별 상세 계획 수립",
+      "summary": "백엔드 파서 구현, 이벤트 추출 및 정규화, Timeline 및 Issue Cards 생성, 코드 스니펫 관리, FastAPI 백엔드 API 구현, Next.js 프론트엔드 UI 구현, 전체 시스템 통합 테스트 및 품질 보증 등 Phase 2부터 Phase 8까지 각 개발 단계별 목표, 작업 내용, 관련 파일 및 테스트 계획을 구체적으로 수립하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "frontend/components/SnippetsPreview.ts",
+          "frontend/components/TimelinePreview.ts",
+          "tests/test_parser.py",
+          "tests/reports/event_normalizer_e2e_report.json",
+          "tests/test_event_normalizer.py",
+          "tests/test_timeline_issues_e2e.py",
+          "tests/test_integration.py",
+          "frontend/components/IssuesPreview.ts",
+          "snippets.json",
+          "backend/parser/normalize.py",
+          "backend/builders/issues_builder.py",
+          "frontend/lib/constants.ts",
+          "tests/test_issues_builder.py",
+          "backend/parser/turns.py",
+          "backend/parser/snippets.py",
+          "tests/test_timeline_builder.py",
+          "tests/fixtures/cursor_phase_6_3.md",
+          "tests/reports/snippet_e2e_report.json",
+          "Timeline.md",
+          "backend/builders/timeline_builder.py",
+          "frontend/app/page.ts",
+          "timeline.json",
+          "backend/api/routes/snippets.py",
+          "backend/core/llm_service.py",
+          "frontend/components/FileUpload.ts",
+          "frontend/lib/api.ts",
+          "AGENTS.md",
+          "tests/conftest_e2e.py",
+          "backend/core/constants.py",
+          "backend/api/routes/export.py",
+          "frontend/types/api.ts",
+          "backend/core/snippet_storage.py",
+          "README.md",
+          "frontend/components/SessionMetaPreview.ts",
+          "tests/test_api.py",
+          "Issues.md",
+          "backend/api/routes/issues.py",
+          "tests/test_parser_e2e.py",
+          "tests/reports/timeline_issues_e2e_report.json",
+          "tests/test_api_e2e.py",
+          "tests/test_snippet_manager.py",
+          "backend/builders/snippet_manager.py",
+          "tests/reports/parser_e2e_report.json",
+          "backend/api/routes/timeline.py",
+          "tests/test_event_normalizer_e2e.py",
+          "backend/builders/event_normalizer.py",
+          "backend/parser/artifacts.py",
+          "backend/core/models.py",
+          "docs/cursor_phase_6_3.md",
+          "tests/reports/api_e2e_report.json",
+          "backend/api/routes/parse.py",
+          "issues.json",
+          "backend/main.py",
+          "backend/render/render_md.py",
+          "backend/parser/meta.py",
+          "tests/test_snippet_e2e.py"
+        ],
+        "artifacts": [
+          {
+            "path": "backend/parser/turns.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/snippets.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/artifacts.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_parser.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/fixtures/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/normalize.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_parser_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/meta.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/parser_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_event_normalizer_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/event_normalizer.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/models.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/event_normalizer_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_event_normalizer.py",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/llm_service.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_timeline_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/timeline_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_timeline_issues_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/issues_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/timeline_issues_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_issues_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/constants.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_snippet_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/snippet_storage.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/snippet_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "snippets.json",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_snippet_manager.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/snippet_manager.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/conftest_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/snippets.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/api_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/parse.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_api.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/issues.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/main.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/render/render_md.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_api_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/timeline.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/export.py",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/SnippetsPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/TimelinePreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "Timeline.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/app/page.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/types/api.ts",
+            "action": "read"
+          },
+          {
+            "path": "timeline.json",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/SessionMetaPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/FileUpload.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/IssuesPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "snippets.json",
+            "action": "read"
+          },
+          {
+            "path": "frontend/lib/api.ts",
+            "action": "read"
+          },
+          {
+            "path": "issues.json",
+            "action": "read"
+          },
+          {
+            "path": "Issues.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/lib/constants.ts",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_integration.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-4",
+      "title": "데이터 모델 및 주요 파일 구조 코드 생성",
+      "summary": "SessionMeta, Timeline Event, Issue Card, Snippet 등 주요 데이터 모델을 Python 코드로 구현하고, PRD_longtext.md, snippet_storage.py, llm_service.py, timeline_builder.py 등 핵심 파일들의 구조와 코드를 생성하여 프로젝트 데이터 구조와 핵심 컴포넌트 설계를 완성하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        20,
+        21,
+        69,
+        70
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_69_block_0",
+          "turn_68_block_1",
+          "turn_19_block_2",
+          "turn_19_block_3",
+          "turn_19_block_0",
+          "turn_20_block_0",
+          "turn_19_block_1",
+          "turn_68_block_2",
+          "turn_68_block_3",
+          "turn_68_block_0"
+        ],
+        "files": [
+          "PRD_longtext.md",
+          "snippet_storage.py",
+          "llm_service.py",
+          "timeline_builder.py",
+          "instruction_detail.md",
+          "render_md.py",
+          "snippet_manager.py",
+          "test_event_normalizer.py",
+          "parse.py",
+          "test_issues_builder.py",
+          "event_normalizer.py",
+          "turns.py",
+          "issues.py",
+          "api-contract-sync.md",
+          "AGENTS.md",
+          "package.json",
+          "issues_builder.py",
+          "FileUpload.ts",
+          "SnippetsPreview.ts",
+          "constants.ts",
+          "README.md",
+          "normalize.py",
+          "test_api.py",
+          "test_integration.py",
+          "timeline.py",
+          "artifacts.py",
+          "test_parser.py",
+          "TimelinePreview.ts",
+          "page.ts",
+          "api.ts",
+          "export.py",
+          "meta.py",
+          "main.py",
+          "SessionMetaPreview.ts",
+          "snippets.py",
+          "IssuesPreview.ts",
+          "constants.py",
+          "models.py",
+          "instruction_moredetail.md",
+          "test_timeline_builder.py"
+        ],
+        "artifacts": [
+          {
+            "path": "PRD_longtext.md",
+            "action": "create"
+          },
+          {
+            "path": "snippet_storage.py",
+            "action": "create"
+          },
+          {
+            "path": "llm_service.py",
+            "action": "create"
+          },
+          {
+            "path": "timeline_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "instruction_detail.md",
+            "action": "create"
+          },
+          {
+            "path": "render_md.py",
+            "action": "create"
+          },
+          {
+            "path": "snippet_manager.py",
+            "action": "create"
+          },
+          {
+            "path": "test_event_normalizer.py",
+            "action": "create"
+          },
+          {
+            "path": "parse.py",
+            "action": "create"
+          },
+          {
+            "path": "test_issues_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "event_normalizer.py",
+            "action": "create"
+          },
+          {
+            "path": "turns.py",
+            "action": "create"
+          },
+          {
+            "path": "issues.py",
+            "action": "create"
+          },
+          {
+            "path": "api-contract-sync.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "package.json",
+            "action": "create"
+          },
+          {
+            "path": "issues_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "FileUpload.ts",
+            "action": "create"
+          },
+          {
+            "path": "SnippetsPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.ts",
+            "action": "create"
+          },
+          {
+            "path": "README.md",
+            "action": "create"
+          },
+          {
+            "path": "normalize.py",
+            "action": "create"
+          },
+          {
+            "path": "test_api.py",
+            "action": "create"
+          },
+          {
+            "path": "test_integration.py",
+            "action": "create"
+          },
+          {
+            "path": "timeline.py",
+            "action": "create"
+          },
+          {
+            "path": "artifacts.py",
+            "action": "create"
+          },
+          {
+            "path": "test_parser.py",
+            "action": "create"
+          },
+          {
+            "path": "TimelinePreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "page.ts",
+            "action": "create"
+          },
+          {
+            "path": "api.ts",
+            "action": "create"
+          },
+          {
+            "path": "export.py",
+            "action": "create"
+          },
+          {
+            "path": "meta.py",
+            "action": "create"
+          },
+          {
+            "path": "main.py",
+            "action": "create"
+          },
+          {
+            "path": "SessionMetaPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "snippets.py",
+            "action": "create"
+          },
+          {
+            "path": "IssuesPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.py",
+            "action": "create"
+          },
+          {
+            "path": "models.py",
+            "action": "create"
+          },
+          {
+            "path": "instruction_moredetail.md",
+            "action": "create"
+          },
+          {
+            "path": "test_timeline_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "PRD_longtext.md",
+            "action": "create"
+          },
+          {
+            "path": "snippet_storage.py",
+            "action": "create"
+          },
+          {
+            "path": "llm_service.py",
+            "action": "create"
+          },
+          {
+            "path": "timeline_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "instruction_detail.md",
+            "action": "create"
+          },
+          {
+            "path": "render_md.py",
+            "action": "create"
+          },
+          {
+            "path": "snippet_manager.py",
+            "action": "create"
+          },
+          {
+            "path": "test_event_normalizer.py",
+            "action": "create"
+          },
+          {
+            "path": "parse.py",
+            "action": "create"
+          },
+          {
+            "path": "test_issues_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "event_normalizer.py",
+            "action": "create"
+          },
+          {
+            "path": "turns.py",
+            "action": "create"
+          },
+          {
+            "path": "issues.py",
+            "action": "create"
+          },
+          {
+            "path": "api-contract-sync.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "package.json",
+            "action": "create"
+          },
+          {
+            "path": "issues_builder.py",
+            "action": "create"
+          },
+          {
+            "path": "FileUpload.ts",
+            "action": "create"
+          },
+          {
+            "path": "SnippetsPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.ts",
+            "action": "create"
+          },
+          {
+            "path": "README.md",
+            "action": "create"
+          },
+          {
+            "path": "normalize.py",
+            "action": "create"
+          },
+          {
+            "path": "test_api.py",
+            "action": "create"
+          },
+          {
+            "path": "test_integration.py",
+            "action": "create"
+          },
+          {
+            "path": "timeline.py",
+            "action": "create"
+          },
+          {
+            "path": "artifacts.py",
+            "action": "create"
+          },
+          {
+            "path": "test_parser.py",
+            "action": "create"
+          },
+          {
+            "path": "TimelinePreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "page.ts",
+            "action": "create"
+          },
+          {
+            "path": "api.ts",
+            "action": "create"
+          },
+          {
+            "path": "export.py",
+            "action": "create"
+          },
+          {
+            "path": "meta.py",
+            "action": "create"
+          },
+          {
+            "path": "main.py",
+            "action": "create"
+          },
+          {
+            "path": "SessionMetaPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "snippets.py",
+            "action": "create"
+          },
+          {
+            "path": "IssuesPreview.ts",
+            "action": "create"
+          },
+          {
+            "path": "constants.py",
+            "action": "create"
+          },
+          {
+            "path": "models.py",
+            "action": "create"
+          },
+          {
+            "path": "instruction_moredetail.md",
+            "action": "create"
+          },
+          {
+            "path": "test_timeline_builder.py",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-5",
+      "title": "README 및 문서 관리 가이드라인 수립",
+      "summary": "각 Phase 완료 시점과 프로젝트 구조 변경 시점에 맞춘 README 업데이트 가이드라인을 상세히 수립하고, 정기 점검 주기와 체크리스트를 포함하여 체계적인 문서 관리 계획을 마련하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        22,
+        71
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_21_block_1",
+          "turn_70_block_0",
+          "turn_21_block_0",
+          "turn_70_block_1"
+        ],
+        "files": [
+          "AGENTS.md",
+          "TODOs.md"
+        ],
+        "artifacts": [
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-6",
+      "title": "프로젝트 성공 기준 및 리스크 관리 계획 수립",
+      "summary": "프로젝트 성공 기준을 명확히 정의하고 주요 산출물과 기능의 완료 조건을 점검하였다. 또한 입력 포맷 변형, 이슈 카드 탐지 오류, 코드 스니펫 과다 포함, LLM API 비용 문제 등 주요 리스크와 대응 방안을 체계적으로 정리하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        23,
+        24,
+        25,
+        72,
+        73,
+        74
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "snippets.json"
+        ],
+        "artifacts": [
+          {
+            "path": "snippets.json",
+            "action": "read"
+          },
+          {
+            "path": "snippets.json",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-7",
+      "title": "Phase 2 진행 상황 점검 및 작업 흐름 관리 계획",
+      "summary": "현재 Phase 2 백엔드 파서 구현 진행 상황을 상세히 보고하고, Phase 1 완료 내역과 다음 단계 계획을 포함하여 TODOs.md 업데이트 및 Git 커밋 절차 등 작업 흐름을 점검하였다. 또한 프로젝트 진행 규칙과 Phase별 작업 원칙을 체계적으로 수립하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        26,
+        27,
+        28,
+        75
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_25_block_0",
+          "turn_26_block_0",
+          "turn_26_block_1",
+          "turn_74_block_1",
+          "turn_27_block_1",
+          "turn_74_block_2",
+          "turn_25_block_1",
+          "turn_25_block_2",
+          "turn_74_block_0",
+          "turn_74_block_3",
+          "turn_27_block_0"
+        ],
+        "files": [
+          "AGENTS.md",
+          "TODOs.md"
+        ],
+        "artifacts": [
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-8",
+      "title": "PowerShell 명령어 표준 및 환경 설정 관련 코드 생성",
+      "summary": "PowerShell 명령어 표준, 환경변수 파일 관리, Poetry 패키지 관리, Git 버전 관리, 테스트 환경 설정 등 개발 환경 관련 표준과 규칙을 코드 블록과 스크립트로 구체화하였다. 이를 통해 실행 환경 문제 해결과 개발 환경 안정화를 도모하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        29,
+        30,
+        32,
+        33,
+        34,
+        35,
+        37,
+        40,
+        43,
+        44,
+        45,
+        46,
+        47,
+        51,
+        54,
+        55,
+        56,
+        57,
+        83,
+        84,
+        85,
+        87
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_50_block_5",
+          "turn_39_block_1",
+          "turn_56_block_3",
+          "turn_44_block_0",
+          "turn_50_block_1",
+          "turn_28_block_0",
+          "turn_56_block_1",
+          "turn_32_block_2",
+          "turn_39_block_7",
+          "turn_28_block_1",
+          "turn_34_block_2",
+          "turn_34_block_5",
+          "turn_83_block_2",
+          "turn_28_block_11",
+          "turn_43_block_2",
+          "turn_54_block_2",
+          "turn_82_block_8",
+          "turn_56_block_6",
+          "turn_83_block_1",
+          "turn_50_block_11",
+          "turn_28_block_2",
+          "turn_45_block_6",
+          "turn_34_block_4",
+          "turn_28_block_6",
+          "turn_44_block_1",
+          "turn_54_block_0",
+          "turn_34_block_6",
+          "turn_39_block_11",
+          "turn_84_block_0",
+          "turn_34_block_7",
+          "turn_56_block_5",
+          "turn_50_block_12",
+          "turn_28_block_9",
+          "turn_28_block_10",
+          "turn_39_block_12",
+          "turn_56_block_0",
+          "turn_32_block_0",
+          "turn_50_block_2",
+          "turn_39_block_8",
+          "turn_45_block_7",
+          "turn_39_block_3",
+          "turn_32_block_1",
+          "turn_42_block_0",
+          "turn_82_block_4",
+          "turn_50_block_9",
+          "turn_33_block_1",
+          "turn_39_block_4",
+          "turn_56_block_2",
+          "turn_84_block_1",
+          "turn_39_block_6",
+          "turn_53_block_1",
+          "turn_86_block_0",
+          "turn_36_block_0",
+          "turn_45_block_3",
+          "turn_45_block_4",
+          "turn_55_block_1",
+          "turn_42_block_1",
+          "turn_28_block_4",
+          "turn_56_block_7",
+          "turn_50_block_7",
+          "turn_84_block_2",
+          "turn_82_block_0",
+          "turn_28_block_7",
+          "turn_50_block_8",
+          "turn_28_block_12",
+          "turn_50_block_4",
+          "turn_34_block_1",
+          "turn_34_block_3",
+          "turn_82_block_5",
+          "turn_31_block_0",
+          "turn_82_block_3",
+          "turn_33_block_0",
+          "turn_50_block_3",
+          "turn_33_block_2",
+          "turn_45_block_1",
+          "turn_43_block_0",
+          "turn_28_block_3",
+          "turn_34_block_0",
+          "turn_28_block_5",
+          "turn_39_block_9",
+          "turn_54_block_1",
+          "turn_82_block_2",
+          "turn_45_block_5",
+          "turn_39_block_0",
+          "turn_42_block_2",
+          "turn_56_block_4",
+          "turn_31_block_1",
+          "turn_50_block_10",
+          "turn_45_block_0",
+          "turn_82_block_7",
+          "turn_43_block_1",
+          "turn_45_block_2",
+          "turn_83_block_0",
+          "turn_82_block_6",
+          "turn_82_block_1",
+          "turn_50_block_6",
+          "turn_53_block_2",
+          "turn_50_block_0",
+          "turn_39_block_10",
+          "turn_39_block_5",
+          "turn_44_block_2",
+          "turn_39_block_2",
+          "turn_28_block_8",
+          "turn_55_block_0",
+          "turn_55_block_2",
+          "turn_53_block_0",
+          "turn_31_block_2"
+        ],
+        "files": [
+          "module/submodule/script.py",
+          "file.py",
+          "path/to/file.py",
+          "check_files.py",
+          "conftest_e2e.py",
+          "script.py"
+        ],
+        "artifacts": [
+          {
+            "path": "check_files.py",
+            "action": "create"
+          },
+          {
+            "path": "module/submodule/script.py",
+            "action": "create"
+          },
+          {
+            "path": "file.py",
+            "action": "create"
+          },
+          {
+            "path": "script.py",
+            "action": "create"
+          },
+          {
+            "path": "path/to/file.py",
+            "action": "create"
+          },
+          {
+            "path": "check_files.py",
+            "action": "create"
+          },
+          {
+            "path": "module/submodule/script.py",
+            "action": "create"
+          },
+          {
+            "path": "file.py",
+            "action": "create"
+          },
+          {
+            "path": "script.py",
+            "action": "create"
+          },
+          {
+            "path": "path/to/file.py",
+            "action": "create"
+          },
+          {
+            "path": "conftest_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "check_files.py",
+            "action": "create"
+          },
+          {
+            "path": "module/submodule/script.py",
+            "action": "create"
+          },
+          {
+            "path": "file.py",
+            "action": "create"
+          },
+          {
+            "path": "script.py",
+            "action": "create"
+          },
+          {
+            "path": "path/to/file.py",
+            "action": "create"
+          },
+          {
+            "path": "check_files.py",
+            "action": "create"
+          },
+          {
+            "path": "module/submodule/script.py",
+            "action": "create"
+          },
+          {
+            "path": "file.py",
+            "action": "create"
+          },
+          {
+            "path": "script.py",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-9",
+      "title": "프로젝트 실행 경로 및 작업 원칙 계획 수립",
+      "summary": "프로젝트 루트 기준으로 모든 명령어 실행과 세션 중 cd 명령어 사용 금지 등 실행 경로 규칙을 명확히 하였으며, 친절 모드 답변 가이드라인과 사용자 설명 필수 원칙을 포함한 작업 전후 커뮤니케이션 계획을 체계적으로 수립하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        31,
+        36,
+        38,
+        39,
+        41,
+        42,
+        48,
+        49,
+        50,
+        52,
+        53
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_49_block_0",
+          "turn_48_block_0",
+          "turn_48_block_1",
+          "turn_37_block_0",
+          "turn_37_block_1",
+          "turn_38_block_0",
+          "turn_38_block_1",
+          "turn_49_block_1",
+          "turn_47_block_0"
+        ],
+        "files": [
+          "conftest_e2e.py",
+          "TODOs.md"
+        ],
+        "artifacts": [
+          {
+            "path": "conftest_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-10",
+      "title": "AGENTS.md 파일 정교화 및 프로젝트 운영 규칙 강화",
+      "summary": "AGENTS.md 파일의 중복 제거와 핵심 내용 유지, Phase별 명확한 분리, 사용자 피드백 원칙 강화, PowerShell 명령어 및 환경변수 사용법 명확화 작업을 수행하였다. 주요 변경점과 진행 원칙을 체크리스트 형태로 정리하고 다음 작업으로 cursor-master-sequence.md 정교화를 준비하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_82_block_2",
+          "turn_83_block_2",
+          "turn_82_block_1",
+          "turn_82_block_4",
+          "turn_82_block_5",
+          "turn_86_block_0",
+          "turn_82_block_7",
+          "turn_80_block_0",
+          "turn_82_block_3",
+          "turn_82_block_8",
+          "turn_84_block_0",
+          "turn_84_block_2",
+          "turn_82_block_0",
+          "turn_83_block_0",
+          "turn_82_block_6",
+          "turn_84_block_1",
+          "turn_83_block_1",
+          "turn_80_block_1"
+        ],
+        "files": [
+          "module/submodule/script.py",
+          "file.py",
+          "TODOs.md",
+          "cursor-master-sequence.md",
+          "AGENTS.md",
+          "check_files.py",
+          "conftest_e2e.py",
+          "script.py"
+        ],
+        "artifacts": [
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "check_files.py",
+            "action": "create"
+          },
+          {
+            "path": "module/submodule/script.py",
+            "action": "create"
+          },
+          {
+            "path": "file.py",
+            "action": "create"
+          },
+          {
+            "path": "script.py",
+            "action": "create"
+          },
+          {
+            "path": "conftest_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-11",
+      "title": "cursor-master-sequence.md 파일 정교화 및 프로젝트 운영 흐름 정리",
+      "summary": "cursor-master-sequence.md 파일을 대상으로 프로젝트 진행 전 준비, 진행 시 주의, 완료 후 사후 체크로 구분하여 중복을 병합하고 운영 흐름을 체계적으로 정리하였다. 프로젝트 폴더 생성, PRD 배치, 필수 패키지 확인, Phase별 작업 원칙, 테스트 및 코드 품질 관리, 배포 후 점검 절차 등을 상세히 문서화하였다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "cursor-master-sequence.md",
+          "README.md",
+          "AGENTS.md",
+          "TODOs.md"
+        ],
+        "artifacts": [
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "cursor-master-sequence.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-12",
+      "title": "plan 작업",
+      "summary": "E2E 테스트 환경 설정 계획을 설명하며, 실제 서버 실행과 프로덕션 플로우와 동일한 검증 원칙을 강조합니다. 테스트 후 자동 보고 필수 사항과 DB 직접 조회 금지, 테스트 데이터베이스 분리 등 테스트 실행과 분석 절차를 구체적으로 계획합니다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        58
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "conftest_e2e.py"
+        ],
+        "artifacts": [
+          {
+            "path": "conftest_e2e.py",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-13",
+      "title": "status_review 작업",
+      "summary": "Poetry 프로젝트 시작 전, 서버 실행 전, 코드 작성 시, 작업 전후 Git 사용 등 작업 단계별 체크리스트를 통해 상태 점검을 수행하며, 버전 확인, 환경 변수 설정, 포트 충돌 확인, 커밋 메시지 작성 규칙과 충돌 해결 절차를 포함하여 작업 준비 상태를 리뷰합니다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        59
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_58_block_0"
+        ],
+        "files": [
+          "docs/cursor_phase_6_3.md",
+          "docs/PRD_longtext.md",
+          "docs/instruction_detail.md",
+          "TODOs.md",
+          "docs/instruction_moredetail.md"
+        ],
+        "artifacts": [
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "create"
+          },
+          {
+            "path": "docs/PRD_longtext.md",
+            "action": "create"
+          },
+          {
+            "path": "docs/instruction_detail.md",
+            "action": "create"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "create"
+          },
+          {
+            "path": "docs/instruction_moredetail.md",
+            "action": "create"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-14",
+      "title": "code_generation 작업",
+      "summary": "아키텍처 개요를 설명하는 코드 블록 1개를 포함하여 시스템 구조와 주요 컴포넌트 간 관계를 시각적으로 또는 코드 형태로 제시하며, 전체 프로젝트 설계의 핵심 개념을 코드로 표현합니다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        60
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [
+          "turn_59_block_0"
+        ],
+        "files": [],
+        "artifacts": []
+      }
+    },
+    {
+      "section_id": "1.?-main-task-15",
+      "title": "completion 작업",
+      "summary": "프로젝트 초기 설정 및 환경 구성이 완료되었으며, 백엔드와 프론트엔드 의존성 설치, 디렉토리 구조 생성, 기본 README 및 문서 작성이 완료되었다. 주요 파일로는 README.md, api-contract-sync.md, backend-api.md, parser-rules.md, TODOs.md가 포함된다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        61
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "README.md",
+          "api-contract-sync.md",
+          "backend-api.md",
+          "parser-rules.md",
+          "TODOs.md",
+          "AGENTS.md"
+        ],
+        "artifacts": [
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "api-contract-sync.md",
+            "action": "read"
+          },
+          {
+            "path": "backend-api.md",
+            "action": "read"
+          },
+          {
+            "path": "parser-rules.md",
+            "action": "read"
+          },
+          {
+            "path": "TODOs.md",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-16",
+      "title": "plan 작업",
+      "summary": "백엔드 파서 구현을 위한 상세 작업 계획이 수립되었으며, 텍스트 정규화, 세션 메타 추출, Turn 블록 파싱, 코드 스니펫 및 Artifact 추출, 그리고 단위 및 E2E 테스트 작성이 포함된다. 관련 파일로는 backend/parser/turns.py, snippets.py, artifacts.py, tests/test_parser.py 등이 있다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        62
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "backend/parser/turns.py",
+          "backend/parser/snippets.py",
+          "backend/parser/artifacts.py",
+          "tests/fixtures/cursor_phase_6_3.md",
+          "tests/test_parser.py",
+          "docs/cursor_phase_6_3.md",
+          "README.md",
+          "backend/parser/normalize.py",
+          "tests/test_parser_e2e.py",
+          "backend/parser/meta.py",
+          "AGENTS.md",
+          "tests/reports/parser_e2e_report.json"
+        ],
+        "artifacts": [
+          {
+            "path": "backend/parser/turns.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/snippets.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/artifacts.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_parser.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/fixtures/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/normalize.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_parser_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/parser/meta.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/parser_e2e_report.json",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-17",
+      "title": "plan 작업",
+      "summary": "이벤트 추출 및 정규화를 위한 데이터 모델 정의와 Turn을 Event로 변환하는 로직 구현 계획이 수립되었다. LLM 서비스 구현과 캐싱 로직, 그리고 실제 데이터 기반 테스트 및 E2E 테스트 작성이 포함되며, 관련 파일로는 backend/builders/event_normalizer.py, backend/core/models.py, tests/test",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        63
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "tests/test_event_normalizer_e2e.py",
+          "backend/builders/event_normalizer.py",
+          "backend/core/models.py",
+          "tests/reports/event_normalizer_e2e_report.json",
+          "docs/cursor_phase_6_3.md",
+          "tests/test_event_normalizer.py",
+          "README.md",
+          "backend/core/llm_service.py",
+          "AGENTS.md"
+        ],
+        "artifacts": [
+          {
+            "path": "tests/test_event_normalizer_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/event_normalizer.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/models.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/event_normalizer_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_event_normalizer.py",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/llm_service.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-18",
+      "title": "plan 작업",
+      "summary": "Timeline 및 Issue Cards 생성을 위한 상세 계획이 수립되었으며, Event 타입 Enum 정의, Timeline 및 Issue Cards 생성 로직, 이슈 탐지 및 그룹화, 그리고 실제 데이터 기반 테스트 및 Golden 파일 비교 테스트 작성이 포함된다. 관련 파일로는 backend/builders/timeline_builder.py, i",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        64
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "tests/test_timeline_builder.py",
+          "README.md",
+          "backend/builders/timeline_builder.py",
+          "tests/test_timeline_issues_e2e.py",
+          "backend/builders/issues_builder.py",
+          "tests/reports/timeline_issues_e2e_report.json",
+          "AGENTS.md",
+          "tests/test_issues_builder.py",
+          "backend/core/constants.py"
+        ],
+        "artifacts": [
+          {
+            "path": "tests/test_timeline_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/timeline_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_timeline_issues_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/issues_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/timeline_issues_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_issues_builder.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/constants.py",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-19",
+      "title": "plan 작업",
+      "summary": "코드 스니펫 분리 및 저장을 위한 스니펫 관리 및 저장소 모듈 구현 계획이 수립되었으며, 스니펫 ID 생성, 중복 제거, 파일 저장, Issue/Timeline과의 링킹, 그리고 실제 데이터 기반 테스트 및 E2E 테스트 작성이 포함된다. 산출물로는 스니펫 관리 모듈, 저장소 모듈, 테스트 리포트, README 업데이트가 예정되어 있다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        65
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "tests/reports/snippet_e2e_report.json",
+          "backend/core/snippet_storage.py",
+          "README.md",
+          "snippets.json",
+          "tests/test_snippet_manager.py",
+          "AGENTS.md",
+          "backend/builders/snippet_manager.py",
+          "tests/test_snippet_e2e.py"
+        ],
+        "artifacts": [
+          {
+            "path": "tests/test_snippet_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/core/snippet_storage.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/snippet_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "snippets.json",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_snippet_manager.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/builders/snippet_manager.py",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-20",
+      "title": "plan 작업",
+      "summary": "Phase 6 백엔드 API 구현 계획을 상세히 수립하며 FastAPI 엔드포인트별 기능 요구사항과 테스트 전략을 명확히 정의한다. 각 API 경로와 기능, 테스트 방식, E2E 테스트 조건까지 포함하여 전체 백엔드 개발 로드맵을 제시한다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        66
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "docs/cursor_phase_6_3.md",
+          "README.md",
+          "tests/reports/api_e2e_report.json",
+          "backend/api/routes/snippets.py",
+          "backend/api/routes/parse.py",
+          "tests/test_api.py",
+          "AGENTS.md",
+          "backend/api/routes/issues.py",
+          "backend/main.py",
+          "backend/render/render_md.py",
+          "tests/test_api_e2e.py",
+          "tests/conftest_e2e.py",
+          "backend/api/routes/timeline.py",
+          "backend/api/routes/export.py"
+        ],
+        "artifacts": [
+          {
+            "path": "tests/conftest_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/snippets.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/reports/api_e2e_report.json",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/parse.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_api.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/issues.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/main.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/render/render_md.py",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_api_e2e.py",
+            "action": "read"
+          },
+          {
+            "path": "AGENTS.md",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/timeline.py",
+            "action": "read"
+          },
+          {
+            "path": "backend/api/routes/export.py",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-21",
+      "title": "plan 작업",
+      "summary": "Phase 7 프론트엔드 UI 구현 계획을 구체적으로 수립하며 Next.js 기반 웹 UI의 주요 컴포넌트, API 연동, 타입 정의, 스타일링, 테스트 및 README 업데이트 항목을 체계적으로 정리한다. 완전한 UI 구현과 사용자 가이드 작성 목표를 포함한다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        67
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "frontend/components/SnippetsPreview.ts",
+          "frontend/components/TimelinePreview.ts",
+          "Timeline.md",
+          "frontend/app/page.ts",
+          "frontend/types/api.ts",
+          "timeline.json",
+          "README.md",
+          "frontend/components/SessionMetaPreview.ts",
+          "frontend/components/FileUpload.ts",
+          "frontend/components/IssuesPreview.ts",
+          "snippets.json",
+          "frontend/lib/api.ts",
+          "issues.json",
+          "Issues.md",
+          "frontend/lib/constants.ts"
+        ],
+        "artifacts": [
+          {
+            "path": "frontend/components/SnippetsPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/TimelinePreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "Timeline.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/app/page.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/types/api.ts",
+            "action": "read"
+          },
+          {
+            "path": "timeline.json",
+            "action": "read"
+          },
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/SessionMetaPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/FileUpload.ts",
+            "action": "read"
+          },
+          {
+            "path": "frontend/components/IssuesPreview.ts",
+            "action": "read"
+          },
+          {
+            "path": "snippets.json",
+            "action": "read"
+          },
+          {
+            "path": "frontend/lib/api.ts",
+            "action": "read"
+          },
+          {
+            "path": "issues.json",
+            "action": "read"
+          },
+          {
+            "path": "Issues.md",
+            "action": "read"
+          },
+          {
+            "path": "frontend/lib/constants.ts",
+            "action": "read"
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "1.?-main-task-22",
+      "title": "plan 작업",
+      "summary": "Phase 8 통합 테스트 및 품질 보증 계획을 수립하며 전체 시스템의 E2E 통합 테스트, 품질 체크, 성능 최적화, 문서화 작업을 상세히 정의한다. 실제 데이터 기반 테스트와 README 최종 업데이트를 포함한 품질 보증 완료 목표를 명확히 한다.",
+      "phase": 1,
+      "subphase": null,
+      "events": [
+        68
+      ],
+      "has_issues": false,
+      "issue_refs": [],
+      "detailed_results": {
+        "code_snippets": [],
+        "files": [
+          "README.md",
+          "tests/test_integration.py",
+          "docs/cursor_phase_6_3.md"
+        ],
+        "artifacts": [
+          {
+            "path": "README.md",
+            "action": "read"
+          },
+          {
+            "path": "tests/test_integration.py",
+            "action": "read"
+          },
+          {
+            "path": "docs/cursor_phase_6_3.md",
+            "action": "read"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "turn",
+      "summary": "Phase 1의 기본 정보와 내보내기 시점이 기록된 문서 헤더가 제공되었습니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 2,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "사용자가 TODOs.md 파일을 기반으로 프로젝트의 현재 상황을 파악할 것을 요청하였습니다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 3,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "PRD와 프로젝트 구조를 확인하여 프로젝트의 완료된 항목과 미완료 항목을 상세히 분석하고, Phase 1의 진행 상황과 다음 단계 제안을 포함한 현황을 보고하였습니다.",
+      "artifacts": [
+        {
+          "path": ".cursor/rules/frontend-components.md",
+          "action": "read"
+        },
+        {
+          "path": ".cursor/rules/event-normalization.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": ".cursor/rules/parser-rules.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/PRD_longtext.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/instruction_detail.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": ".cursor/rules/testing-strategy.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        },
+        {
+          "path": ".cursor/rules/backend-api-design.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/instruction_moredetail.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 4,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "사용자가 AGENTS.md 파일과 커서룰을 참고하여 프로젝트 규칙을 정확히 준수할 것을 요청하였습니다.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 5,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "AGENTS.md와 여러 커서 룰 문서들을 검토하여 프로젝트 진행 원칙, 테스트 전략, API 계약, 백엔드 및 프론트엔드 구조 규칙, Git 및 Poetry 관리 규칙 등 프로젝트 규칙을 상세히 파악하였습니다.",
+      "artifacts": [
+        {
+          "path": "api.ts",
+          "action": "create"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "create"
+        },
+        {
+          "path": "testing-strategy.md",
+          "action": "create"
+        },
+        {
+          "path": "constants.ts",
+          "action": "create"
+        },
+        {
+          "path": "app/page.ts",
+          "action": "create"
+        },
+        {
+          "path": "api-contract-sync.md",
+          "action": "create"
+        },
+        {
+          "path": "backend-api-design.md",
+          "action": "create"
+        },
+        {
+          "path": "event-normalization.md",
+          "action": "create"
+        },
+        {
+          "path": "frontend-components.md",
+          "action": "create"
+        },
+        {
+          "path": "parser-rules.md",
+          "action": "create"
+        },
+        {
+          "path": "constants.py",
+          "action": "create"
+        },
+        {
+          "path": "models.py",
+          "action": "create"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "types/api.ts",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_4_block_0",
+        "turn_4_block_1"
+      ]
+    },
+    {
+      "seq": 6,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "현재 프로젝트 상태를 점검하고 Phase 1 작업 시 준수할 규칙과 다음 작업 계획을 수립하며, Phase 1부터 시작할지 여부를 사용자에게 문의합니다.",
+      "artifacts": [
+        {
+          "path": "api.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.ts",
+          "action": "create"
+        },
+        {
+          "path": "app/page.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.py",
+          "action": "create"
+        },
+        {
+          "path": "models.py",
+          "action": "create"
+        },
+        {
+          "path": "types/api.ts",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_5_block_0",
+        "turn_5_block_1"
+      ]
+    },
+    {
+      "seq": 7,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "turn",
+      "summary": "사용자가 Phase 1부터 시작할 것을 요청하며, 작업 시작 의사를 명확히 전달합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 8,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Phase 1 작업 계획을 구체적으로 정리하고, 백엔드 및 프론트엔드 디렉토리 구조 생성, 의존성 설치, 환경 설정, 테스트 디렉토리 생성 등 초기 프로젝트 설정 작업을 수행하여 Phase 1을 완료합니다.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "create"
+        },
+        {
+          "path": "docs/PRD_longtext.md",
+          "action": "create"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "cursor_phase_6_3.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_7_block_0",
+        "turn_7_block_1",
+        "turn_7_block_2",
+        "turn_7_block_3",
+        "turn_7_block_4",
+        "turn_7_block_5",
+        "turn_7_block_6",
+        "turn_7_block_7",
+        "turn_7_block_8",
+        "turn_7_block_9",
+        "turn_7_block_10",
+        "turn_7_block_11",
+        "turn_7_block_12",
+        "turn_7_block_13",
+        "turn_7_block_14"
+      ]
+    },
+    {
+      "seq": 9,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "사용자가 각 Phase 완료 시 TODOs.md 업데이트와 git 커밋을 수행하고, 이를 AGENTS.md에 정확히 반영할 것을 요청하여 향후 작업 규칙 반영 계획을 전달합니다.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 10,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "completion",
+      "summary": "Phase 1 완료 상태를 TODOs.md에 반영하고 git 커밋을 수행한 뒤, AGENTS.md에 작업 규칙을 추가하여 프로젝트 문서와 관리 체계를 최신화합니다.",
+      "artifacts": [
+        {
+          "path": "docs/instruction_moredetail.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/PRD_longtext.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/instruction_detail.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 11,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "아키텍처 개요를 코드 블록으로 제시하며 시스템 구조를 설명하는 코드 생성 작업을 수행합니다. 166자 분량의 코드 블록이 포함되어 있어 초기 설계 코드 작성에 해당합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_10_block_0"
+      ]
+    },
+    {
+      "seq": 12,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "completion",
+      "summary": "프로젝트 초기 설정 및 환경 구성이 완료된 상태를 상세히 기록합니다. 백엔드와 프론트엔드 의존성 설치, 디렉토리 구조 생성, README 및 문서 작성, Cursor Rules 초기 설정 등 산출물이 완성되어 프로젝트 기본 구조와 개발 환경이 마련되었습니다.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "api-contract-sync.md",
+          "action": "read"
+        },
+        {
+          "path": "backend-api.md",
+          "action": "read"
+        },
+        {
+          "path": "parser-rules.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 13,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "백엔드 파서 구현을 위한 상세 작업 계획을 수립합니다. 마크다운 파싱을 위한 텍스트 정규화, 세션 메타 추출, Turn 블록 파싱, 코드 스니펫 및 Artifact 추출, 단위 및 E2E 테스트 작성 등 Phase 2 개발 단계별 목표와 파일 경로를 명확히 정의합니다.",
+      "artifacts": [
+        {
+          "path": "backend/parser/turns.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/snippets.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/artifacts.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_parser.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/fixtures/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/normalize.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_parser_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/meta.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/parser_e2e_report.json",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 14,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "이벤트 추출 및 정규화를 위한 데이터 모델 정의와 변환 로직 구현 계획을 수립합니다. SessionMeta, Turn, Event 모델 정의, 이벤트 타입 분류, LLM 서비스 옵션 구현, 테스트 및 E2E 검증 계획을 포함하여 Phase 3 작업의 구체적 단계와 산출물을 명시합니다.",
+      "artifacts": [
+        {
+          "path": "tests/test_event_normalizer_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/event_normalizer.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/models.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/event_normalizer_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_event_normalizer.py",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/llm_service.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 15,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Timeline 및 Issue Cards 생성을 위한 상세 계획을 수립합니다. 이벤트 타입 Enum 정의, Timeline 및 Issue Cards 생성 로직, 이슈 탐지 및 그룹화, Symptom/Root cause/Fix/Validation 추출, 테스트 및 E2E 검증 계획을 포함하여 Phase 4 작업의 목표와 산출물을 구체적으로 제시합니다.",
+      "artifacts": [
+        {
+          "path": "tests/test_timeline_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/timeline_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_timeline_issues_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/issues_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/timeline_issues_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_issues_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/constants.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 16,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 5의 목표는 코드 스니펫을 분리하여 별도 저장하고 참조 연결하는 것으로, snippet_manager.py와 snippet_storage.py에서 ID 생성, 중복 제거, 파일 저장, 링킹 로직 구현 계획과 실제 데이터 기반 테스트 및 E2E 검증, README 업데이트를 포함한다.",
+      "artifacts": [
+        {
+          "path": "tests/test_snippet_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/snippet_storage.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/snippet_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "snippets.json",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_snippet_manager.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/snippet_manager.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 17,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 6에서는 FastAPI 백엔드 API 엔드포인트 구현을 계획하며, 파싱, Timeline, Issues, Snippets, Export API와 Markdown 렌더러, FastAPI 앱 초기화, 실제 데이터 기반 단위 및 E2E 테스트 작성, 관련 파일 및 문서 업데이트 작업을 포함한다.",
+      "artifacts": [
+        {
+          "path": "tests/conftest_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/snippets.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/api_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/parse.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_api.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/issues.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/main.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/render/render_md.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_api_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/timeline.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/export.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 18,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 7의 목표는 Next.js 기반 프론트엔드 UI 구현으로, 메인 페이지 레이아웃, 입력 및 결과 미리보기 컴포넌트, Export 패널, API 클라이언트, 타입 정의, 스타일링, 단위 및 E2E 테스트 계획과 README 업데이트를 포함한다.",
+      "artifacts": [
+        {
+          "path": "frontend/components/SnippetsPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/TimelinePreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "Timeline.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/app/page.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/types/api.ts",
+          "action": "read"
+        },
+        {
+          "path": "timeline.json",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/SessionMetaPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/FileUpload.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/IssuesPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "snippets.json",
+          "action": "read"
+        },
+        {
+          "path": "frontend/lib/api.ts",
+          "action": "read"
+        },
+        {
+          "path": "issues.json",
+          "action": "read"
+        },
+        {
+          "path": "Issues.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/lib/constants.ts",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 19,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 8에서는 전체 시스템 통합 테스트 및 품질 보증을 목표로 하며, 실제 데이터 기반 통합 E2E 테스트, 백엔드와 프론트엔드 통합, 다양한 파일 형식 및 에러 케이스 테스트, 성능 최적화, JSON Schema 검증, 사용자 및 개발자 가이드 작성, README 최종 업데이트를 계획한다.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_integration.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 20,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "데이터 모델 정의를 위해 SessionMeta, Timeline Event, Issue Card, Snippet 관련 4개의 Python 코드 블록이 제공되어, 각 모델의 구조와 속성을 코드로 구체적으로 구현하는 작업이 진행 중임을 나타낸다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_19_block_0",
+        "turn_19_block_1",
+        "turn_19_block_2",
+        "turn_19_block_3"
+      ]
+    },
+    {
+      "seq": 21,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "프로젝트의 주요 파일 구조를 포함한 1400자 분량의 코드 블록을 제공하며, PRD_longtext.md, snippet_storage.py, llm_service.py, timeline_builder.py, instruction_detail.md 등 핵심 파일들을 확인합니다.",
+      "artifacts": [
+        {
+          "path": "PRD_longtext.md",
+          "action": "create"
+        },
+        {
+          "path": "snippet_storage.py",
+          "action": "create"
+        },
+        {
+          "path": "llm_service.py",
+          "action": "create"
+        },
+        {
+          "path": "timeline_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "instruction_detail.md",
+          "action": "create"
+        },
+        {
+          "path": "render_md.py",
+          "action": "create"
+        },
+        {
+          "path": "snippet_manager.py",
+          "action": "create"
+        },
+        {
+          "path": "test_event_normalizer.py",
+          "action": "create"
+        },
+        {
+          "path": "parse.py",
+          "action": "create"
+        },
+        {
+          "path": "test_issues_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "event_normalizer.py",
+          "action": "create"
+        },
+        {
+          "path": "turns.py",
+          "action": "create"
+        },
+        {
+          "path": "issues.py",
+          "action": "create"
+        },
+        {
+          "path": "api-contract-sync.md",
+          "action": "create"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "package.json",
+          "action": "create"
+        },
+        {
+          "path": "issues_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "FileUpload.ts",
+          "action": "create"
+        },
+        {
+          "path": "SnippetsPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.ts",
+          "action": "create"
+        },
+        {
+          "path": "README.md",
+          "action": "create"
+        },
+        {
+          "path": "normalize.py",
+          "action": "create"
+        },
+        {
+          "path": "test_api.py",
+          "action": "create"
+        },
+        {
+          "path": "test_integration.py",
+          "action": "create"
+        },
+        {
+          "path": "timeline.py",
+          "action": "create"
+        },
+        {
+          "path": "artifacts.py",
+          "action": "create"
+        },
+        {
+          "path": "test_parser.py",
+          "action": "create"
+        },
+        {
+          "path": "TimelinePreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "page.ts",
+          "action": "create"
+        },
+        {
+          "path": "api.ts",
+          "action": "create"
+        },
+        {
+          "path": "export.py",
+          "action": "create"
+        },
+        {
+          "path": "meta.py",
+          "action": "create"
+        },
+        {
+          "path": "main.py",
+          "action": "create"
+        },
+        {
+          "path": "SessionMetaPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "snippets.py",
+          "action": "create"
+        },
+        {
+          "path": "IssuesPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.py",
+          "action": "create"
+        },
+        {
+          "path": "models.py",
+          "action": "create"
+        },
+        {
+          "path": "instruction_moredetail.md",
+          "action": "create"
+        },
+        {
+          "path": "test_timeline_builder.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_20_block_0"
+      ]
+    },
+    {
+      "seq": 22,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "README 업데이트 가이드라인을 상세히 수립하며, Phase별 작성 시점과 주기, 프로젝트 구조 변경 시 필수 업데이트 사항, 정기 점검 주기 및 체크리스트를 포함한 체계적인 문서 관리 계획을 제시합니다.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_21_block_0",
+        "turn_21_block_1"
+      ]
+    },
+    {
+      "seq": 23,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 성공 기준을 명확히 정의하며, 입력 파일 파싱, Timeline 및 Issue Cards 생성, 코드 스니펫 저장, UI 미리보기, JSON Schema 검증, E2E 테스트 통과 여부 등 주요 완료 조건을 점검합니다.",
+      "artifacts": [
+        {
+          "path": "snippets.json",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 24,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 리스크와 대응 방안을 체계적으로 정리하며, 입력 포맷 변형, 이슈 카드 탐지 오류, 코드 스니펫 과다 포함, LLM API 비용 문제에 대한 구체적인 대응 전략을 수립합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 25,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "차기 기능으로 다중 세션 업로드 및 자동 정렬/병합, 프로젝트별 저장소 관리, Cursor Rule 자동 생성 기능을 계획하며, 향후 개발 방향과 기능 확장 전략을 제시합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 26,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 진행 상황을 상세히 추적하며 현재 Phase 2(백엔드 파서 구현) 진행 중임을 보고하고, Phase 1 완료 내역과 다음 단계 계획을 명확히 제시한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_25_block_0",
+        "turn_25_block_1",
+        "turn_25_block_2"
+      ]
+    },
+    {
+      "seq": 27,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 진행 규칙과 Phase별 작업 원칙을 체계적으로 수립하여, 사용자 피드백 기반 단계별 진행과 TODOs.md 업데이트 및 Git 커밋 절차를 포함한 작업 계획을 구체적으로 안내한다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_26_block_0",
+        "turn_26_block_1"
+      ]
+    },
+    {
+      "seq": 28,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "사용자 설명 필수 원칙을 강조하며 작업 전후 상세 설명, 사용자 확인, 결과 해석 및 문제 해결 대책 제시 등 단계별 실행 계획과 커뮤니케이션 방식을 체계적으로 수립한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_27_block_0",
+        "turn_27_block_1"
+      ]
+    },
+    {
+      "seq": 29,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "PowerShell 명령어 표준과 실행 환경 문제 및 해결책을 다수의 코드 예시와 함께 상세히 검토하며, Python 실행, 인코딩 문제, 경로 처리 등 환경 설정 현황과 주의사항을 점검한다.",
+      "artifacts": [
+        {
+          "path": "check_files.py",
+          "action": "create"
+        },
+        {
+          "path": "module/submodule/script.py",
+          "action": "create"
+        },
+        {
+          "path": "file.py",
+          "action": "create"
+        },
+        {
+          "path": "script.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_28_block_0",
+        "turn_28_block_1",
+        "turn_28_block_2",
+        "turn_28_block_3",
+        "turn_28_block_4",
+        "turn_28_block_5",
+        "turn_28_block_6",
+        "turn_28_block_7",
+        "turn_28_block_8",
+        "turn_28_block_9",
+        "turn_28_block_10",
+        "turn_28_block_11",
+        "turn_28_block_12"
+      ]
+    },
+    {
+      "seq": 30,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "실행 경로 규칙을 명확히 하여 모든 명령은 프로젝트 루트 기준으로 실행하고 세션 중 cd 명령어 사용을 금지하는 환경 설정 현황을 확인한다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 31,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "1.9 답변 가이드라인을 통해 친절 모드에서 요약, 근거, 다음 액션을 포함한 정량적 근거 제시와 실행 전후 설명 및 사용자 확인 절차를 계획한다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 32,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "터미널 문제 해결을 위한 프로세스 강제 종료, 포트 점유 확인 및 종료, 프로세스 모니터링 관련 PowerShell 스크립트 3개를 작성하여 문제 해결 코드를 생성한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_31_block_0",
+        "turn_31_block_1",
+        "turn_31_block_2"
+      ]
+    },
+    {
+      "seq": 33,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "환경변수 파일 관리에서 .env 숨김 속성 문제와 파일 확인 표준, 위치, Next.js 환경변수 규칙을 다루며 PowerShell 2개와 Python 1개 코드 블록을 작성하여 환경변수 검증 및 관리 코드를 생성한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_32_block_0",
+        "turn_32_block_1",
+        "turn_32_block_2"
+      ]
+    },
+    {
+      "seq": 34,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Poetry 패키지 관리 관련 버전 요구사항과 주요 오류 원인 및 해결책, 프로젝트 초기 설정, 대안으로 requirements.txt 사용법을 포함한 PowerShell 스크립트 3개를 작성하여 패키지 관리 코드를 생성한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_33_block_0",
+        "turn_33_block_1",
+        "turn_33_block_2"
+      ]
+    },
+    {
+      "seq": 35,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Git 버전 관리에서 업데이트 중요성, 커밋 및 동기화 방법, 충돌 해결, .gitignore 파일 설정 등 기본 워크플로우와 명령어를 설명하며 PowerShell 환경용 Git 명령어 8개 코드 블록을 작성하여 버전 관리 코드를 생성한다.",
+      "artifacts": [
+        {
+          "path": "path/to/file.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_34_block_0",
+        "turn_34_block_1",
+        "turn_34_block_2",
+        "turn_34_block_3",
+        "turn_34_block_4",
+        "turn_34_block_5",
+        "turn_34_block_6",
+        "turn_34_block_7"
+      ]
+    },
+    {
+      "seq": 36,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "테스트 환경 설정에 관한 원칙과 구현 방법을 상세히 계획한다. E2E 테스트는 실제 서버를 실행하여 프로덕션 플로우와 동일하게 검증하며, DB 직접 조회 금지 및 API 응답 검증 방식을 명확히 한다. 테스트 후 자동 보고 체계도 필수로 수립한다.",
+      "artifacts": [
+        {
+          "path": "conftest_e2e.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 37,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "Poetry 프로젝트 시작 전과 서버 실행 전, 코드 작성 시, 작업 전후에 필요한 체크리스트를 점검한다. 버전 확인, 환경변수 설정, 포트 충돌 확인, Git 작업 절차 등 작업 준비 상태를 체계적으로 확인한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_36_block_0"
+      ]
+    },
+    {
+      "seq": 38,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 진행 규칙을 Phase별로 엄격히 수립한다. 각 Phase는 사용자 피드백을 받아서 진행하며, 완료 시 TODOs.md 업데이트와 Git 커밋을 반드시 수행한다. 사용자 승인 없이는 다음 Phase 진행 금지 원칙을 명확히 한다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_37_block_0",
+        "turn_37_block_1"
+      ]
+    },
+    {
+      "seq": 39,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "모든 작업 전에 사용자에게 상세 설명하고 확인을 받는 원칙을 수립한다. 작업 내용, 이유, 방법, 예상 결과를 단계별로 명확히 설명하며, 실행 후 결과 해석과 문제 발생 시 원인 분석 및 해결책 제시를 필수로 한다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_38_block_0",
+        "turn_38_block_1"
+      ]
+    },
+    {
+      "seq": 40,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "PowerShell 명령어 표준과 실행 규칙을 점검한다. 임시 실행 코드는 스크립트 파일로 작성하고, 모듈 실행 시 경로 문제 해결법, 서버 실행 위치, 인코딩 문제 및 출력 제한 등 환경별 주의사항을 상세히 확인한다.",
+      "artifacts": [
+        {
+          "path": "check_files.py",
+          "action": "create"
+        },
+        {
+          "path": "module/submodule/script.py",
+          "action": "create"
+        },
+        {
+          "path": "file.py",
+          "action": "create"
+        },
+        {
+          "path": "script.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_39_block_0",
+        "turn_39_block_1",
+        "turn_39_block_2",
+        "turn_39_block_3",
+        "turn_39_block_4",
+        "turn_39_block_5",
+        "turn_39_block_6",
+        "turn_39_block_7",
+        "turn_39_block_8",
+        "turn_39_block_9",
+        "turn_39_block_10",
+        "turn_39_block_11",
+        "turn_39_block_12"
+      ]
+    },
+    {
+      "seq": 41,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 루트 기준으로 모든 명령 실행을 규칙으로 설정하고, 경로 중첩 오류 방지를 위해 세션 중 cd 명령 사용 금지를 명확히 안내합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 42,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "친절 모드 답변 가이드라인을 제시하며, 요약-근거-다음 액션 순서와 정량적 근거 필수, 문제 유형 구분, 실행 전후 설명 및 사용자 확인 절차를 계획합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 43,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "터미널 문제 해결을 위한 프로세스 강제 종료, 포트 점유 확인 및 종료, 프로세스 모니터링 관련 파워셸 스크립트 3개를 작성하여 문제 해결용 코드를 제공합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_42_block_0",
+        "turn_42_block_1",
+        "turn_42_block_2"
+      ]
+    },
+    {
+      "seq": 44,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "환경변수 파일 관리에 대해 숨김 속성 문제와 파일 확인 표준, 위치, Next.js 환경변수 규칙을 설명하며 파워셸 및 파이썬 코드 블록 3개를 포함해 관련 스크립트를 생성합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_43_block_0",
+        "turn_43_block_1",
+        "turn_43_block_2"
+      ]
+    },
+    {
+      "seq": 45,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Poetry 패키지 관리에서 버전 요구사항과 주요 오류 원인 및 해결책을 안내하고, 프로젝트 초기 설정 및 대안으로 requirements.txt 활용법을 담은 파워셸 스크립트 3개를 작성합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_44_block_0",
+        "turn_44_block_1",
+        "turn_44_block_2"
+      ]
+    },
+    {
+      "seq": 46,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Git 버전 관리에 관한 상세 가이드 문서가 작성되었으며, 작업 완료 후 커밋, 정기 커밋 습관, 원격 저장소 동기화, 커밋 메시지 규칙, Git 명령어 사용법, 충돌 해결, .gitignore 설정 등 다양한 코드 블록과 함께 구체적으로 설명되었다.",
+      "artifacts": [
+        {
+          "path": "path/to/file.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_45_block_0",
+        "turn_45_block_1",
+        "turn_45_block_2",
+        "turn_45_block_3",
+        "turn_45_block_4",
+        "turn_45_block_5",
+        "turn_45_block_6",
+        "turn_45_block_7"
+      ]
+    },
+    {
+      "seq": 47,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "테스트 환경 설정 문서가 작성되었으며, E2E 테스트를 실제 서버 실행 환경에서 진행하고, DB 직접 조회 금지 원칙, API 응답 검증 방법, 테스트 후 자동 상세 보고 원칙과 금지 사항을 포함한 구체적 구현 방법이 conftest_e2e.py 파일과 함께 설명되었다.",
+      "artifacts": [
+        {
+          "path": "conftest_e2e.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 48,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "Poetry 프로젝트 시작 전, 서버 실행 전, 코드 작성 시, 작업 전후 Git 사용 등 다양한 체크리스트가 작성되어 프로젝트 준비 상태를 점검할 수 있도록 하였으며, Windows PowerShell 환경에서의 명령어 사용법과 규칙도 포함되어 있다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_47_block_0"
+      ]
+    },
+    {
+      "seq": 49,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 진행 규칙에 대한 상세 계획이 수립되었으며, Phase별 작업 진행 원칙, 사용자 피드백 절차, 작업 완료 후 TODOs.md 업데이트 및 Git 커밋 절차, 예외 상황 처리, Phase 진행 템플릿 등이 구체적으로 정의되어 체계적 작업 계획을 제시하였다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_48_block_0",
+        "turn_48_block_1"
+      ]
+    },
+    {
+      "seq": 50,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "사용자 설명 필수 원칙에 관한 작업 계획이 수립되었으며, 작업 전 상세 설명, 사용자 확인, 결과 해석 및 대책 제시, 단계별 명확한 설명과 Sequential Thinking 활용, 금지 사항과 권장 사항, 설명 템플릿과 예시를 포함하여 명확한 커뮤니케이션 계획을 제시하였다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_49_block_0",
+        "turn_49_block_1"
+      ]
+    },
+    {
+      "seq": 51,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "PowerShell 명령어 표준에 관한 상세 가이드로, Python 코드 실행 시 인코딩 문제와 경로 문제 해결법을 포함해 임시 스크립트 파일 작성 및 삭제 규칙, 서버 실행 위치 제한 등 다양한 코드 예시와 함께 13개의 코드 블록을 제공하며 실행 환경 문제를 해결하는 스크립트 작성법을 설명합니다.",
+      "artifacts": [
+        {
+          "path": "check_files.py",
+          "action": "create"
+        },
+        {
+          "path": "module/submodule/script.py",
+          "action": "create"
+        },
+        {
+          "path": "file.py",
+          "action": "create"
+        },
+        {
+          "path": "script.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_50_block_0",
+        "turn_50_block_1",
+        "turn_50_block_2",
+        "turn_50_block_3",
+        "turn_50_block_4",
+        "turn_50_block_5",
+        "turn_50_block_6",
+        "turn_50_block_7",
+        "turn_50_block_8",
+        "turn_50_block_9",
+        "turn_50_block_10",
+        "turn_50_block_11",
+        "turn_50_block_12"
+      ]
+    },
+    {
+      "seq": 52,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 루트 기준으로 모든 명령어 실행과 세션 중 cd 명령어 사용 금지라는 실행 경로 규칙을 간결하게 정리하여 경로 중첩 오류 방지를 위한 환경 상태를 점검하고 규칙을 재확인합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 53,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "답변 작성 시 필수 원칙과 가이드라인을 제시하며, 요약-근거-다음 액션 구조와 정량적 근거 제시, 문제 유형 구분, 실행 전후 설명 및 사용자 확인 절차 등 친절하고 체계적인 답변 작성 상태를 점검합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 54,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "터미널 문제 해결을 위한 PowerShell 스크립트 3개를 포함하여 프로세스 강제 종료, 포트 점유 확인 및 종료, 프로세스 모니터링 방법을 코드 예시와 함께 제공하며 터미널 환경 문제 해결용 스크립트 작성 작업을 수행합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_53_block_0",
+        "turn_53_block_1",
+        "turn_53_block_2"
+      ]
+    },
+    {
+      "seq": 55,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "환경변수 파일 관리 관련 PowerShell 및 Python 코드 3개를 포함하여 .env 파일 숨김 속성 문제, 파일 확인 표준, 파일 위치 규칙, Next.js 환경변수 접두사 규칙 등 환경변수 파일 관리와 검증을 위한 스크립트 작성 및 운영 방침을 상세히 안내합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_54_block_0",
+        "turn_54_block_1",
+        "turn_54_block_2"
+      ]
+    },
+    {
+      "seq": 56,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Poetry 패키지 관리 관련 버전 요구사항과 주요 오류인 'Unknown metadata version: 2.4' 문제를 설명하며, Poetry 1.8.5 이상으로 업데이트하는 해결책과 requirements.txt 대안 설치 방법을 포함한 PowerShell 스크립트 3개를 제시합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_55_block_0",
+        "turn_55_block_1",
+        "turn_55_block_2"
+      ]
+    },
+    {
+      "seq": 57,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Git 버전 관리에 관한 중요 지침을 안내하며, 작업 전후 커밋, 정기적 커밋 습관, 원격 저장소 동기화, 충돌 해결, .gitignore 설정 등 다양한 Git 명령어와 워크플로우를 PowerShell 코드 블록 8개와 함께 상세히 제공합니다.",
+      "artifacts": [
+        {
+          "path": "path/to/file.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_56_block_0",
+        "turn_56_block_1",
+        "turn_56_block_2",
+        "turn_56_block_3",
+        "turn_56_block_4",
+        "turn_56_block_5",
+        "turn_56_block_6",
+        "turn_56_block_7"
+      ]
+    },
+    {
+      "seq": 58,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "E2E 테스트 환경 설정 계획을 설명하며, 실제 서버 실행과 프로덕션 플로우와 동일한 검증 원칙을 강조합니다. 테스트 후 자동 보고 필수 사항과 DB 직접 조회 금지, 테스트 데이터베이스 분리 등 테스트 실행과 분석 절차를 구체적으로 계획합니다.",
+      "artifacts": [
+        {
+          "path": "conftest_e2e.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 59,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "Poetry 프로젝트 시작 전, 서버 실행 전, 코드 작성 시, 작업 전후 Git 사용 등 작업 단계별 체크리스트를 통해 상태 점검을 수행하며, 버전 확인, 환경 변수 설정, 포트 충돌 확인, 커밋 메시지 작성 규칙과 충돌 해결 절차를 포함하여 작업 준비 상태를 리뷰합니다.",
+      "artifacts": [
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "create"
+        },
+        {
+          "path": "docs/PRD_longtext.md",
+          "action": "create"
+        },
+        {
+          "path": "docs/instruction_detail.md",
+          "action": "create"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        },
+        {
+          "path": "docs/instruction_moredetail.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_58_block_0"
+      ]
+    },
+    {
+      "seq": 60,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "아키텍처 개요를 설명하는 코드 블록 1개를 포함하여 시스템 구조와 주요 컴포넌트 간 관계를 시각적으로 또는 코드 형태로 제시하며, 전체 프로젝트 설계의 핵심 개념을 코드로 표현합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_59_block_0"
+      ]
+    },
+    {
+      "seq": 61,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "completion",
+      "summary": "프로젝트 초기 설정 및 환경 구성이 완료되었으며, 백엔드와 프론트엔드 의존성 설치, 디렉토리 구조 생성, 기본 README 및 문서 작성이 완료되었다. 주요 파일로는 README.md, api-contract-sync.md, backend-api.md, parser-rules.md, TODOs.md가 포함된다.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "api-contract-sync.md",
+          "action": "read"
+        },
+        {
+          "path": "backend-api.md",
+          "action": "read"
+        },
+        {
+          "path": "parser-rules.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 62,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "백엔드 파서 구현을 위한 상세 작업 계획이 수립되었으며, 텍스트 정규화, 세션 메타 추출, Turn 블록 파싱, 코드 스니펫 및 Artifact 추출, 그리고 단위 및 E2E 테스트 작성이 포함된다. 관련 파일로는 backend/parser/turns.py, snippets.py, artifacts.py, tests/test_parser.py 등이 있다.",
+      "artifacts": [
+        {
+          "path": "backend/parser/turns.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/snippets.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/artifacts.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_parser.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/fixtures/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/normalize.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_parser_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/parser/meta.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/parser_e2e_report.json",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 63,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "이벤트 추출 및 정규화를 위한 데이터 모델 정의와 Turn을 Event로 변환하는 로직 구현 계획이 수립되었다. LLM 서비스 구현과 캐싱 로직, 그리고 실제 데이터 기반 테스트 및 E2E 테스트 작성이 포함되며, 관련 파일로는 backend/builders/event_normalizer.py, backend/core/models.py, tests/test_event_normalizer_e2e.py 등이 있다.",
+      "artifacts": [
+        {
+          "path": "tests/test_event_normalizer_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/event_normalizer.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/models.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/event_normalizer_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_event_normalizer.py",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/llm_service.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 64,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Timeline 및 Issue Cards 생성을 위한 상세 계획이 수립되었으며, Event 타입 Enum 정의, Timeline 및 Issue Cards 생성 로직, 이슈 탐지 및 그룹화, 그리고 실제 데이터 기반 테스트 및 Golden 파일 비교 테스트 작성이 포함된다. 관련 파일로는 backend/builders/timeline_builder.py, issues_builder.py, tests/test_timeline_builder.py 등이 있다.",
+      "artifacts": [
+        {
+          "path": "tests/test_timeline_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/timeline_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_timeline_issues_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/issues_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/timeline_issues_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_issues_builder.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/constants.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 65,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "코드 스니펫 분리 및 저장을 위한 스니펫 관리 및 저장소 모듈 구현 계획이 수립되었으며, 스니펫 ID 생성, 중복 제거, 파일 저장, Issue/Timeline과의 링킹, 그리고 실제 데이터 기반 테스트 및 E2E 테스트 작성이 포함된다. 산출물로는 스니펫 관리 모듈, 저장소 모듈, 테스트 리포트, README 업데이트가 예정되어 있다.",
+      "artifacts": [
+        {
+          "path": "tests/test_snippet_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/core/snippet_storage.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/snippet_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "snippets.json",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_snippet_manager.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/builders/snippet_manager.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 66,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 6 백엔드 API 구현 계획을 상세히 수립하며 FastAPI 엔드포인트별 기능 요구사항과 테스트 전략을 명확히 정의한다. 각 API 경로와 기능, 테스트 방식, E2E 테스트 조건까지 포함하여 전체 백엔드 개발 로드맵을 제시한다.",
+      "artifacts": [
+        {
+          "path": "tests/conftest_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/snippets.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/reports/api_e2e_report.json",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/parse.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_api.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/issues.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/main.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/render/render_md.py",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_api_e2e.py",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/timeline.py",
+          "action": "read"
+        },
+        {
+          "path": "backend/api/routes/export.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 67,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 7 프론트엔드 UI 구현 계획을 구체적으로 수립하며 Next.js 기반 웹 UI의 주요 컴포넌트, API 연동, 타입 정의, 스타일링, 테스트 및 README 업데이트 항목을 체계적으로 정리한다. 완전한 UI 구현과 사용자 가이드 작성 목표를 포함한다.",
+      "artifacts": [
+        {
+          "path": "frontend/components/SnippetsPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/TimelinePreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "Timeline.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/app/page.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/types/api.ts",
+          "action": "read"
+        },
+        {
+          "path": "timeline.json",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/SessionMetaPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/FileUpload.ts",
+          "action": "read"
+        },
+        {
+          "path": "frontend/components/IssuesPreview.ts",
+          "action": "read"
+        },
+        {
+          "path": "snippets.json",
+          "action": "read"
+        },
+        {
+          "path": "frontend/lib/api.ts",
+          "action": "read"
+        },
+        {
+          "path": "issues.json",
+          "action": "read"
+        },
+        {
+          "path": "Issues.md",
+          "action": "read"
+        },
+        {
+          "path": "frontend/lib/constants.ts",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 68,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "Phase 8 통합 테스트 및 품질 보증 계획을 수립하며 전체 시스템의 E2E 통합 테스트, 품질 체크, 성능 최적화, 문서화 작업을 상세히 정의한다. 실제 데이터 기반 테스트와 README 최종 업데이트를 포함한 품질 보증 완료 목표를 명확히 한다.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "tests/test_integration.py",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 69,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "데이터 모델 관련 4개의 코드 블록을 포함하여 SessionMeta, Timeline Event, Issue Card, Snippet의 Python 코드 구현을 진행한다. 각 모델별 상세 코드가 포함되어 데이터 구조 정의 및 구현 작업이 이루어진다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_68_block_0",
+        "turn_68_block_1",
+        "turn_68_block_2",
+        "turn_68_block_3"
+      ]
+    },
+    {
+      "seq": 70,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "주요 파일 구조를 설명하는 1400자 분량의 코드 블록을 포함하여 PRD_longtext.md, snippet_storage.py, llm_service.py, timeline_builder.py, instruction_detail.md 등 핵심 파일들의 코드 및 구조를 생성한다.",
+      "artifacts": [
+        {
+          "path": "PRD_longtext.md",
+          "action": "create"
+        },
+        {
+          "path": "snippet_storage.py",
+          "action": "create"
+        },
+        {
+          "path": "llm_service.py",
+          "action": "create"
+        },
+        {
+          "path": "timeline_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "instruction_detail.md",
+          "action": "create"
+        },
+        {
+          "path": "render_md.py",
+          "action": "create"
+        },
+        {
+          "path": "snippet_manager.py",
+          "action": "create"
+        },
+        {
+          "path": "test_event_normalizer.py",
+          "action": "create"
+        },
+        {
+          "path": "parse.py",
+          "action": "create"
+        },
+        {
+          "path": "test_issues_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "event_normalizer.py",
+          "action": "create"
+        },
+        {
+          "path": "turns.py",
+          "action": "create"
+        },
+        {
+          "path": "issues.py",
+          "action": "create"
+        },
+        {
+          "path": "api-contract-sync.md",
+          "action": "create"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "package.json",
+          "action": "create"
+        },
+        {
+          "path": "issues_builder.py",
+          "action": "create"
+        },
+        {
+          "path": "FileUpload.ts",
+          "action": "create"
+        },
+        {
+          "path": "SnippetsPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.ts",
+          "action": "create"
+        },
+        {
+          "path": "README.md",
+          "action": "create"
+        },
+        {
+          "path": "normalize.py",
+          "action": "create"
+        },
+        {
+          "path": "test_api.py",
+          "action": "create"
+        },
+        {
+          "path": "test_integration.py",
+          "action": "create"
+        },
+        {
+          "path": "timeline.py",
+          "action": "create"
+        },
+        {
+          "path": "artifacts.py",
+          "action": "create"
+        },
+        {
+          "path": "test_parser.py",
+          "action": "create"
+        },
+        {
+          "path": "TimelinePreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "page.ts",
+          "action": "create"
+        },
+        {
+          "path": "api.ts",
+          "action": "create"
+        },
+        {
+          "path": "export.py",
+          "action": "create"
+        },
+        {
+          "path": "meta.py",
+          "action": "create"
+        },
+        {
+          "path": "main.py",
+          "action": "create"
+        },
+        {
+          "path": "SessionMetaPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "snippets.py",
+          "action": "create"
+        },
+        {
+          "path": "IssuesPreview.ts",
+          "action": "create"
+        },
+        {
+          "path": "constants.py",
+          "action": "create"
+        },
+        {
+          "path": "models.py",
+          "action": "create"
+        },
+        {
+          "path": "instruction_moredetail.md",
+          "action": "create"
+        },
+        {
+          "path": "test_timeline_builder.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_69_block_0"
+      ]
+    },
+    {
+      "seq": 71,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "README 업데이트 가이드라인을 상세히 설명하며 각 Phase 완료 시점, 프로젝트 구조 변경 시점, 정기 업데이트 주기와 체크리스트를 포함한 문서 관리 계획을 수립합니다. 실제 디렉토리 구조 반영과 설치/실행 방법 기술을 강조합니다.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_70_block_0",
+        "turn_70_block_1"
+      ]
+    },
+    {
+      "seq": 72,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 성공 기준(Acceptance Criteria)을 점검하며 입력 파일 파싱, Timeline/Issue Cards 생성, 코드 스니펫 저장, UI 미리보기, JSON Schema 검증, E2E 테스트 통과 여부 등 주요 산출물과 기능의 현황을 확인합니다.",
+      "artifacts": [
+        {
+          "path": "snippets.json",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 73,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 리스크와 대응 방안을 정리하여 입력 포맷 변형, 이슈 카드 탐지 문제, 코드 스니펫 과다 포함, LLM API 비용 등 주요 위험 요소에 대한 관리 및 차기 대응 계획을 수립합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 74,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "차기 기능으로 다중 세션 업로드 및 자동 정렬/병합, 프로젝트별 저장소 관리, Cursor Rule 자동 생성 기능 등 2차 개발 계획을 구체적으로 제시하며 향후 작업 방향을 계획합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 75,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "현재 진행 상황을 Phase 2 백엔드 파서 구현으로 명확히 하고, Phase 1 완료 내역과 다음 단계 계획을 포함하여 TODOs.md 업데이트 및 Git 커밋 절차 등 작업 흐름 현황을 점검합니다.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "create"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_74_block_0",
+        "turn_74_block_1",
+        "turn_74_block_2",
+        "turn_74_block_3"
+      ]
+    },
+    {
+      "seq": 76,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "사용자가 AGENTS.md와 @cursor-master-sequence.md 두 파일의 정교화를 계획하며, 먼저 AGENTS.md의 주요 항목과 구조를 파악하도록 지시하고 완료 후 추가 지시를 대기함.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 77,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "Cursor가 AGENTS.md 파일의 구조와 주요 항목을 상세히 분석하여 프로젝트 진행 규칙, 사용자 설명 원칙, PowerShell 명령어 표준, 터미널 문제 해결, 환경변수 관리, Poetry 패키지 관리, Git 버전 관리, 테스트 환경 설정, 체크리스트 등 9개 주요 섹션을 파악 중임.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 78,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "AGENTS.md 파일의 총 691라인 구조 파악을 완료하고, Phase별 진행 원칙, 사용자 설명 필수 원칙, PowerShell 환경 명령어 가이드, Git 및 Poetry 관련 실무 규칙 등 주요 특징을 요약하며 다음 지시를 기다림.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 79,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "사용자가 AGENTS.md 정교화의 목적과 기준을 명확히 제시함. 토큰 수 효율적 사용, 중복 항목 병합, 중요 항목 유지, 핵심적 설명과 정확한 규칙 예시 제시, Phase별 분리 및 사용자 피드백 원칙 강조, PowerShell 명령어와 환경변수 사용법 주의가 주요 목표임.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 80,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Cursor가 AGENTS.md 파일 정교화 작업을 시작함. 중복 제거, 핵심 내용 유지, Phase별 명확한 분리와 사용자 피드백 원칙 강화, PowerShell 명령어 및 환경변수 사용법 명확화에 중점을 두고 작업 중임을 알리며, 정교화된 문서 일부를 마크다운 코드 블록 형태로 작성함.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 81,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 진행 규칙과 Phase별 작업 원칙을 상세히 설명하며, Phase별 사용자 피드백 필수, 작업 완료 후 TODOs.md 업데이트 및 Git 커밋 절차를 명확히 계획합니다. 예외 상황과 작업 순서도 포함하여 체계적 진행 계획을 수립합니다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_80_block_0",
+        "turn_80_block_1"
+      ]
+    },
+    {
+      "seq": 82,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "모든 작업 전에 사용자에게 상세 설명을 하고 확인을 받은 후 실행하며, 결과 해석과 정량적 근거 제시를 필수로 하는 사용자 설명 원칙을 강조합니다. 금지 사항과 반드시 지켜야 할 사항을 명확히 하여 작업 절차를 계획합니다.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 83,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "PowerShell 명령어 사용 규칙, 환경 변수 설정 및 확인 방법, .env 파일 관리 기준, Python 실행 규칙 등 개발 환경 관련 표준을 코드 블록과 함께 구체적으로 제시합니다. 명령어 연결, 경로 관리, 인코딩 규칙 등 세부 실행 규칙도 포함합니다.",
+      "artifacts": [
+        {
+          "path": "check_files.py",
+          "action": "create"
+        },
+        {
+          "path": "module/submodule/script.py",
+          "action": "create"
+        },
+        {
+          "path": "file.py",
+          "action": "create"
+        },
+        {
+          "path": "script.py",
+          "action": "create"
+        }
+      ],
+      "snippet_refs": [
+        "turn_82_block_0",
+        "turn_82_block_1",
+        "turn_82_block_2",
+        "turn_82_block_3",
+        "turn_82_block_4",
+        "turn_82_block_5",
+        "turn_82_block_6",
+        "turn_82_block_7",
+        "turn_82_block_8"
+      ]
+    },
+    {
+      "seq": 84,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Poetry 패키지 관리 관련 버전 요구사항과 주요 오류 원인 및 해결책을 설명하며, Poetry 1.8.5 이상 사용을 권장합니다. 프로젝트 초기 설정을 위한 PowerShell 명령어 코드 블록 3개를 포함하여 구체적인 설정 방법을 제공합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_83_block_0",
+        "turn_83_block_1",
+        "turn_83_block_2"
+      ]
+    },
+    {
+      "seq": 85,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "Git 버전 관리와 Phase 완료 시 필수 Git 커밋 규칙을 상세히 안내하며, 커밋 메시지 형식과 타입별 규칙을 명확히 합니다. PowerShell 환경에서 사용할 Git 명령어 코드 블록 3개를 포함하여 실무 적용 가능한 내용을 제공합니다.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_84_block_0",
+        "turn_84_block_1",
+        "turn_84_block_2"
+      ]
+    },
+    {
+      "seq": 86,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "테스트 환경 설정에 대한 원칙과 구현 방법을 상세히 설명하며, E2E 테스트는 실제 서버 실행과 프로덕션 플로우와 동일하게 진행해야 함을 명시. DB 직접 조회 금지 및 테스트 후 자동 보고 필수 조건을 강조하고 conftest_e2e.py 파일을 참조함.",
+      "artifacts": [
+        {
+          "path": "conftest_e2e.py",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 87,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "터미널 문제 해결을 위한 PowerShell 스크립트 코드 블록(316자)을 포함하여 문제 해결용 코드를 작성하거나 제공함.",
+      "artifacts": [],
+      "snippet_refs": [
+        "turn_86_block_0"
+      ]
+    },
+    {
+      "seq": 88,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "completion",
+      "summary": "AGENTS.md 파일의 정교화 완료 사항과 주요 변경점, Phase별 진행 원칙 및 사용자 피드백 강화 내용을 체크리스트 형태로 정리하고, 다음 작업으로 cursor-master-sequence.md 정교화 진행 여부를 묻는 상태를 보고함.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 89,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "cursor-master-sequence.md 파일의 항목을 파악하는 상태로, 사용자 지시를 기다리며 해당 파일의 내용을 검토 중임을 알림.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 90,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "cursor-master-sequence.md 파일의 구조를 상세히 분석하여 주요 섹션별 내용과 라인 범위, 관련 파일 경로를 정리하며 프로젝트 작업 순서와 지침, 배포, 주의 사항 등을 체계적으로 파악함.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 91,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 초기 설정부터 배포까지 전체 워크플로우를 72줄로 구조 파악 완료. Supabase 및 배포 관련 항목은 현재 로컬 파일 기반 프로젝트와 무관하며, 나머지 항목은 대부분 적용 가능함을 확인하고 다음 지시를 기다림.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 92,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "plan",
+      "summary": "프로젝트 각 카테고리별 필요한 항목을 명확히 구조화하고, 진행 전 준비, 진행 시 주의, 완료 후 사후 체크로 역할을 분담하며 중복된 내용을 병합해 프로젝트 전체 운영 흐름을 매끄럽게 할 계획을 수립함.",
+      "artifacts": [],
+      "snippet_refs": []
+    },
+    {
+      "seq": 93,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "`cursor-master-sequence.md` 파일을 정교화하는 작업을 시작하며, 진행 전 준비, 진행 시 주의, 완료 후 사후 체크로 구분하고 중복을 병합하여 운영 흐름을 정리하는 내용을 마크다운 형식으로 작성 중임.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 94,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "`cursor-master-sequence.md` 내 프로젝트 진행 전 준비 파트를 작성하며, 프로젝트명 기준 폴더 생성, `/docs` 디렉토리 및 PRD 파일 배치, PRD 기반 프로젝트 계획 수립, 필수 패키지 확인, AGENTS.md 및 커서룰 준비 등 구체적인 작업 순서와 필수 파일 준비 내용을 상세히 코드 블록으로 문서화함.",
+      "artifacts": [
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 95,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "code_generation",
+      "summary": "`cursor-master-sequence.md` 파일에 프로젝트 진행 시 주의사항 파트를 상세히 작성하며, Phase별 작업 원칙, 테스트 원칙과 실행 규칙, 코드 품질 관리, 디버깅 및 문제 해결 접근법, 로그 추가 요청 프로세스 등 운영 중 필수 준수 사항과 파일 관리 지침을 마크다운 문서로 체계적으로 정리함.",
+      "artifacts": [
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 96,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 완료 후 사후 체크를 위한 배포 전 빌드 검증과 타입 체크, 최종 점검, Git 커밋 및 푸시 완료 상태를 확인하며 백엔드와 프론트엔드 배포 설정, 환경변수, CORS, 건강도 확인, 스케줄러 추가, 데이터베이스 테스트 fixture 사용법 등 배포 후 확인 절차를 점검한다.",
+      "artifacts": [
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    },
+    {
+      "seq": 97,
+      "session_id": "cursor_export_unknown_4730",
+      "phase": 1,
+      "subphase": null,
+      "type": "status_review",
+      "summary": "프로젝트 전반에 걸친 핵심 체크리스트를 점검하며 프로젝트 시작 전 폴더 및 문서 준비, Phase별 점검 및 테스트, TODOs.md 업데이트, Git 커밋, 프로젝트 완료 후 빌드 실행 및 최종 검증 절차를 체계적으로 정리하고 cursor-master-sequence.md 파일을 정교화 완료했다.",
+      "artifacts": [
+        {
+          "path": "cursor-master-sequence.md",
+          "action": "read"
+        },
+        {
+          "path": "README.md",
+          "action": "read"
+        },
+        {
+          "path": "AGENTS.md",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": []
+    }
+  ]
+}

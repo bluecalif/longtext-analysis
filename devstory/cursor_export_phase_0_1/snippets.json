@@ -1,0 +1,1243 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_7700",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 0,
+    "subphase": null,
+    "source_doc": "longcontext_phase_0_1.md"
+  },
+  "snippets": [
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-002-00-text",
+      "lang": "text",
+      "code": "✅ 문서 준비: 100% 완료\n❌ 프로젝트 구조: 0% (Phase 1 시작 전)\n❌ 코드 구현: 0% (Phase 2~8 시작 전)\n",
+      "source": {
+        "turn_index": 2,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          3
+        ]
+      },
+      "snippet_hash": "ff50ad4d01b808d0b441439b2e81ef1fd02459a629468ff382dd2c292f3f67fc",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-002-01-plaintext"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-010-00-text",
+      "lang": "text",
+      "code": "\n## Checklist\n- [ ] Key validation points\n- [ ] Common pitfalls to avoid\n- [ ] Required dependencies or setup\n\n## References\n- Links to relevant documentation\n- Related rule files\n",
+      "source": {
+        "turn_index": 10,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          11
+        ]
+      },
+      "snippet_hash": "383b6eaf5495575810a1f41375da48d927d915a6ead521331d1055844061e7d3",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-00-text",
+      "lang": "text",
+      "code": "backend/\n├── api/\n│  └── routes/\n│  ├── parse.py\n│  ├── timeline.py\n│  ├── issues.py\n│  ├── snippets.py\n│  └── export.py\n├── parser/  # 파싱 모듈\n├── builders/  # Timeline/Issue Cards 빌더\n├── render/  # Markdown 렌더러\n├── core/\n│  ├── models.py  # Pydantic 모델\n│  └── constants.py # 상수 정의\n└── main.py\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "dff95485038758665457cde201f04dae8ca50f8782dcd4feb91ac7d982a49f7a",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-01-python",
+      "lang": "python",
+      "code": "# backend/core/models.py\nfrom pydantic import BaseModel\nfrom typing import Optional, List\nfrom enum import Enum\n\nclass EventType(str, Enum):\n  STATUS_REVIEW = \"status_review\"\n  PLAN = \"plan\"\n  ARTIFACT = \"artifact\"\n  DEBUG = \"debug\"\n  COMPLETION = \"completion\"\n  NEXT_STEP = \"next_step\"\n  TURN = \"turn\"\n\nclass SessionMeta(BaseModel):\n  session_id: str\n  exported_at: Optional[str] = None\n  cursor_version: Optional[str] = None\n  phase: Optional[int] = None\n  subphase: Optional[int] = None\n  source_doc: str\n\nclass TimelineEvent(BaseModel):\n  seq: int\n  session_id: str\n  phase: Optional[int] = None\n  subphase: Optional[int] = None\n  type: EventType\n  summary: str\n  artifacts: List[dict] = []\n  snippet_refs: List[str] = []\n\nclass IssueCard(BaseModel):\n  issue_id: str\n  scope: dict\n  title: str\n  symptoms: List[str]\n  root_cause: Optional[dict] = None\n  evidence: List[dict] = []\n  fix: List[dict] = []\n  validation: List[str] = []\n  related_artifacts: List[dict] = []\n  snippet_refs: List[str] = []\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "368faccb474b0d081a6304e4716428c157445cb120557423107f47d667d3dad2",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-02-python",
+      "lang": "python",
+      "code": "# backend/api/routes/parse.py\nfrom fastapi import APIRouter, UploadFile, File, HTTPException\nfrom backend.core.models import SessionMeta, Turn\nfrom backend.parser import parse_markdown\n\nrouter = APIRouter(prefix=\"/api/parse\", tags=[\"parse\"])\n\n@router.post(\"\", response_model=dict)\nasync def parse_file(file: UploadFile = File(...)):\n  \"\"\"\n  마크다운 파일을 업로드하고 파싱합니다.\n\n  Returns:\n  {\n  \"session_meta\": SessionMeta,\n  \"turns\": List[Turn],\n  \"events\": List[Event]\n  }\n  \"\"\"\n  if not file.filename.endswith('.md'):\n  raise HTTPException(status_code=400, detail=\"Only .md files are supported\")\n\n  content = await file.read()\n  text = content.decode('utf-8')\n\n  # 파싱 실행\n  result = parse_markdown(text)\n\n  return {\n  \"session_meta\": result.session_meta,\n  \"turns\": result.turns,\n  \"events\": result.events\n  }\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "7715538b0f2d4208d421811a74552dd8d67032f944577c1406077179830ee824",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-03-python",
+      "lang": "python",
+      "code": "from fastapi import HTTPException\nfrom fastapi.responses import JSONResponse\n\n# 커스텀 예외 클래스\nclass ParseError(Exception):\n  pass\n\n# 예외 핸들러\n@app.exception_handler(ParseError)\nasync def parse_error_handler(request, exc):\n  return JSONResponse(\n  status_code=400,\n  content={\"detail\": f\"Parse error: {str(exc)}\"}\n  )\n\n# 사용 예시\ntry:\n  result = parse_markdown(text)\nexcept ParseError as e:\n  raise HTTPException(status_code=400, detail=str(e))\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "38f9fe819c6616e4c32a37613b6bb5a17f9f70e81be5a55455c1d531ed6577b0",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-04-python",
+      "lang": "python",
+      "code": "from fastapi import UploadFile, File\nimport aiofiles\n\n@router.post(\"/upload\")\nasync def upload_file(file: UploadFile = File(...)):\n  # 파일 크기 제한 (예: 10MB)\n  MAX_SIZE = 10 * 1024 * 1024\n\n  content = await file.read()\n  if len(content) > MAX_SIZE:\n  raise HTTPException(status_code=413, detail=\"File too large\")\n\n  # UTF-8 디코딩\n  try:\n  text = content.decode('utf-8')\n  except UnicodeDecodeError:\n  raise HTTPException(status_code=400, detail=\"Invalid UTF-8 encoding\")\n\n  return {\"filename\": file.filename, \"size\": len(content)}\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "aadae919e6e98ffc99e4242b22bf6814fc57e9de72d08ed4eaa046eeb270463b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-05-python",
+      "lang": "python",
+      "code": "# backend/core/dependencies.py\nfrom fastapi import Depends\n\ndef get_llm_service():\n  from backend.core.llm_service import LLMService\n  return LLMService()\n\n# 사용\n@router.post(\"/timeline\")\nasync def create_timeline(\n  events: List[Event],\n  llm_service: LLMService = Depends(get_llm_service)\n):\n  # LLM 서비스 사용\n  pass\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "285e181898c6796013fc1fb4645e972f6f1f4b4602b380b6a5fcfdf4e5e4e3eb",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-06-python",
+      "lang": "python",
+      "code": "# backend/core/cache.py\nfrom functools import lru_cache\nimport hashlib\nimport json\n\ndef cache_key(*args, **kwargs):\n  \"\"\"캐시 키 생성\"\"\"\n  data = json.dumps({\"args\": args, \"kwargs\": kwargs}, sort_keys=True)\n  return hashlib.sha256(data.encode()).hexdigest()\n\n# 파일 기반 캐시 (LLM 호출 결과)\ndef get_cached_result(key: str):\n  cache_file = f\"cache/{key}.json\"\n  if os.path.exists(cache_file):\n  with open(cache_file, 'r', encoding='utf-8') as f:\n  return json.load(f)\n  return None\n\ndef save_cached_result(key: str, result: dict):\n  os.makedirs(\"cache\", exist_ok=True)\n  cache_file = f\"cache/{key}.json\"\n  with open(cache_file, 'w', encoding='utf-8') as f:\n  json.dump(result, f, ensure_ascii=False, indent=2)\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "b27972a2a92ef72a621ab10598a233c719df8cc6054afe5a530c5c598d743b21",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-07-python",
+      "lang": "python",
+      "code": "# 백그라운드 작업은 FastAPI BackgroundTasks 사용\nfrom fastapi import BackgroundTasks\n\n@router.post(\"/parse\")\nasync def parse_file(\n  file: UploadFile,\n  background_tasks: BackgroundTasks\n):\n  result = parse_markdown(text)\n\n  # 백그라운드에서 스니펫 저장\n  background_tasks.add_task(save_snippets, result.snippets)\n\n  return result\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "114c332ca84901c0c4d18c0bc77ae74e50a28c3a747d2aa540255483f753f1b8",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-08-python",
+      "lang": "python",
+      "code": "# backend/api/routes/timeline.py\nfrom fastapi import APIRouter, HTTPException, Depends\nfrom typing import List\nfrom backend.core.models import TimelineEvent, SessionMeta\nfrom backend.builders.timeline_builder import build_timeline\n\nrouter = APIRouter(prefix=\"/api/timeline\", tags=[\"timeline\"])\n\n@router.post(\"\", response_model=dict)\nasync def create_timeline(\n  session_id: str,\n  events: List[dict],\n  session_meta: SessionMeta\n):\n  \"\"\"\n  이벤트 리스트로부터 Timeline을 생성합니다.\n\n  Args:\n  session_id: 세션 ID\n  events: 정규화된 이벤트 리스트\n  session_meta: 세션 메타데이터\n\n  Returns:\n  {\n  \"session_meta\": SessionMeta,\n  \"timeline\": List[TimelineEvent]\n  }\n  \"\"\"\n  try:\n  timeline = build_timeline(\n  session_id=session_id,\n  events=events,\n  session_meta=session_meta\n  )\n\n  return {\n  \"session_meta\": session_meta,\n  \"timeline\": timeline\n  }\n  except Exception as e:\n  raise HTTPException(\n  status_code=500,\n  detail=f\"Failed to build timeline: {str(e)}\"\n  )\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "350b2ddbb474e5bf8aa18a6b4526689639e91596b61463f716f501ab5f0c4460",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-015-09-text",
+      "lang": "text",
+      "code": "\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-019-07-text",
+        "SNP-cursor_export_unknown_7700-021-08-text",
+        "SNP-cursor_export_unknown_7700-040-00-text",
+        "SNP-cursor_export_unknown_7700-055-00-text",
+        "SNP-cursor_export_unknown_7700-070-00-text",
+        "SNP-cursor_export_unknown_7700-085-00-text",
+        "SNP-cursor_export_unknown_7700-100-00-text",
+        "SNP-cursor_export_unknown_7700-115-00-text",
+        "SNP-cursor_export_unknown_7700-130-00-text",
+        "SNP-cursor_export_unknown_7700-145-00-text",
+        "SNP-cursor_export_unknown_7700-160-00-text",
+        "SNP-cursor_export_unknown_7700-175-00-text",
+        "SNP-cursor_export_unknown_7700-221-00-text",
+        "SNP-cursor_export_unknown_7700-236-00-text",
+        "SNP-cursor_export_unknown_7700-251-00-text",
+        "SNP-cursor_export_unknown_7700-266-00-text",
+        "SNP-cursor_export_unknown_7700-281-00-text",
+        "SNP-cursor_export_unknown_7700-296-00-text",
+        "SNP-cursor_export_unknown_7700-311-00-text",
+        "SNP-cursor_export_unknown_7700-326-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-00-text",
+      "lang": "text",
+      "code": "backend/parser/\n├── normalize.py    # 텍스트 정규화\n├── meta.py         # 세션 메타 추출\n├── turns.py        # Turn 분할/파싱\n├── snippets.py     # 코드 블록 추출\n└── artifacts.py    # 파일/경로 추출\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "37aed0b4e2912bec3f58b478f55a00e8cba4122a44ec7f925592f1b8e19da496",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-01-python",
+      "lang": "python",
+      "code": "# backend/parser/normalize.py\nimport re\n\ndef normalize_text(text: str, preserve_code_blocks: bool = True) -> str:\n    \"\"\"\n    텍스트 정규화\n    \n    Args:\n        text: 원본 텍스트\n        preserve_code_blocks: 코드 블록 내부 보존 여부\n    \n    Returns:\n        정규화된 텍스트\n    \"\"\"\n    # 1. 줄바꿈 통일\n    text = text.replace('\\r\\n', '\\n').replace('\\r', '\\n')\n    \n    # 2. BOM 제거\n    text = text.lstrip('\\ufeff')\n    \n    if preserve_code_blocks:\n        # 코드 블록 분리\n        code_blocks = []\n        pattern = r'",
+      "source": {
+        "turn_index": 17,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "520c88e09778626e4aa5b3ced8ba049bf50495e0d9f07e8957d5370e8556ab7e",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-02-text",
+      "lang": "text",
+      "code": "\n### 3. Session Meta 추출 규칙\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "1f95c77e8a7dadccf3717e02e01610627f725ebaf14a7dddce4a2e0ec252146d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-03-text",
+      "lang": "text",
+      "code": "\n### 4. Turn 분할 규칙\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "410e107129317a9d8a9d16ac82d5191f5d6bef120fb3d059c79675c44e9285e7",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-04-text",
+      "lang": "text",
+      "code": "\n### 5. 코드 블록 추출 규칙\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "6edbbca647bf63a16bd7e41835e373abf72fb4a60fe9f14dbff65a67b44fb8ed",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-05-text",
+      "lang": "text",
+      "code": "\n### 6. 파일/경로 추출 규칙\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "fdc9148262287c24abfb6ca7cca916eff2361c4c945ff273ed22f1715f4700c6",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-06-text",
+      "lang": "text",
+      "code": "\n## Implementation Patterns\n\n### Pattern 1: Parse Health Check\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "f0e4a78f077bb14501706aea8d43670b5198733935836e11a907fe05e07c8a04",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-07-text",
+      "lang": "text",
+      "code": "\n### Pattern 2: Fallback 파서 체인\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "1d135406843eb076ade6688ce80eed45f088585b860c8e188152d72a75caf357",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-08-text",
+      "lang": "text",
+      "code": "\n## Examples\n\n### 완전한 파서 예시\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "f0a3e5757e2f0ad23c4bed3405eeff167ea176c103c3282aca01c9cdd4ade35b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-017-09-text",
+      "lang": "text",
+      "code": "\n## Checklist\n\n### 파서 구현 시\n- [ ] 정규식 패턴이 포맷 변형에 견디는지 확인\n- [ ] Fallback 파서 구현\n- [ ] Parse Health Check 구현\n- [ ] 코드 블록 내부 보존 로직 확인\n- [ ] 한글 파일명/경로 처리 확인\n\n### 테스트 케이스 준비\n- [ ] 정상 케이스 (구분선 + speaker + 코드펜스)\n- [ ] 구분선 없음 (speaker 라벨만)\n- [ ] Speaker 라벨 변형\n- [ ] 코드펜스 lang 누락\n- [ ] 파일 경로가 괄호/백틱 안에 존재\n\n## References\n- 상세 지침: `docs/instruction_detail.md`\n- 구체화 지침: `docs/instruction_moredetail.md`\n- 테스트: `tests/test_parser.py`\n\n",
+      "source": {
+        "turn_index": 17,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          18
+        ]
+      },
+      "snippet_hash": "92d267e5669d61cd1a56a4eacfa913fdc1cfadbac3147e8d1366adbf00f0e00a",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-00-text",
+      "lang": "text",
+      "code": "backend/builders/\n├── event_normalizer.py  # Turn → Event 변환\n├── timeline_builder.py  # Timeline 생성\n└── issues_builder.py  # Issue Cards 생성\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "a016c3881e514f3fd0a1edff8fa6bc514f84b77a02b53214aa58a578fcd7330e",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-01-python",
+      "lang": "python",
+      "code": "# backend/builders/event_normalizer.py\nfrom typing import List\nfrom backend.core.models import Turn, Event, EventType\n\n# Debug 트리거 패턴\nDEBUG_TRIGGERS = {\n  \"error\": re.compile(\n  r'(?i)\\b(error|exception|stack trace|violates check constraint|constraint)\\b'\n  ),\n  \"root_cause\": re.compile(\n  r'(?i)\\b(원인|Root cause|because|due to)\\b'\n  ),\n  \"fix\": re.compile(\n  r'(?i)\\b(해결|조치|수정|patch|fix|ALTER TABLE|UPDATE|script)\\b'\n  ),\n  \"validation\": re.compile(\n  r'(?i)\\b(검증|확인|테스트|scenario|check)\\b'\n  )\n}\n\ndef normalize_turns_to_events(turns: List[Turn]) -> List[Event]:\n  \"\"\"\n  Turn 리스트를 Event 리스트로 변환\n\n  Args:\n  turns: 파싱된 Turn 리스트\n\n  Returns:\n  정규화된 Event 리스트\n  \"\"\"\n  events = []\n\n  for turn in turns:\n  # 1. ArtifactEvent 체크 (파일 경로가 있으면)\n  if turn.path_candidates:\n  events.append(create_artifact_event(turn))\n\n  # 2. DebugEvent 체크 (디버그 트리거가 있으면)\n  if is_debug_turn(turn):\n  events.append(create_debug_event(turn))\n\n  # 3. 일반 MessageEvent\n  events.append(create_message_event(turn))\n\n  return events\n\ndef is_debug_turn(turn: Turn) -> bool:\n  \"\"\"디버그 Turn인지 판단\"\"\"\n  if turn.speaker != \"Cursor\":\n  return False\n\n  text = turn.body.lower()\n  return any(\n  trigger.search(text)\n  for trigger in DEBUG_TRIGGERS.values()\n  )\n\ndef create_debug_event(turn: Turn) -> Event:\n  \"\"\"DebugEvent 생성\"\"\"\n  return Event(\n  type=EventType.DEBUG,\n  turn_ref=turn.turn_index,\n  summary=summarize_turn(turn),\n  artifacts=[],  # 후속 단계에서 연결\n  snippet_refs=[block.block_index for block in turn.code_blocks]\n  )\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "1548fdd53f6ce3260d79a01821030cb962d1d11b3d7dcc411013f1e39ce2bb3c",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-02-python",
+      "lang": "python",
+      "code": "# backend/builders/timeline_builder.py\nfrom typing import List\nfrom backend.core.models import Event, TimelineEvent, SessionMeta\n\ndef build_timeline(\n  session_id: str,\n  events: List[Event],\n  session_meta: SessionMeta\n) -> List[TimelineEvent]:\n  \"\"\"\n  이벤트 리스트로부터 Timeline 생성\n\n  Args:\n  session_id: 세션 ID\n  events: 정규화된 이벤트 리스트\n  session_meta: 세션 메타데이터\n\n  Returns:\n  TimelineEvent 리스트\n  \"\"\"\n  timeline = []\n\n  for seq, event in enumerate(events, start=1):\n  timeline_event = TimelineEvent(\n  seq=seq,\n  session_id=session_id,\n  phase=session_meta.phase,\n  subphase=session_meta.subphase,\n  type=event.type,\n  summary=event.summary,\n  artifacts=event.artifacts,\n  snippet_refs=event.snippet_refs\n  )\n  timeline.append(timeline_event)\n\n  return timeline\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "9615a6fa154d2d2351a8e358f834991ee6c7cbedd9753d69b361f35734761160",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-03-python",
+      "lang": "python",
+      "code": "# backend/builders/issues_builder.py\nfrom typing import List, Optional\nfrom backend.core.models import Event, IssueCard, Turn\n\n# 슬라이딩 윈도우 크기\nWINDOW_SIZE = 10\n\ndef build_issue_cards(\n  turns: List[Turn],\n  events: List[Event]\n) -> List[IssueCard]:\n  \"\"\"\n  Turn과 Event로부터 Issue Cards 생성\n\n  Args:\n  turns: Turn 리스트\n  events: Event 리스트\n\n  Returns:\n  IssueCard 리스트\n  \"\"\"\n  issue_cards = []\n\n  # 1. Seed 탐지 (User symptom)\n  seeds = find_symptom_seeds(turns)\n\n  for seed_idx, seed_turn in seeds:\n  # 2. 슬라이딩 윈도우 내에서 연결 후보 탐색\n  window_turns = turns[seed_idx:seed_idx + WINDOW_SIZE]\n  window_events = [\n  e for e in events\n  if seed_idx <= e.turn_ref < seed_idx + WINDOW_SIZE\n  ]\n\n  # 3. Issue Card 구성\n  issue_card = build_issue_card_from_window(\n  seed_turn=seed_turn,\n  window_turns=window_turns,\n  window_events=window_events,\n  seed_idx=seed_idx\n  )\n\n  if issue_card:\n  issue_cards.append(issue_card)\n\n  return issue_cards\n\ndef find_symptom_seeds(turns: List[Turn]) -> List[tuple]:\n  \"\"\"\n  User Turn에서 symptom 후보 탐지\n\n  Returns:\n  [(turn_index, Turn), ...]\n  \"\"\"\n  seeds = []\n  symptom_pattern = re.compile(\n  r'(?i)\\b(없|안 보|에러|문제|왜|%\\s*증가|%\\s*감소)\\b'\n  )\n\n  for idx, turn in enumerate(turns):\n  if turn.speaker == \"User\" and symptom_pattern.search(turn.body):\n  seeds.append((idx, turn))\n\n  return seeds\n\ndef build_issue_card_from_window(\n  seed_turn: Turn,\n  window_turns: List[Turn],\n  window_events: List[Event],\n  seed_idx: int\n) -> Optional[IssueCard]:\n  \"\"\"\n  슬라이딩 윈도우 내에서 Issue Card 구성\n  \"\"\"\n  # Symptom 추출\n  symptoms = [seed_turn.body]\n\n  # Root cause 추출 (Cursor turns에서)\n  root_cause = None\n  for turn in window_turns:\n  if turn.speaker == \"Cursor\":\n  if DEBUG_TRIGGERS[\"root_cause\"].search(turn.body):\n  root_cause = {\n  \"status\": \"confirmed\",  # 또는 \"hypothesis\"\n  \"text\": extract_root_cause_text(turn.body)\n  }\n  break\n\n  # Fix 추출\n  fixes = []\n  for event in window_events:\n  if event.type == EventType.DEBUG and event.snippet_refs:\n  fixes.append({\n  \"summary\": event.summary,\n  \"snippet_refs\": event.snippet_refs\n  })\n\n  # Validation 추출\n  validations = []\n  for turn in window_turns:\n  if DEBUG_TRIGGERS[\"validation\"].search(turn.body):\n  validations.append(extract_validation_text(turn.body))\n\n  # Root cause 또는 Fix 중 하나라도 있어야 카드 생성\n  if not root_cause and not fixes:\n  return None\n\n  # Issue ID 생성\n  issue_id = f\"ISS-{seed_idx:03d}-{hash(seed_turn.body) % 10000}\"\n\n  return IssueCard(\n  issue_id=issue_id,\n  scope={\n  \"session_id\": \"current\",  # 실제로는 session_id 전달\n  \"phase\": None,\n  \"subphase\": None\n  },\n  title=generate_issue_title(seed_turn, root_cause),\n  symptoms=symptoms,\n  root_cause=root_cause,\n  evidence=[],\n  fix=fixes,\n  validation=validations,\n  related_artifacts=[],\n  snippet_refs=[]\n  )\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "9d35ba626a363a3713ae0096e8072eaa17046031a8c60e03c6eadbdefddb4704",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-04-python",
+      "lang": "python",
+      "code": "def score_turn_for_issue(\n  turn: Turn,\n  issue_type: str  # \"root_cause\", \"fix\", \"validation\"\n) -> float:\n  \"\"\"\n  Turn이 Issue의 특정 부분에 얼마나 적합한지 점수 계산\n  \"\"\"\n  score = 0.0\n\n  if issue_type == \"root_cause\":\n  if DEBUG_TRIGGERS[\"error\"].search(turn.body):\n  score += 5.0\n  if DEBUG_TRIGGERS[\"root_cause\"].search(turn.body):\n  score += 4.0\n\n  elif issue_type == \"fix\":\n  if DEBUG_TRIGGERS[\"fix\"].search(turn.body):\n  score += 4.0\n  if turn.code_blocks:\n  score += 3.0  # 코드가 있으면 fix 가능성 높음\n\n  elif issue_type == \"validation\":\n  if DEBUG_TRIGGERS[\"validation\"].search(turn.body):\n  score += 3.0\n\n  # 거리 패널티\n  # (seed에서 멀수록 점수 감소)\n\n  return score\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "1058b18931e48ed2b95510b89835ba53e1eb5c14fb723b4513b13ab74fd35fd1",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-05-python",
+      "lang": "python",
+      "code": "# backend/core/llm_service.py\nfrom backend.core.cache import get_cached_result, save_cached_result\n\ndef summarize_with_llm(text: str, cache_key: str) -> str:\n  \"\"\"\n  LLM으로 요약 (캐싱 적용)\n  \"\"\"\n  # 캐시 확인\n  cached = get_cached_result(cache_key)\n  if cached:\n  return cached[\"summary\"]\n\n  # LLM 호출\n  from openai import OpenAI\n  client = OpenAI()\n\n  response = client.chat.completions.create(\n  model=\"gpt-4\",\n  messages=[\n  {\"role\": \"system\", \"content\": \"요약만 제공하세요.\"},\n  {\"role\": \"user\", \"content\": f\"다음 텍스트를 1-2문장으로 요약: {text}\"}\n  ]\n  )\n\n  summary = response.choices[0].message.content\n\n  # 캐시 저장\n  save_cached_result(cache_key, {\"summary\": summary})\n\n  return summary\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "42e1d9a1de2502c4646b3dda0a1d3f41a690ffa228b75c67c1b1b2356aebcf45",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-019-06-python",
+      "lang": "python",
+      "code": "# backend/builders/event_normalizer.py\ndef normalize_session(\n  session_meta: SessionMeta,\n  turns: List[Turn]\n) -> dict:\n  \"\"\"\n  전체 세션 정규화\n\n  Returns:\n  {\n  \"events\": List[Event],\n  \"timeline\": List[TimelineEvent],\n  \"issues\": List[IssueCard]\n  }\n  \"\"\"\n  # 1. Turn → Event 변환\n  events = normalize_turns_to_events(turns)\n\n  # 2. Timeline 생성\n  from backend.builders.timeline_builder import build_timeline\n  timeline = build_timeline(\n  session_id=session_meta.session_id,\n  events=events,\n  session_meta=session_meta\n  )\n\n  # 3. Issue Cards 생성\n  from backend.builders.issues_builder import build_issue_cards\n  issues = build_issue_cards(turns, events)\n\n  return {\n  \"events\": events,\n  \"timeline\": timeline,\n  \"issues\": issues\n  }\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "ef742858430ded6902c6a692ed86898ab8c22d706366b0d791538e82dae05fb1",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-00-text",
+      "lang": "text",
+      "code": "frontend/\n├── app/\n│  └── page.tsx  # 메인 페이지\n├── components/\n│  ├── FileUpload.tsx\n│  ├── SessionMetaPreview.tsx\n│  ├── TimelinePreview.tsx\n│  ├── IssuesPreview.tsx\n│  └── SnippetsPreview.tsx\n├── lib/\n│  ├── api.ts  # API 클라이언트\n│  └── constants.ts  # 상수 (백엔드와 동기화)\n├── types/\n│  └── api.ts  # 타입 정의 (백엔드와 동기화)\n└── package.json\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "d884e1a97837a4d358cedf4c0625fd3298047de48804e35f894fc6e2c0584895",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-01-typescript",
+      "lang": "typescript",
+      "code": "// frontend/types/api.ts\n// 백엔드 Pydantic 모델과 동일한 구조 유지\n\nexport type EventType =\n  | 'status_review'\n  | 'plan'\n  | 'artifact'\n  | 'debug'\n  | 'completion'\n  | 'next_step'\n  | 'turn'\n\nexport interface SessionMeta {\n  session_id: string\n  exported_at?: string\n  cursor_version?: string\n  phase?: number\n  subphase?: number\n  source_doc: string\n}\n\nexport interface TimelineEvent {\n  seq: number\n  session_id: string\n  phase?: number\n  subphase?: number\n  type: EventType\n  summary: string\n  artifacts: Array<{\n  kind: string\n  path: string\n  action: string\n  }>\n  snippet_refs: string[]\n}\n\nexport interface IssueCard {\n  issue_id: string\n  scope: {\n  session_id: string\n  phase?: number\n  subphase?: number\n  }\n  title: string\n  symptoms: string[]\n  root_cause?: {\n  status: 'confirmed' | 'hypothesis'\n  text: string\n  }\n  evidence: Array<{\n  type: string\n  text_or_ref: string\n  }>\n  fix: Array<{\n  summary: string\n  snippet_refs: string[]\n  }>\n  validation: string[]\n  related_artifacts: Array<{\n  path: string\n  kind: string\n  }>\n  snippet_refs: string[]\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "cae11cf770169be0e491cb1aebb87ebc115684e64840addbb55d54aa1f2bd3c5",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-02-typescript",
+      "lang": "typescript",
+      "code": "// frontend/lib/api.ts\nconst API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'\n\nclass ApiClient {\n  private baseUrl: string\n\n  constructor(baseUrl: string) {\n  this.baseUrl = baseUrl\n  }\n\n  async parseFile(file: File): Promise<{\n  session_meta: SessionMeta\n  turns: any[]\n  events: any[]\n  }> {\n  const formData = new FormData()\n  formData.append('file', file)\n\n  const response = await fetch(`${this.baseUrl}/api/parse`, {\n  method: 'POST',\n  body: formData\n  })\n\n  if (!response.ok) {\n  throw new Error(`Parse failed: ${response.statusText}`)\n  }\n\n  return response.json()\n  }\n\n  async createTimeline(\n  sessionId: string,\n  events: any[],\n  sessionMeta: SessionMeta\n  ): Promise<{\n  session_meta: SessionMeta\n  timeline: TimelineEvent[]\n  }> {\n  const response = await fetch(`${this.baseUrl}/api/timeline`, {\n  method: 'POST',\n  headers: {\n  'Content-Type': 'application/json'\n  },\n  body: JSON.stringify({\n  session_id: sessionId,\n  events,\n  session_meta: sessionMeta\n  })\n  })\n\n  if (!response.ok) {\n  throw new Error(`Timeline creation failed: ${response.statusText}`)\n  }\n\n  return response.json()\n  }\n\n  async getSnippet(snippetId: string): Promise<{\n  snippet_id: string\n  lang: string\n  code: string\n  }> {\n  const response = await fetch(`${this.baseUrl}/api/snippets/${snippetId}`)\n\n  if (!response.ok) {\n  throw new Error(`Snippet fetch failed: ${response.statusText}`)\n  }\n\n  return response.json()\n  }\n}\n\nexport const api = new ApiClient(API_BASE_URL)\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "2d0cf4ea1b71e72eebb03da000e6b9b236c8bf38eeeb8feb8e9ecc7173d22a14",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-03-typescript",
+      "lang": "typescript",
+      "code": "// frontend/components/FileUpload.tsx\n'use client'\n\nimport { useState, useCallback } from 'react'\nimport { api } from '@/lib/api'\n\nexport function FileUpload({\n  onParseComplete\n}: {\n  onParseComplete: (result: any) => void\n}) {\n  const [isDragging, setIsDragging] = useState(false)\n  const [isParsing, setIsParsing] = useState(false)\n  const [error, setError] = useState<string | null>(null)\n\n  const handleFile = useCallback(async (file: File) => {\n  if (!file.name.endsWith('.md')) {\n  setError('Only .md files are supported')\n  return\n  }\n\n  setIsParsing(true)\n  setError(null)\n\n  try {\n  const result = await api.parseFile(file)\n  onParseComplete(result)\n  } catch (err) {\n  setError(err instanceof Error ? err.message : 'Parse failed')\n  } finally {\n  setIsParsing(false)\n  }\n  }, [onParseComplete])\n\n  const handleDrop = useCallback((e: React.DragEvent) => {\n  e.preventDefault()\n  setIsDragging(false)\n\n  const file = e.dataTransfer.files[0]\n  if (file) {\n  handleFile(file)\n  }\n  }, [handleFile])\n\n  return (\n  <div\n  onDrop={handleDrop}\n  onDragOver={(e) => {\n  e.preventDefault()\n  setIsDragging(true)\n  }}\n  onDragLeave={() => setIsDragging(false)}\n  className={`border-2 border-dashed p-8 ${\n  isDragging ? 'border-blue-500' : 'border-gray-300'\n  }`}\n  >\n  <input\n  type=\"file\"\n  accept=\".md\"\n  onChange={(e) => {\n  const file = e.target.files?.[0]\n  if (file) handleFile(file)\n  }}\n  className=\"hidden\"\n  id=\"file-upload\"\n  />\n  <label\n  htmlFor=\"file-upload\"\n  className=\"cursor-pointer block text-center\"\n  >\n  {isParsing ? 'Parsing...' : 'Drop .md file here or click to select'}\n  </label>\n  {error && <div className=\"text-red-500 mt-2\">{error}</div>}\n  </div>\n  )\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "e37b285b39d74cecbf0c107b728e48d0f96236b05980336b0f9c8c69c23aedc5",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-04-typescript",
+      "lang": "typescript",
+      "code": "// frontend/app/page.tsx\n'use client'\n\nimport { useState } from 'react'\nimport { FileUpload } from '@/components/FileUpload'\nimport { SessionMetaPreview } from '@/components/SessionMetaPreview'\nimport { TimelinePreview } from '@/components/TimelinePreview'\nimport { IssuesPreview } from '@/components/IssuesPreview'\nimport { SnippetsPreview } from '@/components/SnippetsPreview'\nimport type { SessionMeta, TimelineEvent, IssueCard } from '@/types/api'\n\nexport default function Home() {\n  const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)\n  const [timeline, setTimeline] = useState<TimelineEvent[]>([])\n  const [issues, setIssues] = useState<IssueCard[]>([])\n  const [activeTab, setActiveTab] = useState<'timeline' | 'issues' | 'snippets'>('timeline')\n\n  const handleParseComplete = async (result: any) => {\n  setSessionMeta(result.session_meta)\n\n  // Timeline 생성\n  const timelineResult = await api.createTimeline(\n  result.session_meta.session_id,\n  result.events,\n  result.session_meta\n  )\n  setTimeline(timelineResult.timeline)\n\n  // Issues 생성\n  const issuesResult = await api.createIssues(\n  result.session_meta.session_id,\n  result.events,\n  result.turns\n  )\n  setIssues(issuesResult.issues)\n  }\n\n  return (\n  <div className=\"grid grid-cols-3 gap-4 p-4\">\n  {/* 좌측: 입력 패널 */}\n  <div className=\"col-span-1\">\n  <FileUpload onParseComplete={handleParseComplete} />\n  {sessionMeta && (\n  <SessionMetaPreview sessionMeta={sessionMeta} />\n  )}\n  </div>\n\n  {/* 중앙: 결과 미리보기 */}\n  <div className=\"col-span-1\">\n  <div className=\"tabs\">\n  <button onClick={() => setActiveTab('timeline')}>Timeline</button>\n  <button onClick={() => setActiveTab('issues')}>Issues</button>\n  <button onClick={() => setActiveTab('snippets')}>Snippets</button>\n  </div>\n\n  {activeTab === 'timeline' && (\n  <TimelinePreview timeline={timeline} />\n  )}\n  {activeTab === 'issues' && (\n  <IssuesPreview issues={issues} />\n  )}\n  {activeTab === 'snippets' && (\n  <SnippetsPreview />\n  )}\n  </div>\n\n  {/* 우측: Export 패널 */}\n  <div className=\"col-span-1\">\n  <ExportPanel\n  sessionMeta={sessionMeta}\n  timeline={timeline}\n  issues={issues}\n  />\n  </div>\n  </div>\n  )\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "dc2294d86c55fcf5b6270f07d9ec5888a1370c983cbda66223971da56da7c76a",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-05-typescript",
+      "lang": "typescript",
+      "code": "// frontend/lib/error-handler.ts\nexport function handleApiError(error: unknown): string {\n  if (error instanceof Error) {\n  return error.message\n  }\n  return 'An unexpected error occurred'\n}\n\n// 사용\ntry {\n  const result = await api.parseFile(file)\n} catch (error) {\n  const message = handleApiError(error)\n  toast.error(message)\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "99c9bda5da6932584077ef154fe57f62d12947a56f81f8eb2496243ef7dab0b1",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-06-typescript",
+      "lang": "typescript",
+      "code": "// 커스텀 훅\nfunction useAsync<T>(\n  asyncFn: () => Promise<T>\n): {\n  data: T | null\n  loading: boolean\n  error: string | null\n} {\n  const [data, setData] = useState<T | null>(null)\n  const [loading, setLoading] = useState(false)\n  const [error, setError] = useState<string | null>(null)\n\n  useEffect(() => {\n  setLoading(true)\n  setError(null)\n  asyncFn()\n  .then(setData)\n  .catch((err) => setError(err.message))\n  .finally(() => setLoading(false))\n  }, [asyncFn])\n\n  return { data, loading, error }\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "c1d60f8e36c770b3d78e7dbaa17e45efb3e4ae4dba8dc0cbaea7e93c91783a7d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-021-07-typescript",
+      "lang": "typescript",
+      "code": "// frontend/components/TimelinePreview.tsx\n'use client'\n\nimport { useState } from 'react'\nimport type { TimelineEvent } from '@/types/api'\nimport { api } from '@/lib/api'\n\nexport function TimelinePreview({ timeline }: { timeline: TimelineEvent[] }) {\n  const [expandedSeq, setExpandedSeq] = useState<number | null>(null)\n  const [snippetCache, setSnippetCache] = useState<Record<string, string>>({})\n\n  const loadSnippet = async (snippetId: string) => {\n  if (snippetCache[snippetId]) {\n  return snippetCache[snippetId]\n  }\n\n  const snippet = await api.getSnippet(snippetId)\n  setSnippetCache((prev) => ({\n  ...prev,\n  [snippetId]: snippet.code\n  }))\n  return snippet.code\n  }\n\n  return (\n  <div className=\"space-y-2\">\n  {timeline.map((event) => (\n  <div\n  key={event.seq}\n  className=\"border p-4 rounded cursor-pointer\"\n  onClick={() => setExpandedSeq(\n  expandedSeq === event.seq ? null : event.seq\n  )}\n  >\n  <div className=\"flex justify-between\">\n  <span className=\"font-bold\">#{event.seq}</span>\n  <span className=\"text-sm text-gray-500\">{event.type}</span>\n  </div>\n  <p className=\"mt-2\">{event.summary}</p>\n\n  {expandedSeq === event.seq && (\n  <div className=\"mt-4\">\n  {event.snippet_refs.length > 0 && (\n  <div>\n  <h4>Snippets:</h4>\n  {event.snippet_refs.map((snippetId) => (\n  <div key={snippetId}>\n  <code>{snippetId}</code>\n  {/* 스니펫 로드 및 표시 */}\n  </div>\n  ))}\n  </div>\n  )}\n  </div>\n  )}\n  </div>\n  ))}\n  </div>\n  )\n}\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "898162be2c4a8f9d835c77b29f1f9a5c686c810f68a9067d0f2b2739e59a3f58",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-00-text",
+      "lang": "text",
+      "code": "tests/\n├── fixtures/\n│  └── cursor_phase_6_3.md  # 실제 입력 데이터\n├── golden/\n│  ├── parser_expected.json\n│  ├── timeline_expected.json\n│  └── issues_expected.json\n├── conftest_e2e.py  # E2E 테스트 fixture\n├── test_parser_e2e.py\n├── test_event_normalizer_e2e.py\n├── test_timeline_issues_e2e.py\n├── test_snippet_e2e.py\n└── test_api_e2e.py\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "e821310c79583e17020ec9f4f0b6b9db92d79fcee5e7664eca05c1353f16f8aa",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-01-python",
+      "lang": "python",
+      "code": "# tests/conftest_e2e.py\nimport pytest\nimport subprocess\nimport time\nimport httpx\nfrom pathlib import Path\n\n@pytest.fixture(scope=\"session\")\ndef test_server():\n  \"\"\"\n  실제 uvicorn 서버 실행 fixture\n  \"\"\"\n  # 서버 시작\n  process = subprocess.Popen(\n  [\"poetry\", \"run\", \"uvicorn\", \"backend.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"],\n  cwd=Path(__file__).parent.parent,\n  stdout=subprocess.PIPE,\n  stderr=subprocess.PIPE\n  )\n\n  # 서버 준비 대기\n  max_retries = 30\n  for _ in range(max_retries):\n  try:\n  response = httpx.get(\"http://localhost:8000/health\", timeout=1.0)\n  if response.status_code == 200:\n  break\n  except:\n  time.sleep(0.5)\n  else:\n  process.terminate()\n  raise RuntimeError(\"Server failed to start\")\n\n  yield process\n\n  # 서버 종료\n  process.terminate()\n  process.wait()\n\n@pytest.fixture\ndef client(test_server):\n  \"\"\"\n  httpx.Client fixture (실제 HTTP 요청)\n  \"\"\"\n  return httpx.Client(base_url=\"http://localhost:8000\", timeout=30.0)\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "c07a6f261d0437e9db8356b3a7e4a9399f2338fb528d0b6de9080fba6efe2507",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-02-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\nimport pytest\nfrom pathlib import Path\nfrom backend.parser import parse_markdown\n\ndef test_parser_e2e():\n  \"\"\"\n  실제 입력 데이터로 전체 파서 파이프라인 테스트\n  \"\"\"\n  # 1. 실제 입력 데이터 로드\n  input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n  text = input_file.read_text(encoding='utf-8')\n\n  # 2. 파싱 실행\n  result = parse_markdown(text, source_doc=str(input_file))\n\n  # 3. 정합성 검증\n  assert result[\"session_meta\"] is not None\n  assert result[\"session_meta\"].session_id is not None\n  assert len(result[\"turns\"]) > 0\n\n  # Session Meta 추출 정확성\n  assert result[\"session_meta\"].phase is not None or result[\"session_meta\"].phase is None\n  # (phase가 없을 수도 있으므로 None도 허용)\n\n  # Turn 블록 분할 정확성\n  user_turns = [t for t in result[\"turns\"] if t.speaker == \"User\"]\n  cursor_turns = [t for t in result[\"turns\"] if t.speaker == \"Cursor\"]\n  unknown_turns = [t for t in result[\"turns\"] if t.speaker == \"Unknown\"]\n\n  assert len(user_turns) > 0, \"User turns should exist\"\n  assert len(cursor_turns) > 0, \"Cursor turns should exist\"\n\n  # Unknown 비율 검증\n  unknown_ratio = len(unknown_turns) / len(result[\"turns\"])\n  assert unknown_ratio < 0.2, f\"Unknown speaker ratio too high: {unknown_ratio:.1%}\"\n\n  # 코드 스니펫 추출 정확성\n  all_code_blocks = []\n  for turn in result[\"turns\"]:\n  all_code_blocks.extend(turn.code_blocks)\n\n  assert len(all_code_blocks) > 0, \"Code blocks should be extracted\"\n\n  # 4. 타당성 검증\n  # 파싱 실패율 검증\n  assert unknown_ratio < 0.2, \"Parse failure rate too high\"\n\n  # 5. 결과 분석 및 피드백\n  print(f\"\\n[Parser E2E Test Results]\")\n  print(f\"Total turns: {len(result['turns'])}\")\n  print(f\"User turns: {len(user_turns)}\")\n  print(f\"Cursor turns: {len(cursor_turns)}\")\n  print(f\"Unknown turns: {len(unknown_turns)} ({unknown_ratio:.1%})\")\n  print(f\"Code blocks: {len(all_code_blocks)}\")\n  print(f\"Artifacts: {len(result.get('artifacts', []))}\")\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "106d88d67cf79f5d331041b1330dec8da4bb055dc21adfdad113d4fdd1d9556b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-03-python",
+      "lang": "python",
+      "code": "# tests/test_api_e2e.py\nimport pytest\nfrom pathlib import Path\nimport httpx\n\ndef test_parse_endpoint_e2e(client: httpx.Client):\n  \"\"\"\n  POST /api/parse 엔드포인트 E2E 테스트\n  \"\"\"\n  # 실제 입력 파일\n  input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n\n  with open(input_file, \"rb\") as f:\n  files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n  response = client.post(\"/api/parse\", files=files)\n\n  assert response.status_code == 200\n\n  data = response.json()\n\n  # 응답 스키마 검증\n  assert \"session_meta\" in data\n  assert \"turns\" in data\n  assert \"events\" in data\n\n  # 파싱 결과 정확성\n  assert data[\"session_meta\"][\"session_id\"] is not None\n  assert len(data[\"turns\"]) > 0\n\ndef test_timeline_endpoint_e2e(client: httpx.Client):\n  \"\"\"\n  POST /api/timeline 엔드포인트 E2E 테스트\n  \"\"\"\n  # 1. 먼저 파싱\n  input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n\n  with open(input_file, \"rb\") as f:\n  files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n  parse_response = client.post(\"/api/parse\", files=files)\n\n  parse_data = parse_response.json()\n\n  # 2. Timeline 생성\n  timeline_response = client.post(\n  \"/api/timeline\",\n  json={\n  \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n  \"events\": parse_data[\"events\"],\n  \"session_meta\": parse_data[\"session_meta\"]\n  }\n  )\n\n  assert timeline_response.status_code == 200\n\n  timeline_data = timeline_response.json()\n\n  # Timeline JSON 구조 검증\n  assert \"session_meta\" in timeline_data\n  assert \"timeline\" in timeline_data\n  assert len(timeline_data[\"timeline\"]) > 0\n\n  # Artifact/Snippet 연결 확인\n  for event in timeline_data[\"timeline\"]:\n  assert \"seq\" in event\n  assert \"type\" in event\n  assert \"summary\" in event\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "ee3b04731f18e552bdb245d00b1672ac103ba48822afc9e4d39f05eb3dc7c4e7",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-04-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\ndef test_parser_e2e_with_report():\n  \"\"\"\n  테스트 실행 후 상세 보고 포함\n  \"\"\"\n  # ... 테스트 실행 ...\n\n  # 결과 분석\n  report = {\n  \"test_name\": \"parser_e2e\",\n  \"input_file\": str(input_file),\n  \"results\": {\n  \"total_turns\": len(result[\"turns\"]),\n  \"user_turns\": len(user_turns),\n  \"cursor_turns\": len(cursor_turns),\n  \"unknown_ratio\": unknown_ratio,\n  \"code_blocks\": len(all_code_blocks),\n  \"artifacts\": len(result.get(\"artifacts\", []))\n  },\n  \"warnings\": [],\n  \"errors\": []\n  }\n\n  if unknown_ratio > 0.2:\n  report[\"warnings\"].append(\n  f\"High Unknown speaker ratio: {unknown_ratio:.1%}\"\n  )\n\n  # 리포트 출력\n  import json\n  print(\"\\n\" + \"=\"*50)\n  print(\"E2E Test Report\")\n  print(\"=\"*50)\n  print(json.dumps(report, indent=2, ensure_ascii=False))\n  print(\"=\"*50)\n\n  # 리포트 파일 저장\n  report_file = Path(__file__).parent / \"reports\" / \"parser_e2e_report.json\"\n  report_file.parent.mkdir(exist_ok=True)\n  report_file.write_text(\n  json.dumps(report, indent=2, ensure_ascii=False),\n  encoding='utf-8'\n  )\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "04dab640767cbc60f587d75f8f99ef07baa28f409a45bcd8c0e127178389b195",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-05-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\ndef test_parser_golden_comparison():\n  \"\"\"\n  Golden 파일과 비교하여 회귀 테스트\n  \"\"\"\n  # 실제 파싱\n  result = parse_markdown(text, source_doc)\n\n  # Golden 파일 로드\n  golden_file = Path(__file__).parent / \"golden\" / \"parser_expected.json\"\n  if golden_file.exists():\n  expected = json.loads(golden_file.read_text(encoding='utf-8'))\n\n  # 비교 (주요 필드만)\n  assert result[\"session_meta\"].session_id == expected[\"session_meta\"][\"session_id\"]\n  assert len(result[\"turns\"]) == len(expected[\"turns\"])\n  else:\n  # Golden 파일 생성 (최초 1회)\n  golden_file.parent.mkdir(exist_ok=True)\n  golden_file.write_text(\n  json.dumps({\n  \"session_meta\": result[\"session_meta\"].dict(),\n  \"turns_count\": len(result[\"turns\"])\n  }, indent=2, ensure_ascii=False),\n  encoding='utf-8'\n  )\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "d7b2305e0be8b922a8c029c46379186ede350109027f1fc74f2608fa045b351d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-06-python",
+      "lang": "python",
+      "code": "# 테스트 실행 시 로그 파일로 저장\nimport logging\nfrom pathlib import Path\n\ndef setup_test_logging():\n  \"\"\"\n  테스트용 로깅 설정\n  \"\"\"\n  log_dir = Path(__file__).parent / \"logs\"\n  log_dir.mkdir(exist_ok=True)\n\n  log_file = log_dir / f\"test_{time.strftime('%Y%m%d_%H%M%S')}.log\"\n\n  logging.basicConfig(\n  level=logging.DEBUG,\n  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',\n  handlers=[\n  logging.FileHandler(log_file, encoding='utf-8'),\n  logging.StreamHandler()\n  ]\n  )\n\n  return logging.getLogger(__name__)\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "5e256a0af522e0f25735719abb6562ad4a251f33583e98bc982dda145ba4d73b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-023-07-python",
+      "lang": "python",
+      "code": "# tests/test_api_e2e.py\nimport pytest\nfrom pathlib import Path\nimport httpx\nimport json\n\n@pytest.mark.e2e\ndef test_full_pipeline_e2e(client: httpx.Client):\n  \"\"\"\n  전체 파이프라인 E2E 테스트\n  파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Export\n  \"\"\"\n  input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n\n  # 1. 파일 업로드 및 파싱\n  with open(input_file, \"rb\") as f:\n  files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n  parse_response = client.post(\"/api/parse\", files=files)\n\n  assert parse_response.status_code == 200\n  parse_data = parse_response.json()\n\n  # 2. Timeline 생성\n  timeline_response = client.post(\n  \"/api/timeline\",\n  json={\n  \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n  \"events\": parse_data[\"events\"],\n  \"session_meta\": parse_data[\"session_meta\"]\n  }\n  )\n  assert timeline_response.status_code == 200\n  timeline_data = timeline_response.json()\n\n  # 3. Issues 생성\n  issues_response = client.post(\n  \"/api/issues\",\n  json={\n  \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n  \"events\": parse_data[\"events\"],\n  \"turns\": parse_data[\"turns\"]\n  }\n  )\n  assert issues_response.status_code == 200\n  issues_data = issues_response.json()\n\n  # 4. Export 테스트\n  export_response = client.post(\n  \"/api/export/all\",\n  json={\n  \"session_id\": parse_data[\"session_meta\"][\"session_id\"]\n  }\n  )\n  assert export_response.status_code == 200\n\n  # 5. 결과 검증\n  assert len(timeline_data[\"timeline\"]) > 0\n  assert len(issues_data[\"issues\"]) >= 0  # 이슈가 없을 수도 있음\n\n  # 6. 리포트 생성\n  report = {\n  \"test\": \"full_pipeline_e2e\",\n  \"timeline_events\": len(timeline_data[\"timeline\"]),\n  \"issues\": len(issues_data[\"issues\"]),\n  \"status\": \"PASS\"\n  }\n\n  print(json.dumps(report, indent=2, ensure_ascii=False))\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "21ae150382bb2664a4658360954498e1aa6b403c33e5f63cca9e788f8211a7d5",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-026-00-text",
+      "lang": "text",
+      "code": "마크다운 파일 업로드\n  ↓\nIngest & Normalize\n  ↓\nSession Meta 추출\n  ↓\nTurn 파싱\n  ↓\nArtifact 추출\n  ↓\nEvent 정규화\n  ↓\nTimeline 생성 + Issue Cards 생성 + 코드 스니펫 분리\n  ↓\nJSON/MD 출력\n  ↓\n다운로드\n",
+      "source": {
+        "turn_index": 26,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          27
+        ]
+      },
+      "snippet_hash": "758d6681093611f4ca7715a8b847d7221ad952ab6fd36a38cd11884f0e5b4265",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-041-00-text",
+        "SNP-cursor_export_unknown_7700-056-00-text",
+        "SNP-cursor_export_unknown_7700-071-00-text",
+        "SNP-cursor_export_unknown_7700-086-00-text",
+        "SNP-cursor_export_unknown_7700-101-00-text",
+        "SNP-cursor_export_unknown_7700-116-00-text",
+        "SNP-cursor_export_unknown_7700-131-00-text",
+        "SNP-cursor_export_unknown_7700-146-00-text",
+        "SNP-cursor_export_unknown_7700-161-00-text",
+        "SNP-cursor_export_unknown_7700-176-00-text",
+        "SNP-cursor_export_unknown_7700-207-00-text",
+        "SNP-cursor_export_unknown_7700-222-00-text",
+        "SNP-cursor_export_unknown_7700-237-00-text",
+        "SNP-cursor_export_unknown_7700-252-00-text",
+        "SNP-cursor_export_unknown_7700-267-00-text",
+        "SNP-cursor_export_unknown_7700-282-00-text",
+        "SNP-cursor_export_unknown_7700-297-00-text",
+        "SNP-cursor_export_unknown_7700-312-00-text",
+        "SNP-cursor_export_unknown_7700-329-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-035-00-python",
+      "lang": "python",
+      "code": "class SessionMeta(BaseModel):\n    session_id: str\n    exported_at: Optional[str]\n    cursor_version: Optional[str]\n    phase: Optional[int]\n    subphase: Optional[int]\n    source_doc: str\n",
+      "source": {
+        "turn_index": 35,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          36
+        ]
+      },
+      "snippet_hash": "73d4661d4230494d7d93efd4ca453388e0ee295a479c0e0f0001a6ccd5e2f4aa",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-050-00-python",
+        "SNP-cursor_export_unknown_7700-065-00-python",
+        "SNP-cursor_export_unknown_7700-080-00-python",
+        "SNP-cursor_export_unknown_7700-095-00-python",
+        "SNP-cursor_export_unknown_7700-110-00-python",
+        "SNP-cursor_export_unknown_7700-125-00-python",
+        "SNP-cursor_export_unknown_7700-140-00-python",
+        "SNP-cursor_export_unknown_7700-155-00-python",
+        "SNP-cursor_export_unknown_7700-170-00-python",
+        "SNP-cursor_export_unknown_7700-185-00-python",
+        "SNP-cursor_export_unknown_7700-216-00-python",
+        "SNP-cursor_export_unknown_7700-231-00-python",
+        "SNP-cursor_export_unknown_7700-246-00-python",
+        "SNP-cursor_export_unknown_7700-261-00-python",
+        "SNP-cursor_export_unknown_7700-276-00-python",
+        "SNP-cursor_export_unknown_7700-291-00-python",
+        "SNP-cursor_export_unknown_7700-306-00-python",
+        "SNP-cursor_export_unknown_7700-321-00-python",
+        "SNP-cursor_export_unknown_7700-338-00-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-035-01-python",
+      "lang": "python",
+      "code": "class TimelineEvent(BaseModel):\n    seq: int\n    session_id: str\n    phase: Optional[int]\n    subphase: Optional[int]\n    type: EventType  # status_review|plan|artifact|debug|completion|next_step|turn\n    summary: str\n    artifacts: List[ArtifactRef]\n    snippet_refs: List[str]  # snippet_id\n",
+      "source": {
+        "turn_index": 35,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          36
+        ]
+      },
+      "snippet_hash": "d59e38bf063e3ab9000a2f611b625a399cf3156a64e8a508d8781bb0abf2e2d5",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-050-01-python",
+        "SNP-cursor_export_unknown_7700-065-01-python",
+        "SNP-cursor_export_unknown_7700-080-01-python",
+        "SNP-cursor_export_unknown_7700-095-01-python",
+        "SNP-cursor_export_unknown_7700-110-01-python",
+        "SNP-cursor_export_unknown_7700-125-01-python",
+        "SNP-cursor_export_unknown_7700-140-01-python",
+        "SNP-cursor_export_unknown_7700-155-01-python",
+        "SNP-cursor_export_unknown_7700-170-01-python",
+        "SNP-cursor_export_unknown_7700-185-01-python",
+        "SNP-cursor_export_unknown_7700-216-01-python",
+        "SNP-cursor_export_unknown_7700-231-01-python",
+        "SNP-cursor_export_unknown_7700-246-01-python",
+        "SNP-cursor_export_unknown_7700-261-01-python",
+        "SNP-cursor_export_unknown_7700-276-01-python",
+        "SNP-cursor_export_unknown_7700-291-01-python",
+        "SNP-cursor_export_unknown_7700-306-01-python",
+        "SNP-cursor_export_unknown_7700-321-01-python",
+        "SNP-cursor_export_unknown_7700-338-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-035-02-python",
+      "lang": "python",
+      "code": "class IssueCard(BaseModel):\n    issue_id: str\n    scope: IssueScope\n    title: str\n    symptoms: List[str]\n    root_cause: Optional[RootCause]\n    evidence: List[Evidence]\n    fix: List[Fix]\n    validation: List[str]\n    related_artifacts: List[ArtifactRef]\n    snippet_refs: List[str]\n",
+      "source": {
+        "turn_index": 35,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          36
+        ]
+      },
+      "snippet_hash": "ace47983ec5d34a35c06ba425212df196310ee8932d21d5338d0fbba3b339e08",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-050-02-python",
+        "SNP-cursor_export_unknown_7700-065-02-python",
+        "SNP-cursor_export_unknown_7700-080-02-python",
+        "SNP-cursor_export_unknown_7700-095-02-python",
+        "SNP-cursor_export_unknown_7700-110-02-python",
+        "SNP-cursor_export_unknown_7700-125-02-python",
+        "SNP-cursor_export_unknown_7700-140-02-python",
+        "SNP-cursor_export_unknown_7700-155-02-python",
+        "SNP-cursor_export_unknown_7700-170-02-python",
+        "SNP-cursor_export_unknown_7700-185-02-python",
+        "SNP-cursor_export_unknown_7700-216-02-python",
+        "SNP-cursor_export_unknown_7700-231-02-python",
+        "SNP-cursor_export_unknown_7700-246-02-python",
+        "SNP-cursor_export_unknown_7700-261-02-python",
+        "SNP-cursor_export_unknown_7700-276-02-python",
+        "SNP-cursor_export_unknown_7700-291-02-python",
+        "SNP-cursor_export_unknown_7700-306-02-python",
+        "SNP-cursor_export_unknown_7700-321-02-python",
+        "SNP-cursor_export_unknown_7700-338-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-035-03-python",
+      "lang": "python",
+      "code": "class Snippet(BaseModel):\n    snippet_id: str\n    lang: str\n    code: str\n    source: SnippetSource\n    links: SnippetLinks\n",
+      "source": {
+        "turn_index": 35,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          36
+        ]
+      },
+      "snippet_hash": "5c9b0818c07e045f81b741fd8ca3cb5e1cbc9d72880b10308c51220adc1befde",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-050-03-python",
+        "SNP-cursor_export_unknown_7700-065-03-python",
+        "SNP-cursor_export_unknown_7700-080-03-python",
+        "SNP-cursor_export_unknown_7700-095-03-python",
+        "SNP-cursor_export_unknown_7700-110-03-python",
+        "SNP-cursor_export_unknown_7700-125-03-python",
+        "SNP-cursor_export_unknown_7700-140-03-python",
+        "SNP-cursor_export_unknown_7700-155-03-python",
+        "SNP-cursor_export_unknown_7700-170-03-python",
+        "SNP-cursor_export_unknown_7700-185-03-python",
+        "SNP-cursor_export_unknown_7700-216-03-python",
+        "SNP-cursor_export_unknown_7700-231-03-python",
+        "SNP-cursor_export_unknown_7700-246-03-python",
+        "SNP-cursor_export_unknown_7700-261-03-python",
+        "SNP-cursor_export_unknown_7700-276-03-python",
+        "SNP-cursor_export_unknown_7700-291-03-python",
+        "SNP-cursor_export_unknown_7700-306-03-python",
+        "SNP-cursor_export_unknown_7700-321-03-python",
+        "SNP-cursor_export_unknown_7700-338-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-036-00-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/\n│   ├── api/\n│   │   └── routes/\n│   │       ├── parse.py\n│   │       ├── timeline.py\n│   │       ├── issues.py\n│   │       ├── snippets.py\n│   │       └── export.py\n│   ├── parser/\n│   │   ├── normalize.py\n│   │   ├── meta.py\n│   │   ├── turns.py\n│   │   ├── snippets.py\n│   │   └── artifacts.py\n│   ├── builders/\n│   │   ├── event_normalizer.py\n│   │   ├── timeline_builder.py\n│   │   ├── issues_builder.py\n│   │   └── snippet_manager.py\n│   ├── render/\n│   │   └── render_md.py\n│   ├── core/\n│   │   ├── models.py\n│   │   ├── constants.py\n│   │   ├── llm_service.py\n│   │   └── snippet_storage.py\n│   ├── main.py\n│   └── pyproject.toml\n├── frontend/\n│   ├── app/\n│   │   └── page.tsx\n│   ├── components/\n│   │   ├── FileUpload.tsx\n│   │   ├── SessionMetaPreview.tsx\n│   │   ├── TimelinePreview.tsx\n│   │   ├── IssuesPreview.tsx\n│   │   └── SnippetsPreview.tsx\n│   ├── lib/\n│   │   ├── api.ts\n│   │   └── constants.ts\n│   ├── types/\n│   │   └── api.ts\n│   └── package.json\n├── tests/\n│   ├── fixtures/\n│   ├── golden/\n│   ├── test_parser.py\n│   ├── test_event_normalizer.py\n│   ├── test_timeline_builder.py\n│   ├── test_issues_builder.py\n│   ├── test_api.py\n│   └── test_integration.py\n├── docs/\n│   ├── PRD_longtext.md\n│   ├── instruction_detail.md\n│   └── instruction_moredetail.md\n├── .cursor/\n│   └── rules/\n├── AGENTS.md\n├── api-contract-sync.mdc\n└── README.md\n",
+      "source": {
+        "turn_index": 36,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          37
+        ]
+      },
+      "snippet_hash": "2f88b0c9d66685f3d771ff3674cd59e418825b79610c205372ce6acfa5b82ad7",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-051-00-text",
+        "SNP-cursor_export_unknown_7700-066-00-text",
+        "SNP-cursor_export_unknown_7700-081-00-text",
+        "SNP-cursor_export_unknown_7700-096-00-text",
+        "SNP-cursor_export_unknown_7700-111-00-text",
+        "SNP-cursor_export_unknown_7700-126-00-text",
+        "SNP-cursor_export_unknown_7700-141-00-text",
+        "SNP-cursor_export_unknown_7700-156-00-text",
+        "SNP-cursor_export_unknown_7700-171-00-text",
+        "SNP-cursor_export_unknown_7700-186-00-text",
+        "SNP-cursor_export_unknown_7700-217-00-text",
+        "SNP-cursor_export_unknown_7700-232-00-text",
+        "SNP-cursor_export_unknown_7700-247-00-text",
+        "SNP-cursor_export_unknown_7700-262-00-text",
+        "SNP-cursor_export_unknown_7700-277-00-text",
+        "SNP-cursor_export_unknown_7700-292-00-text",
+        "SNP-cursor_export_unknown_7700-307-00-text",
+        "SNP-cursor_export_unknown_7700-322-00-text",
+        "SNP-cursor_export_unknown_7700-339-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-192-00-powershell",
+      "lang": "powershell",
+      "code": "git remote add origin <원격_저장소_URL>\ngit branch -M main\ngit push -u origin main\n",
+      "source": {
+        "turn_index": 192,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          193
+        ]
+      },
+      "snippet_hash": "8f2da05f8e4b045757024104e200ea8fc1a39b9ff5bc6ba4065f08810c132ff0",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-192-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-00-jsonc",
+      "lang": "jsonc",
+      "code": "{\n  \"extends\": [\n  \"next/core-web-vitals\",\n  \"eslint:recommended\",\n  \"plugin:@typescript-eslint/recommended\",\n  \"plugin:react/recommended\",\n  \"plugin:react-hooks/recommended\",\n  \"prettier\"\n  ],\n  \"parser\": \"@typescript-eslint/parser\",\n  \"parserOptions\": {\n  \"ecmaVersion\": 2022,\n  \"sourceType\": \"module\",\n  \"ecmaFeatures\": {\n  \"jsx\": true\n  },\n  \"project\": \"./tsconfig.json\"\n  },\n  \"plugins\": [\n  \"@typescript-eslint\",\n  \"react\",\n  \"react-hooks\"\n  ],\n  \"rules\": {\n  \"indent\": [\"error\", 2, {\n  \"SwitchCase\": 1,\n  \"VariableDeclarator\": 1,\n  \"outerIIFEBody\": 1,\n  \"MemberExpression\": 1,\n  \"FunctionDeclaration\": {\n  \"parameters\": 1,\n  \"body\": 1\n  },\n  \"FunctionExpression\": {\n  \"parameters\": 1,\n  \"body\": 1\n  },\n  \"CallExpression\": {\n  \"arguments\": 1\n  },\n  \"ArrayExpression\": 1,\n  \"ObjectExpression\": 1,\n  \"ImportDeclaration\": 1,\n  \"flatTernaryExpressions\": false,\n  \"ignoreComments\": false\n  }],\n  \"linebreak-style\": [\"error\", \"unix\"],\n  \"quotes\": [\"error\", \"single\", { \"avoidEscape\": true }],\n  \"semi\": [\"error\", \"always\"],\n  \"no-unused-vars\": \"off\",\n  \"@typescript-eslint/no-unused-vars\": [\"error\", {\n  \"argsIgnorePattern\": \"^_\",\n  \"varsIgnorePattern\": \"^_\"\n  }],\n  \"@typescript-eslint/explicit-function-return-type\": \"off\",\n  \"@typescript-eslint/explicit-module-boundary-types\": \"off\",\n  \"@typescript-eslint/no-explicit-any\": \"warn\",\n  \"react/react-in-jsx-scope\": \"off\",\n  \"react/prop-types\": \"off\",\n  \"react-hooks/rules-of-hooks\": \"error\",\n  \"react-hooks/exhaustive-deps\": \"warn\"\n  },\n  \"settings\": {\n  \"react\": {\n  \"version\": \"detect\"\n  }\n  },\n  \"env\": {\n  \"browser\": true,\n  \"es2022\": true,\n  \"node\": true\n  },\n  \"ignorePatterns\": [\n  \"node_modules/\",\n  \".next/\",\n  \"out/\",\n  \"build/\",\n  \"dist/\",\n  \"*.config.js\",\n  \"*.config.ts\"\n  ]\n}\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "797bc01728d38ef9eff2120f3227cfa38c50ee1f5c7c80399d551ee013eaf28a",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-01-plaintext",
+      "lang": "plaintext",
+      "code": "{\n  \"semi\": true,\n  \"trailingComma\": \"es5\",\n  \"singleQuote\": true,\n  \"printWidth\": 100,\n  \"tabWidth\": 2,\n  \"useTabs\": false,\n  \"arrowParens\": \"avoid\",\n  \"endOfLine\": \"lf\",\n  \"bracketSpacing\": true,\n  \"jsxSingleQuote\": false,\n  \"quoteProps\": \"as-needed\",\n  \"proseWrap\": \"preserve\"\n}\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "4f3b6a1deb380392c359a19687e977fac10f0f680f75a792e38c8de5e204be51",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-02-plaintext",
+      "lang": "plaintext",
+      "code": "# Dependencies\nnode_modules/\n.pnp\n.pnp.js\n\n# Testing\ncoverage/\n*.log\n\n# Next.js\n.next/\nout/\nbuild/\ndist/\n\n# Production\n*.min.js\n*.min.css\n\n# Misc\n.DS_Store\n*.pem\n\n# Debug\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Local env files\n.env\n.env*.local\n\n# Vercel\n.vercel\n\n# TypeScript\n*.tsbuildinfo\nnext-env.d.ts\n\n# Python\n__pycache__/\n*.py[cod]\n*$py.class\n*.so\n.Python\nvenv/\nenv/\nENV/\n\n# Poetry\npoetry.lock\n\n# IDE\n.vscode/\n.idea/\n\n# OS\nThumbs.db\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "a1dd8e7b756a99cf72ddad036cbc6766aeeb0c9b07d53ddce86c185d7c7f006d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-03-properties",
+      "lang": "properties",
+      "code": "# EditorConfig is awesome: https://EditorConfig.org\n\n# top-most EditorConfig file\nroot = true\n\n# Unix-style newlines with a newline ending every file\n[*]\ncharset = utf-8\nend_of_line = lf\ninsert_final_newline = true\ntrim_trailing_whitespace = true\n\n# Python files\n[*.py]\nindent_style = space\nindent_size = 4\nmax_line_length = 100\n\n# TypeScript/JavaScript files\n[*.{ts,tsx,js,jsx}]\nindent_style = space\nindent_size = 2\nmax_line_length = 100\n\n# JSON files\n[*.json]\nindent_style = space\nindent_size = 2\n\n# YAML files\n[*.{yml,yaml}]\nindent_style = space\nindent_size = 2\n\n# Markdown files\n[*.md]\ntrim_trailing_whitespace = false\nmax_line_length = off\n\n# Makefile\n[Makefile]\nindent_style = tab\n\n# Shell scripts\n[*.sh]\nindent_style = space\nindent_size = 2\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "c57bdcc4aab67c2b787e203d7563dc6c30d99931a0287422dc8ca3da43880e55",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-04-ini",
+      "lang": "ini",
+      "code": "[flake8]\n# Python 코드 스타일 검사 설정\n\n# 최대 줄 길이\nmax-line-length = 100\n\n# 무시할 에러 코드\n# E203: whitespace before ':' (black과 충돌)\n# E501: line too long (max-line-length로 처리)\n# W503: line break before binary operator (black과 충돌)\nignore = E203, E501, W503\n\n# 제외할 디렉토리/파일\nexclude =\n  .git,\n  __pycache__,\n  .venv,\n  venv,\n  env,\n  ENV,\n  .env,\n  build,\n  dist,\n  *.egg-info,\n  .pytest_cache,\n  .mypy_cache,\n  .coverage,\n  htmlcov,\n  node_modules,\n  .next,\n  frontend\n\n# 허용할 최대 복잡도\nmax-complexity = 10\n\n# import 순서 검사\nimport-order-style = google\n\n# 통계 출력\nstatistics = True\n\n# 에러 수 제한\nmax-errors = 1000\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "0db0113c1aed87eda5bffa5445a3d9788bf5dcff21e074e2f5728d5b99475806",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-05-toml",
+      "lang": "toml",
+      "code": "[tool.poetry]\nname = \"longtext-analysis\"\nversion = \"0.1.0\"\ndescription = \"Cursor IDE 세션 대화 마크다운 파일을 파싱하여 Timeline, Issue Cards, 코드 스니펫을 생성하는 웹 애플리케이션\"\nauthors = [\"Your Name <you@example.com>\"]\nreadme = \"README.md\"\npackages = [{include = \"backend\"}]\n\n[tool.poetry.dependencies]\npython = \"^3.11\"\nfastapi = \"^0.104.1\"\nuvicorn = {extras = [\"standard\"], version = \"^0.24.0\"}\npydantic = \"^2.5.0\"\npython-dotenv = \"^1.0.0\"\nopenai = \"^1.3.0\"\nregex = \"^2023.10.3\"\nhttpx = \"^0.25.0\"\n\n[tool.poetry.group.dev.dependencies]\npytest = \"^7.4.3\"\npytest-asyncio = \"^0.21.1\"\nblack = \"^23.11.0\"\nflake8 = \"^6.1.0\"\nisort = \"^5.12.0\"\nmypy = \"^1.7.0\"\nruff = \"^0.1.6\"\n\n[build-system]\nrequires = [\"poetry-core\"]\nbuild-backend = \"poetry.core.masonry.api\"\n\n# Black 설정 (코드 포맷팅)\n[tool.black]\nline-length = 100\ntarget-version = ['py311']\ninclude = '\\.pyi?$'\nextend-exclude = '''\n/(\n  # directories\n  \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.tox\n  | \\.venv\n  | venv\n  | _build\n  | buck-out\n  | build\n  | dist\n  | node_modules\n  | \\.next\n  | frontend\n)/\n'''\n\n# isort 설정 (import 정렬)\n[tool.isort]\nprofile = \"black\"\nline_length = 100\nmulti_line_output = 3\ninclude_trailing_comma = true\nforce_grid_wrap = 0\nuse_parentheses = true\nensure_newline_before_comments = true\nskip_glob = [\n  \"*/migrations/*\",\n  \"*/node_modules/*\",\n  \"*/.next/*\",\n  \"*/frontend/*\"\n]\n\n# mypy 설정 (타입 체크)\n[tool.mypy]\npython_version = \"3.11\"\nwarn_return_any = true\nwarn_unused_configs = true\ndisallow_untyped_defs = false\ndisallow_incomplete_defs = false\ncheck_untyped_defs = true\nno_implicit_optional = true\nwarn_redundant_casts = true\nwarn_unused_ignores = true\nwarn_no_return = true\nignore_missing_imports = true\nexclude = [\n  \"*/migrations/*\",\n  \"*/node_modules/*\",\n  \"*/.next/*\",\n  \"*/frontend/*\"\n]\n\n# Ruff 설정 (빠른 린터)\n[tool.ruff]\nline-length = 100\ntarget-version = \"py311\"\nexclude = [\n  \".git\",\n  \"__pycache__\",\n  \".venv\",\n  \"venv\",\n  \"env\",\n  \"ENV\",\n  \"build\",\n  \"dist\",\n  \"*.egg-info\",\n  \".pytest_cache\",\n  \".mypy_cache\",\n  \"node_modules\",\n  \".next\",\n  \"frontend\"\n]\n\n[tool.ruff.lint]\nselect = [\n  \"E\",  # pycodestyle errors\n  \"W\",  # pycodestyle warnings\n  \"F\",  # pyflakes\n  \"I\",  # isort\n  \"B\",  # flake8-bugbear\n  \"C4\", # flake8-comprehensions\n  \"UP\", # pyupgrade\n]\nignore = [\n  \"E501\",  # line too long (handled by black)\n  \"B008\",  # do not perform function calls in argument defaults\n  \"C901\",  # too complex\n]\n\n[tool.ruff.lint.per-file-ignores]\n\"__init__.py\" = [\"F401\"]  # unused imports in __init__.py\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "0de4de966b731e174e2c189b88b02d7475d3e5d730457654dc4e6ae8d20ffdd6",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-06-jsonc",
+      "lang": "jsonc",
+      "code": "{\n  // Editor 설정\n  \"editor.formatOnSave\": true,\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.codeActionsOnSave\": {\n  \"source.fixAll.eslint\": \"explicit\",\n  \"source.organizeImports\": \"explicit\"\n  },\n  \"editor.tabSize\": 2,\n  \"editor.insertSpaces\": true,\n  \"editor.detectIndentation\": false,\n  \"editor.trimAutoWhitespace\": true,\n  \"files.insertFinalNewline\": true,\n  \"files.trimTrailingWhitespace\": true,\n  \"files.eol\": \"\\n\",\n\n  // 파일별 포맷터 설정\n  \"[python]\": {\n  \"editor.defaultFormatter\": \"ms-python.black-formatter\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 4,\n  \"editor.insertSpaces\": true\n  },\n  \"[typescript]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 2\n  },\n  \"[typescriptreact]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 2\n  },\n  \"[javascript]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 2\n  },\n  \"[javascriptreact]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 2\n  },\n  \"[json]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"editor.tabSize\": 2\n  },\n  \"[jsonc]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true\n  },\n  \"[markdown]\": {\n  \"editor.defaultFormatter\": \"esbenp.prettier-vscode\",\n  \"editor.formatOnSave\": true,\n  \"files.trimTrailingWhitespace\": false\n  },\n\n  // Python 설정\n  \"python.formatting.provider\": \"black\",\n  \"python.linting.enabled\": true,\n  \"python.linting.flake8Enabled\": true,\n  \"python.linting.pylintEnabled\": false,\n  \"python.linting.mypyEnabled\": true,\n  \"python.linting.lintOnSave\": true,\n  \"python.analysis.typeCheckingMode\": \"basic\",\n  \"python.analysis.autoImportCompletions\": true,\n\n  // ESLint 설정\n  \"eslint.enable\": true,\n  \"eslint.validate\": [\n  \"javascript\",\n  \"javascriptreact\",\n  \"typescript\",\n  \"typescriptreact\"\n  ],\n  \"eslint.format.enable\": true,\n\n  // 파일 제외\n  \"files.exclude\": {\n  \"**/__pycache__\": true,\n  \"**/*.pyc\": true,\n  \"**/.pytest_cache\": true,\n  \"**/.mypy_cache\": true,\n  \"**/.coverage\": true,\n  \"**/htmlcov\": true,\n  \"**/node_modules\": true,\n  \"**/.next\": true,\n  \"**/dist\": true,\n  \"**/build\": true\n  },\n\n  // 검색 제외\n  \"search.exclude\": {\n  \"**/node_modules\": true,\n  \"**/bower_components\": true,\n  \"**/*.code-search\": true,\n  \"**/__pycache__\": true,\n  \"**/.next\": true,\n  \"**/dist\": true,\n  \"**/build\": true,\n  \"**/.venv\": true,\n  \"**/venv\": true\n  }\n}\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "bc8e767584d5cb9fb5c16a5195c56ad8ea4ed08af133734c6ba58929c90966d1",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-07-jsonc",
+      "lang": "jsonc",
+      "code": "{\n  \"recommendations\": [\n  \"esbenp.prettier-vscode\",\n  \"dbaeumer.vscode-eslint\",\n  \"ms-python.python\",\n  \"ms-python.black-formatter\",\n  \"ms-python.flake8\",\n  \"ms-python.isort\",\n  \"ms-python.mypy-type-checker\",\n  \"charliermarsh.ruff\"\n  ]\n}\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "2fcd094b369d334a787bbbfca0a0cfd8a02346a044917eeb0fe25b25c090c5d6",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-08-ignore",
+      "lang": "ignore",
+      "code": "# Environment variables\n.env\n.env.local\n.env*.local\n.env.production\n.env.development\n\n# Python\n__pycache__/\n*.py[cod]\n*$py.class\n*.so\n.Python\nbuild/\ndevelop-eggs/\ndist/\ndownloads/\neggs/\n.eggs/\nlib/\nlib64/\nparts/\nsdist/\nvar/\nwheels/\npip-wheel-metadata/\nshare/python-wheels/\n*.egg-info/\n.installed.cfg\n*.egg\nMANIFEST\n\n# Virtual environments\nvenv/\nenv/\nENV/\n.venv/\nenv.bak/\nvenv.bak/\n\n# Poetry\n# poetry.lock  # 프로젝트 정책에 따라 주석 해제\n\n# Testing\n.pytest_cache/\n.coverage\nhtmlcov/\n.tox/\n.nox/\ncoverage.xml\n*.cover\n*.py,cover\n.hypothesis/\ntests/reports/\ntests/logs/\n\n# IDEs\n.vscode/\n.idea/\n*.swp\n*.swo\n*~\n.DS_Store\n\n# Next.js\n.next/\nout/\nbuild/\ndist/\n.vercel\n\n# Node\nnode_modules/\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n.pnp\n.pnp.js\n.yarn/cache\n.yarn/unplugged\n.yarn/build-state.yml\n.yarn/install-state.gz\n\n# TypeScript\n*.tsbuildinfo\nnext-env.d.ts\n\n# Database\n*.db\n*.sqlite\n*.sqlite3\n*.db-journal\n\n# Cache and temp\ncache/\ntemp/\ntmp/\n*.log\n*.tmp\n\n# OS\nThumbs.db\n.DS_Store\n*.swp\n*.swo\n\n# Project specific\nsnippets/\n*.zip\nreports/\nlogs/\n\n# Mypy\n.mypy_cache/\n.dmypy.json\ndmypy.json\n\n# Ruff\n.ruff_cache/\n\n# Black\n.black\n\n# Jupyter Notebook\n.ipynb_checkpoints\n\n# pyenv\n.python-version\n\n# Celery\ncelerybeat-schedule\ncelerybeat.pid\n\n# SageMath parsed files\n*.sage.py\n\n# Spyder project settings\n.spyderproject\n.spyproject\n\n# Rope project settings\n.ropeproject\n\n# mkdocs documentation\n/site\n\n# mypy\n.mypy_cache/\n.dmypy.json\ndmypy.json\n\n# Pyre type checker\n.pyre/\n\n# pytype static type analyzer\n.pytype/\n\n# Cython debug symbols\ncython_debug/\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "279088ef14b33787fcf5119b0b9d5e173f633df2ea95abce1a7146e05f043200",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-196-09-powershell",
+      "lang": "powershell",
+      "code": "  # 프론트엔드\n  npm run lint\n  npm run format\n\n  # 백엔드\n  poetry run black .\n  poetry run flake8 .\n  poetry run isort .\n  ",
+      "source": {
+        "turn_index": 196,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "be18bb94d300d1c4c9f15df46ac56a3eab9bcc38b71caa5bb0399fd01fd8ec24",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-196-10-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-198-00-markdown",
+      "lang": "markdown",
+      "code": "# Longtext Analysis\n\n## 프로젝트 개요\n- PRD 기반 간단한 설명\n- 기술 스택 (FastAPI, Next.js)\n\n## 프로젝트 구조\n- 실제 생성된 디렉토리 구조\n\n## 개발 환경 설정\n- Poetry 설치 및 설정\n- Next.js 설치 및 설정\n- 환경 변수 설정\n\n## 실행 방법\n- 백엔드 서버 실행\n- 프론트엔드 개발 서버 실행\n\n## 참고 문서\n- PRD, TODOs.md 링크\n",
+      "source": {
+        "turn_index": 198,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          199
+        ]
+      },
+      "snippet_hash": "e52e3783ff23e6c85e3b0f6a46ee645e0c7b27aadcb881354863c56df9634b20",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-204-00-markdown"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-200-00-markdown",
+      "lang": "markdown",
+      "code": "## 업데이트 체크리스트\n\n### 프로젝트 구조\n- [ ] 디렉토리 구조가 실제와 일치하는가?\n- [ ] 새로 추가된 디렉토리/파일이 반영되었는가?\n\n### 설치 및 실행\n- [ ] 설치 명령어가 정확한가?\n- [ ] 실행 방법이 최신인가?\n- [ ] 환경 변수 설정이 완전한가?\n\n### 기능 설명\n- [ ] 새로 구현된 기능이 설명되었는가?\n- [ ] API 엔드포인트가 문서화되었는가?\n- [ ] 사용 예시가 최신인가?\n\n### 참고 문서\n- [ ] 링크가 유효한가?\n- [ ] 새 문서가 추가되었는가?\n",
+      "source": {
+        "turn_index": 200,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          201
+        ]
+      },
+      "snippet_hash": "98439cf0994a7701d218dbd99844d685816d1fd8427657be90c2d2820760bac8",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-204-01-markdown"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-201-00-markdown",
+      "lang": "markdown",
+      "code": "# Longtext Analysis\n\n## 📋 프로젝트 개요\n- 목적 및 배경\n- 주요 기능\n\n## 🏗️ 프로젝트 구조\n",
+      "source": {
+        "turn_index": 201,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          202
+        ]
+      },
+      "snippet_hash": "c0539a8a3d1406525414c1a701c4f2209ce7326cf359ce7527d79784a0f6d1d1",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-204-02-markdown",
+        "SNP-cursor_export_unknown_7700-327-00-markdown",
+        "SNP-cursor_export_unknown_7700-340-00-markdown"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-201-01-text",
+      "lang": "text",
+      "code": "\n## 🚀 시작하기\n### 필수 요구사항\n### 설치 방법\n### 환경 변수 설정\n### 실행 방법\n\n## 📖 사용 가이드\n### 입력 파일 형식\n### 출력 형식\n### API 사용법\n\n## 🧪 테스트\n### 테스트 실행 방법\n### E2E 테스트\n\n## 📚 참고 문서\n- PRD\n- TODOs.md\n- AGENTS.md\n\n## 🔧 개발 가이드\n### 코드 스타일\n### 커밋 규칙\n### Phase별 진행 상황\n\n## 📝 변경 이력\n- Phase별 완료 사항\n- 최근 업데이트\n",
+      "source": {
+        "turn_index": 201,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          202
+        ]
+      },
+      "snippet_hash": "69c1047a9e94f95af9f4e50240ed3da84bb5e4b77c429a46bd01a6420728ad59",
+      "aliases": [
+        "SNP-cursor_export_unknown_7700-204-03-plaintext",
+        "SNP-cursor_export_unknown_7700-327-01-text",
+        "SNP-cursor_export_unknown_7700-340-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_7700-328-00-text",
+      "lang": "text",
+      "code": "\nREADME 업데이트 가이드라인 섹션을 추가하기 위해 파일을 다시 확인 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 328,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          329
+        ]
+      },
+      "snippet_hash": "41645384425d02d26a0ec25219f640126bc2fd59851a02e3983432b3da68900d",
+      "aliases": []
+    }
+  ]
+}

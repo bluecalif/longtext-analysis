@@ -1,0 +1,216 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_3363",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 0,
+    "subphase": null,
+    "source_doc": "longcontext_phase_0.md"
+  },
+  "snippets": [
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-005-00-text",
+      "lang": "text",
+      "code": "마크다운 파일 업로드\n  ↓\nIngest & Normalize\n  ↓\nSession Meta 추출\n  ↓\nTurn 파싱\n  ↓\nArtifact 추출\n  ↓\nEvent 정규화\n  ↓\nTimeline 생성 + Issue Cards 생성 + 코드 스니펫 분리\n  ↓\nJSON/MD 출력\n  ↓\n다운로드\n",
+      "source": {
+        "turn_index": 5,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          6
+        ]
+      },
+      "snippet_hash": "758d6681093611f4ca7715a8b847d7221ad952ab6fd36a38cd11884f0e5b4265",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-022-00-text",
+        "SNP-cursor_export_unknown_3363-037-00-text",
+        "SNP-cursor_export_unknown_3363-052-00-text",
+        "SNP-cursor_export_unknown_3363-067-00-text",
+        "SNP-cursor_export_unknown_3363-082-00-text",
+        "SNP-cursor_export_unknown_3363-097-00-text",
+        "SNP-cursor_export_unknown_3363-112-00-text",
+        "SNP-cursor_export_unknown_3363-127-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-014-00-python",
+      "lang": "python",
+      "code": "class SessionMeta(BaseModel):\n    session_id: str\n    exported_at: Optional[str]\n    cursor_version: Optional[str]\n    phase: Optional[int]\n    subphase: Optional[int]\n    source_doc: str\n",
+      "source": {
+        "turn_index": 14,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          15
+        ]
+      },
+      "snippet_hash": "73d4661d4230494d7d93efd4ca453388e0ee295a479c0e0f0001a6ccd5e2f4aa",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-031-00-python",
+        "SNP-cursor_export_unknown_3363-046-00-python",
+        "SNP-cursor_export_unknown_3363-061-00-python",
+        "SNP-cursor_export_unknown_3363-076-00-python",
+        "SNP-cursor_export_unknown_3363-091-00-python",
+        "SNP-cursor_export_unknown_3363-106-00-python",
+        "SNP-cursor_export_unknown_3363-121-00-python",
+        "SNP-cursor_export_unknown_3363-136-00-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-014-01-python",
+      "lang": "python",
+      "code": "class TimelineEvent(BaseModel):\n    seq: int\n    session_id: str\n    phase: Optional[int]\n    subphase: Optional[int]\n    type: EventType  # status_review|plan|artifact|debug|completion|next_step|turn\n    summary: str\n    artifacts: List[ArtifactRef]\n    snippet_refs: List[str]  # snippet_id\n",
+      "source": {
+        "turn_index": 14,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          15
+        ]
+      },
+      "snippet_hash": "d59e38bf063e3ab9000a2f611b625a399cf3156a64e8a508d8781bb0abf2e2d5",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-031-01-python",
+        "SNP-cursor_export_unknown_3363-046-01-python",
+        "SNP-cursor_export_unknown_3363-061-01-python",
+        "SNP-cursor_export_unknown_3363-076-01-python",
+        "SNP-cursor_export_unknown_3363-091-01-python",
+        "SNP-cursor_export_unknown_3363-106-01-python",
+        "SNP-cursor_export_unknown_3363-121-01-python",
+        "SNP-cursor_export_unknown_3363-136-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-014-02-python",
+      "lang": "python",
+      "code": "class IssueCard(BaseModel):\n    issue_id: str\n    scope: IssueScope\n    title: str\n    symptoms: List[str]\n    root_cause: Optional[RootCause]\n    evidence: List[Evidence]\n    fix: List[Fix]\n    validation: List[str]\n    related_artifacts: List[ArtifactRef]\n    snippet_refs: List[str]\n",
+      "source": {
+        "turn_index": 14,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          15
+        ]
+      },
+      "snippet_hash": "ace47983ec5d34a35c06ba425212df196310ee8932d21d5338d0fbba3b339e08",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-031-02-python",
+        "SNP-cursor_export_unknown_3363-046-02-python",
+        "SNP-cursor_export_unknown_3363-061-02-python",
+        "SNP-cursor_export_unknown_3363-076-02-python",
+        "SNP-cursor_export_unknown_3363-091-02-python",
+        "SNP-cursor_export_unknown_3363-106-02-python",
+        "SNP-cursor_export_unknown_3363-121-02-python",
+        "SNP-cursor_export_unknown_3363-136-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-014-03-python",
+      "lang": "python",
+      "code": "class Snippet(BaseModel):\n    snippet_id: str\n    lang: str\n    code: str\n    source: SnippetSource\n    links: SnippetLinks\n",
+      "source": {
+        "turn_index": 14,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          15
+        ]
+      },
+      "snippet_hash": "5c9b0818c07e045f81b741fd8ca3cb5e1cbc9d72880b10308c51220adc1befde",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-031-03-python",
+        "SNP-cursor_export_unknown_3363-046-03-python",
+        "SNP-cursor_export_unknown_3363-061-03-python",
+        "SNP-cursor_export_unknown_3363-076-03-python",
+        "SNP-cursor_export_unknown_3363-091-03-python",
+        "SNP-cursor_export_unknown_3363-106-03-python",
+        "SNP-cursor_export_unknown_3363-121-03-python",
+        "SNP-cursor_export_unknown_3363-136-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-015-00-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/\n│   ├── api/\n│   │   └── routes/\n│   │       ├── parse.py\n│   │       ├── timeline.py\n│   │       ├── issues.py\n│   │       ├── snippets.py\n│   │       └── export.py\n│   ├── parser/\n│   │   ├── normalize.py\n│   │   ├── meta.py\n│   │   ├── turns.py\n│   │   ├── snippets.py\n│   │   └── artifacts.py\n│   ├── builders/\n│   │   ├── event_normalizer.py\n│   │   ├── timeline_builder.py\n│   │   ├── issues_builder.py\n│   │   └── snippet_manager.py\n│   ├── render/\n│   │   └── render_md.py\n│   ├── core/\n│   │   ├── models.py\n│   │   ├── constants.py\n│   │   ├── llm_service.py\n│   │   └── snippet_storage.py\n│   ├── main.py\n│   └── pyproject.toml\n├── frontend/\n│   ├── app/\n│   │   └── page.tsx\n│   ├── components/\n│   │   ├── FileUpload.tsx\n│   │   ├── SessionMetaPreview.tsx\n│   │   ├── TimelinePreview.tsx\n│   │   ├── IssuesPreview.tsx\n│   │   └── SnippetsPreview.tsx\n│   ├── lib/\n│   │   ├── api.ts\n│   │   └── constants.ts\n│   ├── types/\n│   │   └── api.ts\n│   └── package.json\n├── tests/\n│   ├── fixtures/\n│   ├── golden/\n│   ├── test_parser.py\n│   ├── test_event_normalizer.py\n│   ├── test_timeline_builder.py\n│   ├── test_issues_builder.py\n│   ├── test_api.py\n│   └── test_integration.py\n├── docs/\n│   ├── PRD_longtext.md\n│   ├── instruction_detail.md\n│   └── instruction_moredetail.md\n├── .cursor/\n│   └── rules/\n├── AGENTS.md\n├── api-contract-sync.mdc\n└── README.md\n",
+      "source": {
+        "turn_index": 15,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          16
+        ]
+      },
+      "snippet_hash": "2f88b0c9d66685f3d771ff3674cd59e418825b79610c205372ce6acfa5b82ad7",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-032-00-text",
+        "SNP-cursor_export_unknown_3363-047-00-text",
+        "SNP-cursor_export_unknown_3363-062-00-text",
+        "SNP-cursor_export_unknown_3363-077-00-text",
+        "SNP-cursor_export_unknown_3363-092-00-text",
+        "SNP-cursor_export_unknown_3363-107-00-text",
+        "SNP-cursor_export_unknown_3363-122-00-text",
+        "SNP-cursor_export_unknown_3363-137-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-036-00-text",
+      "lang": "text",
+      "code": "\n",
+      "source": {
+        "turn_index": 36,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          37
+        ]
+      },
+      "snippet_hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "aliases": [
+        "SNP-cursor_export_unknown_3363-051-00-text",
+        "SNP-cursor_export_unknown_3363-066-00-text",
+        "SNP-cursor_export_unknown_3363-081-00-text",
+        "SNP-cursor_export_unknown_3363-096-00-text",
+        "SNP-cursor_export_unknown_3363-111-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-126-00-text",
+      "lang": "text",
+      "code": "\n파일명 확인 중입니다.\n\n\n파일명을 `docs/cursor_phase_6_3.md`로 수정 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 126,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          127
+        ]
+      },
+      "snippet_hash": "b47267799435710d1f613a694e4334a43593559e2057c35e47020506ea246165",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_3363-126-01-text",
+      "lang": "text",
+      "code": "\n파일명을 `docs/cursor_phase_6_3.md`로 일괄 수정 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 126,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          127
+        ]
+      },
+      "snippet_hash": "4a2dd95a88efc9c1919c4b5f640d54f45721eab403b71bf0a6311fa1402f0c90",
+      "aliases": []
+    }
+  ]
+}

@@ -1,0 +1,1158 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_5248",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 2,
+    "subphase": null,
+    "source_doc": "longcontext_phase_2.md"
+  },
+  "snippets": [
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-002-00-text",
+      "lang": "text",
+      "code": "현재 Phase: Phase 1 완료, Phase 2 미시작\n완료율: Phase 1 약 95% (main.py만 미생성)\n다음 단계: Phase 2 시작 준비 상태\n",
+      "source": {
+        "turn_index": 2,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          3
+        ]
+      },
+      "snippet_hash": "43dc7ff64fd6a04eeab57f1c2c28184fa4435ac6ea34bcc0adf0b03e40d67b2d",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-002-01-plaintext"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-006-00-python",
+      "lang": "python",
+      "code": "# backend/main.py\n- FastAPI 앱 인스턴스\n- CORS 미들웨어\n- 예외 핸들러\n- Health check 엔드포인트\n- 라우터 등록 (주석 처리, Phase 6에서 구현)\n",
+      "source": {
+        "turn_index": 6,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          7
+        ]
+      },
+      "snippet_hash": "6170525b4e8a3617aa187866821669baae4b16658f350c3098aa1fa142d90d66",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-006-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-008-00-python",
+      "lang": "python",
+      "code": "\"\"\"\nFastAPI 애플리케이션 진입점\n\n이 모듈은 FastAPI 앱을 초기화하고, CORS 설정, 라우터 등록, 예외 처리를 구성합니다.\n\"\"\"\n\nfrom fastapi import FastAPI, HTTPException, Request\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom fastapi.responses import JSONResponse\nfrom typing import Dict, Any\n\n# FastAPI 앱 인스턴스 생성\napp = FastAPI(\n    title=\"Longtext Analysis API\",\n    description=\"Cursor IDE 세션 대화 마크다운 파일을 파싱하여 Timeline, Issue Cards, 코드 스니펫을 생성하는 API\",\n    version=\"0.1.0\",\n    docs_url=\"/docs\",\n    redoc_url=\"/redoc\",\n)\n\n# CORS 설정\n# 개발 환경: Next.js 프론트엔드 (localhost:3000) 허용\n# 프로덕션 환경에서는 환경 변수로 관리 권장\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=[\n        \"http://localhost:3000\",  # Next.js 개발 서버\n        \"http://127.0.0.1:3000\",\n    ],\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)\n\n\n# 예외 처리 핸들러\n@app.exception_handler(HTTPException)\nasync def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:\n    \"\"\"HTTP 예외 처리\"\"\"\n    return JSONResponse(\n        status_code=exc.status_code,\n        content={\"detail\": exc.detail},\n    )\n\n\n@app.exception_handler(Exception)\nasync def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:\n    \"\"\"일반 예외 처리\"\"\"\n    return JSONResponse(\n        status_code=500,\n        content={\"detail\": f\"Internal server error: {str(exc)}\"},\n    )\n\n\n# Health Check 엔드포인트\n# E2E 테스트에서 서버 상태 확인용\n@app.get(\"/health\")\nasync def health_check() -> Dict[str, str]:\n    \"\"\"\n    서버 상태 확인 엔드포인트\n    \n    Returns:\n        {\"status\": \"ok\"}\n    \"\"\"\n    return {\"status\": \"ok\"}\n\n\n# 라우터 등록\n# Phase 6에서 실제 라우터 구현 예정\n# 현재는 구조만 준비\n\n# TODO: Phase 6에서 구현 예정\n# from backend.api.routes import parse, timeline, issues, snippets, export\n#\n# app.include_router(parse.router)\n# app.include_router(timeline.router)\n# app.include_router(issues.router)\n# app.include_router(snippets.router)\n# app.include_router(export.router)\n\n\n# 루트 엔드포인트\n@app.get(\"/\")\nasync def root() -> Dict[str, Any]:\n    \"\"\"\n    루트 엔드포인트\n    \n    Returns:\n        API 정보 및 사용 가능한 엔드포인트\n    \"\"\"\n    return {\n        \"message\": \"Longtext Analysis API\",\n        \"version\": \"0.1.0\",\n        \"docs\": \"/docs\",\n        \"redoc\": \"/redoc\",\n        \"health\": \"/health\",\n    }\n\n\nif __name__ == \"__main__\":\n    import uvicorn\n\n    uvicorn.run(\n        \"backend.main:app\",\n        host=\"0.0.0.0\",\n        port=8000,\n        reload=True,\n    )\n\n",
+      "source": {
+        "turn_index": 8,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          9
+        ]
+      },
+      "snippet_hash": "f103179fef7d87e19bc9ba482cd0cded294e91f0b52f81fa27a700bbe8d8fb4a",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-013-00-text",
+      "lang": "text",
+      "code": "마크다운 파일 업로드\n  ↓\nIngest & Normalize\n  ↓\nSession Meta 추출\n  ↓\nTurn 파싱\n  ↓\nArtifact 추출\n  ↓\nEvent 정규화\n  ↓\nTimeline 생성 + Issue Cards 생성 + 코드 스니펫 분리\n  ↓\nJSON/MD 출력\n  ↓\n다운로드\n",
+      "source": {
+        "turn_index": 13,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          14
+        ]
+      },
+      "snippet_hash": "758d6681093611f4ca7715a8b847d7221ad952ab6fd36a38cd11884f0e5b4265",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-029-00-text",
+        "SNP-cursor_export_unknown_5248-067-00-text",
+        "SNP-cursor_export_unknown_5248-083-00-text",
+        "SNP-cursor_export_unknown_5248-099-00-text",
+        "SNP-cursor_export_unknown_5248-115-00-text",
+        "SNP-cursor_export_unknown_5248-131-00-text",
+        "SNP-cursor_export_unknown_5248-147-00-text",
+        "SNP-cursor_export_unknown_5248-163-00-text",
+        "SNP-cursor_export_unknown_5248-179-00-text",
+        "SNP-cursor_export_unknown_5248-207-00-text",
+        "SNP-cursor_export_unknown_5248-223-00-text",
+        "SNP-cursor_export_unknown_5248-239-00-text",
+        "SNP-cursor_export_unknown_5248-255-00-text",
+        "SNP-cursor_export_unknown_5248-271-00-text",
+        "SNP-cursor_export_unknown_5248-287-00-text",
+        "SNP-cursor_export_unknown_5248-303-00-text",
+        "SNP-cursor_export_unknown_5248-319-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-022-00-python",
+      "lang": "python",
+      "code": "class SessionMeta(BaseModel):\n    session_id: str\n    exported_at: Optional[str]\n    cursor_version: Optional[str]\n    phase: Optional[int]\n    subphase: Optional[int]\n    source_doc: str\n",
+      "source": {
+        "turn_index": 22,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          23
+        ]
+      },
+      "snippet_hash": "73d4661d4230494d7d93efd4ca453388e0ee295a479c0e0f0001a6ccd5e2f4aa",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-038-00-python",
+        "SNP-cursor_export_unknown_5248-076-00-python",
+        "SNP-cursor_export_unknown_5248-092-00-python",
+        "SNP-cursor_export_unknown_5248-108-00-python",
+        "SNP-cursor_export_unknown_5248-124-00-python",
+        "SNP-cursor_export_unknown_5248-140-00-python",
+        "SNP-cursor_export_unknown_5248-156-00-python",
+        "SNP-cursor_export_unknown_5248-172-00-python",
+        "SNP-cursor_export_unknown_5248-188-00-python",
+        "SNP-cursor_export_unknown_5248-216-00-python",
+        "SNP-cursor_export_unknown_5248-232-00-python",
+        "SNP-cursor_export_unknown_5248-248-00-python",
+        "SNP-cursor_export_unknown_5248-264-00-python",
+        "SNP-cursor_export_unknown_5248-280-00-python",
+        "SNP-cursor_export_unknown_5248-296-00-python",
+        "SNP-cursor_export_unknown_5248-312-00-python",
+        "SNP-cursor_export_unknown_5248-328-00-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-022-01-python",
+      "lang": "python",
+      "code": "class TimelineEvent(BaseModel):\n    seq: int\n    session_id: str\n    phase: Optional[int]\n    subphase: Optional[int]\n    type: EventType  # status_review|plan|artifact|debug|completion|next_step|turn\n    summary: str\n    artifacts: List[ArtifactRef]\n    snippet_refs: List[str]  # snippet_id\n",
+      "source": {
+        "turn_index": 22,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          23
+        ]
+      },
+      "snippet_hash": "d59e38bf063e3ab9000a2f611b625a399cf3156a64e8a508d8781bb0abf2e2d5",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-038-01-python",
+        "SNP-cursor_export_unknown_5248-076-01-python",
+        "SNP-cursor_export_unknown_5248-092-01-python",
+        "SNP-cursor_export_unknown_5248-108-01-python",
+        "SNP-cursor_export_unknown_5248-124-01-python",
+        "SNP-cursor_export_unknown_5248-140-01-python",
+        "SNP-cursor_export_unknown_5248-156-01-python",
+        "SNP-cursor_export_unknown_5248-172-01-python",
+        "SNP-cursor_export_unknown_5248-188-01-python",
+        "SNP-cursor_export_unknown_5248-216-01-python",
+        "SNP-cursor_export_unknown_5248-232-01-python",
+        "SNP-cursor_export_unknown_5248-248-01-python",
+        "SNP-cursor_export_unknown_5248-264-01-python",
+        "SNP-cursor_export_unknown_5248-280-01-python",
+        "SNP-cursor_export_unknown_5248-296-01-python",
+        "SNP-cursor_export_unknown_5248-312-01-python",
+        "SNP-cursor_export_unknown_5248-328-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-022-02-python",
+      "lang": "python",
+      "code": "class IssueCard(BaseModel):\n    issue_id: str\n    scope: IssueScope\n    title: str\n    symptoms: List[str]\n    root_cause: Optional[RootCause]\n    evidence: List[Evidence]\n    fix: List[Fix]\n    validation: List[str]\n    related_artifacts: List[ArtifactRef]\n    snippet_refs: List[str]\n",
+      "source": {
+        "turn_index": 22,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          23
+        ]
+      },
+      "snippet_hash": "ace47983ec5d34a35c06ba425212df196310ee8932d21d5338d0fbba3b339e08",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-038-02-python",
+        "SNP-cursor_export_unknown_5248-076-02-python",
+        "SNP-cursor_export_unknown_5248-092-02-python",
+        "SNP-cursor_export_unknown_5248-108-02-python",
+        "SNP-cursor_export_unknown_5248-124-02-python",
+        "SNP-cursor_export_unknown_5248-140-02-python",
+        "SNP-cursor_export_unknown_5248-156-02-python",
+        "SNP-cursor_export_unknown_5248-172-02-python",
+        "SNP-cursor_export_unknown_5248-188-02-python",
+        "SNP-cursor_export_unknown_5248-216-02-python",
+        "SNP-cursor_export_unknown_5248-232-02-python",
+        "SNP-cursor_export_unknown_5248-248-02-python",
+        "SNP-cursor_export_unknown_5248-264-02-python",
+        "SNP-cursor_export_unknown_5248-280-02-python",
+        "SNP-cursor_export_unknown_5248-296-02-python",
+        "SNP-cursor_export_unknown_5248-312-02-python",
+        "SNP-cursor_export_unknown_5248-328-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-022-03-python",
+      "lang": "python",
+      "code": "class Snippet(BaseModel):\n    snippet_id: str\n    lang: str\n    code: str\n    source: SnippetSource\n    links: SnippetLinks\n",
+      "source": {
+        "turn_index": 22,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          23
+        ]
+      },
+      "snippet_hash": "5c9b0818c07e045f81b741fd8ca3cb5e1cbc9d72880b10308c51220adc1befde",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-038-03-python",
+        "SNP-cursor_export_unknown_5248-076-03-python",
+        "SNP-cursor_export_unknown_5248-092-03-python",
+        "SNP-cursor_export_unknown_5248-108-03-python",
+        "SNP-cursor_export_unknown_5248-124-03-python",
+        "SNP-cursor_export_unknown_5248-140-03-python",
+        "SNP-cursor_export_unknown_5248-156-03-python",
+        "SNP-cursor_export_unknown_5248-172-03-python",
+        "SNP-cursor_export_unknown_5248-188-03-python",
+        "SNP-cursor_export_unknown_5248-216-03-python",
+        "SNP-cursor_export_unknown_5248-232-03-python",
+        "SNP-cursor_export_unknown_5248-248-03-python",
+        "SNP-cursor_export_unknown_5248-264-03-python",
+        "SNP-cursor_export_unknown_5248-280-03-python",
+        "SNP-cursor_export_unknown_5248-296-03-python",
+        "SNP-cursor_export_unknown_5248-312-03-python",
+        "SNP-cursor_export_unknown_5248-328-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-023-00-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/\n│   ├── api/\n│   │   └── routes/\n│   │       ├── parse.py\n│   │       ├── timeline.py\n│   │       ├── issues.py\n│   │       ├── snippets.py\n│   │       └── export.py\n│   ├── parser/\n│   │   ├── normalize.py\n│   │   ├── meta.py\n│   │   ├── turns.py\n│   │   ├── snippets.py\n│   │   └── artifacts.py\n│   ├── builders/\n│   │   ├── event_normalizer.py\n│   │   ├── timeline_builder.py\n│   │   ├── issues_builder.py\n│   │   └── snippet_manager.py\n│   ├── render/\n│   │   └── render_md.py\n│   ├── core/\n│   │   ├── models.py\n│   │   ├── constants.py\n│   │   ├── llm_service.py\n│   │   └── snippet_storage.py\n│   ├── main.py\n│   └── pyproject.toml\n├── frontend/\n│   ├── app/\n│   │   └── page.tsx\n│   ├── components/\n│   │   ├── FileUpload.tsx\n│   │   ├── SessionMetaPreview.tsx\n│   │   ├── TimelinePreview.tsx\n│   │   ├── IssuesPreview.tsx\n│   │   └── SnippetsPreview.tsx\n│   ├── lib/\n│   │   ├── api.ts\n│   │   └── constants.ts\n│   ├── types/\n│   │   └── api.ts\n│   └── package.json\n├── tests/\n│   ├── fixtures/\n│   ├── golden/\n│   ├── test_parser.py\n│   ├── test_event_normalizer.py\n│   ├── test_timeline_builder.py\n│   ├── test_issues_builder.py\n│   ├── test_api.py\n│   └── test_integration.py\n├── docs/\n│   ├── PRD_longtext.md\n│   ├── instruction_detail.md\n│   └── instruction_moredetail.md\n├── .cursor/\n│   └── rules/\n├── AGENTS.md\n├── api-contract-sync.mdc\n└── README.md\n",
+      "source": {
+        "turn_index": 23,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          24
+        ]
+      },
+      "snippet_hash": "2f88b0c9d66685f3d771ff3674cd59e418825b79610c205372ce6acfa5b82ad7",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-039-00-text",
+        "SNP-cursor_export_unknown_5248-077-00-text",
+        "SNP-cursor_export_unknown_5248-093-00-text",
+        "SNP-cursor_export_unknown_5248-109-00-text",
+        "SNP-cursor_export_unknown_5248-125-00-text",
+        "SNP-cursor_export_unknown_5248-141-00-text",
+        "SNP-cursor_export_unknown_5248-157-00-text",
+        "SNP-cursor_export_unknown_5248-173-00-text",
+        "SNP-cursor_export_unknown_5248-189-00-text",
+        "SNP-cursor_export_unknown_5248-217-00-text",
+        "SNP-cursor_export_unknown_5248-233-00-text",
+        "SNP-cursor_export_unknown_5248-249-00-text",
+        "SNP-cursor_export_unknown_5248-265-00-text",
+        "SNP-cursor_export_unknown_5248-281-00-text",
+        "SNP-cursor_export_unknown_5248-297-00-text",
+        "SNP-cursor_export_unknown_5248-313-00-text",
+        "SNP-cursor_export_unknown_5248-329-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-024-00-markdown",
+      "lang": "markdown",
+      "code": "# Longtext Analysis\n\n## 📋 프로젝트 개요\n- 목적 및 배경\n- 주요 기능\n\n## 🏗️ 프로젝트 구조\n",
+      "source": {
+        "turn_index": 24,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          25
+        ]
+      },
+      "snippet_hash": "c0539a8a3d1406525414c1a701c4f2209ce7326cf359ce7527d79784a0f6d1d1",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-040-00-markdown",
+        "SNP-cursor_export_unknown_5248-078-00-markdown",
+        "SNP-cursor_export_unknown_5248-094-00-markdown",
+        "SNP-cursor_export_unknown_5248-110-00-markdown",
+        "SNP-cursor_export_unknown_5248-126-00-markdown",
+        "SNP-cursor_export_unknown_5248-142-00-markdown",
+        "SNP-cursor_export_unknown_5248-158-00-markdown",
+        "SNP-cursor_export_unknown_5248-174-00-markdown",
+        "SNP-cursor_export_unknown_5248-190-00-markdown",
+        "SNP-cursor_export_unknown_5248-218-00-markdown",
+        "SNP-cursor_export_unknown_5248-234-00-markdown",
+        "SNP-cursor_export_unknown_5248-250-00-markdown",
+        "SNP-cursor_export_unknown_5248-266-00-markdown",
+        "SNP-cursor_export_unknown_5248-282-00-markdown",
+        "SNP-cursor_export_unknown_5248-298-00-markdown",
+        "SNP-cursor_export_unknown_5248-314-00-markdown",
+        "SNP-cursor_export_unknown_5248-330-00-markdown"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-024-01-text",
+      "lang": "text",
+      "code": "\n## 🚀 시작하기\n### 필수 요구사항\n### 설치 방법\n### 환경 변수 설정\n### 실행 방법\n\n## 📖 사용 가이드\n### 입력 파일 형식\n### 출력 형식\n### API 사용법\n\n## 🧪 테스트\n### 테스트 실행 방법\n### E2E 테스트\n\n## 📚 참고 문서\n- PRD\n- TODOs.md\n- AGENTS.md\n\n## 🔧 개발 가이드\n### 코드 스타일\n### 커밋 규칙\n### Phase별 진행 상황\n\n## 📝 변경 이력\n- Phase별 완료 사항\n- 최근 업데이트\n",
+      "source": {
+        "turn_index": 24,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          25
+        ]
+      },
+      "snippet_hash": "69c1047a9e94f95af9f4e50240ed3da84bb5e4b77c429a46bd01a6420728ad59",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-040-01-text",
+        "SNP-cursor_export_unknown_5248-078-01-text",
+        "SNP-cursor_export_unknown_5248-094-01-text",
+        "SNP-cursor_export_unknown_5248-110-01-text",
+        "SNP-cursor_export_unknown_5248-126-01-text",
+        "SNP-cursor_export_unknown_5248-142-01-text",
+        "SNP-cursor_export_unknown_5248-158-01-text",
+        "SNP-cursor_export_unknown_5248-174-01-text",
+        "SNP-cursor_export_unknown_5248-190-01-text",
+        "SNP-cursor_export_unknown_5248-218-01-text",
+        "SNP-cursor_export_unknown_5248-234-01-text",
+        "SNP-cursor_export_unknown_5248-250-01-text",
+        "SNP-cursor_export_unknown_5248-266-01-text",
+        "SNP-cursor_export_unknown_5248-282-01-text",
+        "SNP-cursor_export_unknown_5248-298-01-text",
+        "SNP-cursor_export_unknown_5248-314-01-text",
+        "SNP-cursor_export_unknown_5248-330-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-028-00-text",
+      "lang": "text",
+      "code": "\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-058-08-text",
+        "SNP-cursor_export_unknown_5248-060-08-text",
+        "SNP-cursor_export_unknown_5248-062-08-text",
+        "SNP-cursor_export_unknown_5248-064-08-text",
+        "SNP-cursor_export_unknown_5248-066-10-text",
+        "SNP-cursor_export_unknown_5248-082-00-text",
+        "SNP-cursor_export_unknown_5248-082-01-text",
+        "SNP-cursor_export_unknown_5248-098-00-text",
+        "SNP-cursor_export_unknown_5248-098-01-text",
+        "SNP-cursor_export_unknown_5248-114-00-text",
+        "SNP-cursor_export_unknown_5248-146-00-text",
+        "SNP-cursor_export_unknown_5248-146-01-text",
+        "SNP-cursor_export_unknown_5248-146-02-text",
+        "SNP-cursor_export_unknown_5248-162-00-text",
+        "SNP-cursor_export_unknown_5248-178-00-text",
+        "SNP-cursor_export_unknown_5248-202-02-text",
+        "SNP-cursor_export_unknown_5248-222-00-text",
+        "SNP-cursor_export_unknown_5248-238-00-text",
+        "SNP-cursor_export_unknown_5248-254-00-text",
+        "SNP-cursor_export_unknown_5248-270-00-text",
+        "SNP-cursor_export_unknown_5248-286-00-text",
+        "SNP-cursor_export_unknown_5248-302-00-text",
+        "SNP-cursor_export_unknown_5248-302-07-text",
+        "SNP-cursor_export_unknown_5248-302-15-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-00-python",
+      "lang": "python",
+      "code": "\"\"\"\n데이터 모델 정의\n\n이 모듈은 파서, 빌더, API에서 사용하는 Pydantic 모델을 정의합니다.\n\"\"\"\n\nfrom pydantic import BaseModel\nfrom typing import Optional, List\n\n\nclass SessionMeta(BaseModel):\n  \"\"\"세션 메타데이터\"\"\"\n\n  session_id: str\n  exported_at: Optional[str] = None\n  cursor_version: Optional[str] = None\n  phase: Optional[int] = None\n  subphase: Optional[int] = None\n  source_doc: str\n\n\nclass CodeBlock(BaseModel):\n  \"\"\"코드 블록\"\"\"\n\n  block_index: int\n  lang: str  # 언어 (빈 문자열 가능)\n  code: str  # 코드 내용\n\n\nclass Turn(BaseModel):\n  \"\"\"Turn 블록 (User/Cursor 대화 단위)\"\"\"\n\n  turn_index: int\n  speaker: str  # \"User\", \"Cursor\", \"Unknown\"\n  body: str  # 본문 텍스트 (코드 블록 제외)\n  code_blocks: List[CodeBlock] = []  # 코드 블록 리스트\n  path_candidates: List[str] = []  # 파일/경로 후보 리스트\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "bc88ab8345303ad9059abf8eb8c90f3e0103e2a1cc633d2112d8de3a8b44721c",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-01-python",
+      "lang": "python",
+      "code": "\"\"\"\n텍스트 정규화 모듈\n\n마크다운 파일의 텍스트를 정규화하여 파싱하기 쉽게 만듭니다.\n\"\"\"\n\nimport re\n\n\ndef normalize_text(text: str, preserve_code_blocks: bool = True) -> str:\n  \"\"\"\n  텍스트 정규화\n\n  Args:\n  text: 원본 텍스트\n  preserve_code_blocks: 코드 블록 내부 보존 여부\n\n  Returns:\n  정규화된 텍스트\n  \"\"\"\n  # 1. 줄바꿈 통일\n  text = text.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\")\n\n  # 2. BOM 제거\n  text = text.lstrip(\"\\ufeff\")\n\n  if preserve_code_blocks:\n  # 코드 블록 분리\n  code_blocks = []\n  pattern = r\"",
+      "source": {
+        "turn_index": 48,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "b40367f95b0b3f21584e6ab3ccbb7618f677a2fdb9bb6f3d8515b751abd645b7",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-02-text",
+      "lang": "text",
+      "code": "\n세션 메타 추출 모듈 구현 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "3c637eae3d0cecc353c03011bddc9703b7a7190333b6c4dcd08df0647a118d02",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-03-text",
+      "lang": "text",
+      "code": "\n코드 스니펫 추출 모듈 구현 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "c1c5ce1460cb835af5fbae700f73d2d76f005287d39e4029b76fb5b6c4e9d424",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-04-text",
+      "lang": "text",
+      "code": "\nArtifact 추출 모듈 구현 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "1825ecb67553a4962047d3ffff0b4682ea5914c78ca9cc501705c15b15b12c0b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-05-text",
+      "lang": "text",
+      "code": "\nTurn 블록 파싱 모듈 구현 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "ebc0f3154a6d7ca9eb1d69f8c27cdbb33b45e877c420b7cefa559296a0a4c519",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-06-text",
+      "lang": "text",
+      "code": "\n파서 통합 모듈 구현 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "ff2defc413158756a543f51ed62541c14b69aabdf9e60c4471c59555c66686e9",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-048-07-text",
+      "lang": "text",
+      "code": "\n파서 구현 완료. 기본 동작 확인을 위한 단위 테스트 작성 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "0c6ba98ccb5236fa797063b3256542bef9881f8ef1544b4d10659d7c64e4cf75",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-050-00-python",
+      "lang": "python",
+      "code": "\"\"\"\n파서 E2E 테스트\n\n실제 입력 데이터로 전체 파서 파이프라인을 테스트합니다.\n\"\"\"\n\nimport pytest\nimport json\nfrom pathlib import Path\nfrom backend.parser import parse_markdown\nfrom backend.parser.turns import check_parse_health\n\n\n# 실제 입력 데이터 경로\nINPUT_FILE = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\nREPORT_DIR = Path(__file__).parent / \"reports\"\nREPORT_FILE = REPORT_DIR / \"parser_e2e_report.json\"\n\n\ndef test_parser_e2e():\n  \"\"\"\n  실제 입력 데이터로 전체 파서 파이프라인 테스트\n  \"\"\"\n  # 1. 실제 입력 데이터 로드\n  if not INPUT_FILE.exists():\n  pytest.skip(f\"Input file not found: {INPUT_FILE}\")\n\n  text = INPUT_FILE.read_text(encoding=\"utf-8\")\n\n  # 2. 파싱 실행\n  result = parse_markdown(text, source_doc=str(INPUT_FILE))\n\n  # 3. 정합성 검증\n  assert result[\"session_meta\"] is not None, \"session_meta가 없음\"\n  assert result[\"session_meta\"].session_id is not None, \"session_id가 없음\"\n  assert len(result[\"turns\"]) > 0, \"turns가 비어있음\"\n\n  # Session Meta 추출 정확성\n  session_meta = result[\"session_meta\"]\n  assert session_meta.source_doc == str(INPUT_FILE), \"source_doc가 올바르지 않음\"\n  # phase, subphase, exported_at, cursor_version은 있을 수도 없을 수도 있음\n\n  # Turn 블록 분할 정확성\n  user_turns = [t for t in result[\"turns\"] if t.speaker == \"User\"]\n  cursor_turns = [t for t in result[\"turns\"] if t.speaker == \"Cursor\"]\n  unknown_turns = [t for t in result[\"turns\"] if t.speaker == \"Unknown\"]\n\n  assert len(user_turns) > 0, \"User turns가 없음\"\n  assert len(cursor_turns) > 0, \"Cursor turns가 없음\"\n\n  # 코드 스니펫 추출 정확성\n  all_code_blocks = result[\"code_blocks\"]\n  # 코드 블록이 있을 수도 없을 수도 있음\n\n  # Artifact 추출 정확성\n  all_artifacts = result[\"artifacts\"]\n  # Artifact가 있을 수도 없을 수도 있음\n\n  # 4. 타당성 검증\n  # 파싱 실패율 검증\n  health = check_parse_health(result[\"turns\"])\n  unknown_ratio = health[\"unknown_ratio\"]\n\n  assert unknown_ratio < 0.2, f\"파싱 실패율이 너무 높음: {unknown_ratio:.1%}\"\n\n  # 5. 결과 분석 및 자동 보고\n  report = {\n  \"test_name\": \"parser_e2e\",\n  \"input_file\": str(INPUT_FILE),\n  \"results\": {\n  \"total_turns\": len(result[\"turns\"]),\n  \"user_turns\": len(user_turns),\n  \"cursor_turns\": len(cursor_turns),\n  \"unknown_turns\": len(unknown_turns),\n  \"unknown_ratio\": unknown_ratio,\n  \"code_blocks\": len(all_code_blocks),\n  \"artifacts\": len(all_artifacts),\n  \"session_meta\": {\n  \"session_id\": session_meta.session_id,\n  \"exported_at\": session_meta.exported_at,\n  \"cursor_version\": session_meta.cursor_version,\n  \"phase\": session_meta.phase,\n  \"subphase\": session_meta.subphase,\n  },\n  },\n  \"warnings\": health.get(\"warnings\", []),\n  \"errors\": [],\n  \"status\": \"PASS\" if unknown_ratio < 0.2 else \"WARNING\",\n  }\n\n  # 리포트 출력\n  print(\"\\n\" + \"=\" * 50)\n  print(\"Parser E2E Test Report\")\n  print(\"=\" * 50)\n  print(json.dumps(report, indent=2, ensure_ascii=False))\n  print(\"=\" * 50)\n\n  # 리포트 파일 저장\n  REPORT_DIR.mkdir(exist_ok=True)\n  REPORT_FILE.write_text(\n  json.dumps(report, indent=2, ensure_ascii=False),\n  encoding=\"utf-8\",\n  )\n\n  # 최종 검증\n  assert unknown_ratio < 0.2, f\"Unknown speaker 비율이 너무 높음: {unknown_ratio:.1%}\"\n\n",
+      "source": {
+        "turn_index": 50,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          51
+        ]
+      },
+      "snippet_hash": "bcc2717bea05447cee6351a4d47f837bc112ff88f1894949385a46b43f9f132d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-052-00-powershell",
+      "lang": "powershell",
+      "code": "poetry run pytest tests/test_parser_e2e.py -v -s\n",
+      "source": {
+        "turn_index": 52,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          53
+        ]
+      },
+      "snippet_hash": "f8abd57274d9ba527cd6d4b187142c9acf7d451b421775cf71a3977653c62049",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-052-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-054-00-python",
+      "lang": "python",
+      "code": "# conftest_e2e.py에 추가\nimport logging\nfrom pathlib import Path\nfrom datetime import datetime\n\n@pytest.fixture(autouse=True)\ndef setup_test_logging(request):\n  \"\"\"모든 E2E 테스트에 자동으로 로깅 설정\"\"\"\n  log_dir = Path(__file__).parent / \"logs\"\n  log_dir.mkdir(exist_ok=True)\n\n  timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n  test_name = request.node.name\n  log_file = log_dir / f\"{test_name}_{timestamp}.log\"\n\n  logging.basicConfig(\n  level=logging.DEBUG,\n  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',\n  handlers=[\n  logging.FileHandler(log_file, encoding='utf-8'),\n  logging.StreamHandler()\n  ]\n  )\n\n  yield\n\n  # 테스트 종료 후 로그 파일 경로 출력\n  print(f\"\\n[LOG] Test log saved to: {log_file}\")\n",
+      "source": {
+        "turn_index": 54,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          55
+        ]
+      },
+      "snippet_hash": "883757a6bba7d686a174ea3d02901164d951fc282187ef0fddd457c764959e9e",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-054-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-054-01-python",
+      "lang": "python",
+      "code": "# test_parser_e2e.py에 추가\nfrom datetime import datetime\n\ndef test_parser_e2e():\n  # ... 테스트 실행 ...\n\n  # 상세 결과 저장\n  results_dir = Path(__file__).parent / \"results\"\n  results_dir.mkdir(exist_ok=True)\n\n  timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n  results_file = results_dir / f\"parser_e2e_{timestamp}.json\"\n\n  # Pydantic 모델을 dict로 변환하여 저장\n  detailed_results = {\n  \"session_meta\": result[\"session_meta\"].dict(),\n  \"turns\": [turn.dict() for turn in result[\"turns\"]],\n  \"code_blocks\": [block.dict() for block in result[\"code_blocks\"]],\n  \"artifacts\": result[\"artifacts\"],\n  \"test_metadata\": {\n  \"timestamp\": timestamp,\n  \"input_file\": str(INPUT_FILE),\n  }\n  }\n\n  results_file.write_text(\n  json.dumps(detailed_results, indent=2, ensure_ascii=False),\n  encoding=\"utf-8\"\n  )\n\n  print(f\"\\n[RESULTS] Detailed results saved to: {results_file}\")\n",
+      "source": {
+        "turn_index": 54,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          55
+        ]
+      },
+      "snippet_hash": "21871d29463a440eb05cad89f11d5421f6e6d52bd8e3b6572fe81b90943f45bd",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-054-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-00-text",
+      "lang": "text",
+      "code": "tests/\n├── fixtures/\n│   └── cursor_phase_6_3.md    # 실제 입력 데이터\n├── golden/\n│   ├── parser_expected.json\n│   ├── timeline_expected.json\n│   └── issues_expected.json\n├── conftest_e2e.py             # E2E 테스트 fixture\n├── test_parser_e2e.py\n├── test_event_normalizer_e2e.py\n├── test_timeline_issues_e2e.py\n├── test_snippet_e2e.py\n└── test_api_e2e.py\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "83bea5519419be2c4445643431ced1b881d0d0a60ef33ac36c02017b95297167",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-01-python",
+      "lang": "python",
+      "code": "# tests/conftest_e2e.py\nimport pytest\nimport subprocess\nimport time\nimport httpx\nfrom pathlib import Path\n\n@pytest.fixture(scope=\"session\")\ndef test_server():\n    \"\"\"\n    실제 uvicorn 서버 실행 fixture\n    \"\"\"\n    # 서버 시작\n    process = subprocess.Popen(\n        [\"poetry\", \"run\", \"uvicorn\", \"backend.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"],\n        cwd=Path(__file__).parent.parent,\n        stdout=subprocess.PIPE,\n        stderr=subprocess.PIPE\n    )\n    \n    # 서버 준비 대기\n    max_retries = 30\n    for _ in range(max_retries):\n        try:\n            response = httpx.get(\"http://localhost:8000/health\", timeout=1.0)\n            if response.status_code == 200:\n                break\n        except:\n            time.sleep(0.5)\n    else:\n        process.terminate()\n        raise RuntimeError(\"Server failed to start\")\n    \n    yield process\n    \n    # 서버 종료\n    process.terminate()\n    process.wait()\n\n@pytest.fixture\ndef client(test_server):\n    \"\"\"\n    httpx.Client fixture (실제 HTTP 요청)\n    \"\"\"\n    return httpx.Client(base_url=\"http://localhost:8000\", timeout=30.0)\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "5eb248979d97ea44e8b75b33c11cdf4a0a10fd1d1e6fe974b9ec4801d22ce9ea",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-02-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\nimport pytest\nfrom pathlib import Path\nfrom backend.parser import parse_markdown\n\ndef test_parser_e2e():\n    \"\"\"\n    실제 입력 데이터로 전체 파서 파이프라인 테스트\n    \"\"\"\n    # 1. 실제 입력 데이터 로드\n    input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n    text = input_file.read_text(encoding='utf-8')\n    \n    # 2. 파싱 실행\n    result = parse_markdown(text, source_doc=str(input_file))\n    \n    # 3. 정합성 검증\n    assert result[\"session_meta\"] is not None\n    assert result[\"session_meta\"].session_id is not None\n    assert len(result[\"turns\"]) > 0\n    \n    # Session Meta 추출 정확성\n    assert result[\"session_meta\"].phase is not None or result[\"session_meta\"].phase is None\n    # (phase가 없을 수도 있으므로 None도 허용)\n    \n    # Turn 블록 분할 정확성\n    user_turns = [t for t in result[\"turns\"] if t.speaker == \"User\"]\n    cursor_turns = [t for t in result[\"turns\"] if t.speaker == \"Cursor\"]\n    unknown_turns = [t for t in result[\"turns\"] if t.speaker == \"Unknown\"]\n    \n    assert len(user_turns) > 0, \"User turns should exist\"\n    assert len(cursor_turns) > 0, \"Cursor turns should exist\"\n    \n    # Unknown 비율 검증\n    unknown_ratio = len(unknown_turns) / len(result[\"turns\"])\n    assert unknown_ratio < 0.2, f\"Unknown speaker ratio too high: {unknown_ratio:.1%}\"\n    \n    # 코드 스니펫 추출 정확성\n    all_code_blocks = []\n    for turn in result[\"turns\"]:\n        all_code_blocks.extend(turn.code_blocks)\n    \n    assert len(all_code_blocks) > 0, \"Code blocks should be extracted\"\n    \n    # 4. 타당성 검증\n    # 파싱 실패율 검증\n    assert unknown_ratio < 0.2, \"Parse failure rate too high\"\n    \n    # 5. 결과 분석 및 피드백\n    print(f\"\\n[Parser E2E Test Results]\")\n    print(f\"Total turns: {len(result['turns'])}\")\n    print(f\"User turns: {len(user_turns)}\")\n    print(f\"Cursor turns: {len(cursor_turns)}\")\n    print(f\"Unknown turns: {len(unknown_turns)} ({unknown_ratio:.1%})\")\n    print(f\"Code blocks: {len(all_code_blocks)}\")\n    print(f\"Artifacts: {len(result.get('artifacts', []))}\")\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "ccbf0f3daf3633476ee3387329c19952d6d48dd1ddfbdb9aa0bb0238e088e4e8",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-02-python",
+        "SNP-cursor_export_unknown_5248-062-02-python",
+        "SNP-cursor_export_unknown_5248-064-02-python",
+        "SNP-cursor_export_unknown_5248-066-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-03-python",
+      "lang": "python",
+      "code": "# tests/test_api_e2e.py\nimport pytest\nfrom pathlib import Path\nimport httpx\n\ndef test_parse_endpoint_e2e(client: httpx.Client):\n    \"\"\"\n    POST /api/parse 엔드포인트 E2E 테스트\n    \"\"\"\n    # 실제 입력 파일\n    input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n    \n    with open(input_file, \"rb\") as f:\n        files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n        response = client.post(\"/api/parse\", files=files)\n    \n    assert response.status_code == 200\n    \n    data = response.json()\n    \n    # 응답 스키마 검증\n    assert \"session_meta\" in data\n    assert \"turns\" in data\n    assert \"events\" in data\n    \n    # 파싱 결과 정확성\n    assert data[\"session_meta\"][\"session_id\"] is not None\n    assert len(data[\"turns\"]) > 0\n\ndef test_timeline_endpoint_e2e(client: httpx.Client):\n    \"\"\"\n    POST /api/timeline 엔드포인트 E2E 테스트\n    \"\"\"\n    # 1. 먼저 파싱\n    input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n    \n    with open(input_file, \"rb\") as f:\n        files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n        parse_response = client.post(\"/api/parse\", files=files)\n    \n    parse_data = parse_response.json()\n    \n    # 2. Timeline 생성\n    timeline_response = client.post(\n        \"/api/timeline\",\n        json={\n            \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n            \"events\": parse_data[\"events\"],\n            \"session_meta\": parse_data[\"session_meta\"]\n        }\n    )\n    \n    assert timeline_response.status_code == 200\n    \n    timeline_data = timeline_response.json()\n    \n    # Timeline JSON 구조 검증\n    assert \"session_meta\" in timeline_data\n    assert \"timeline\" in timeline_data\n    assert len(timeline_data[\"timeline\"]) > 0\n    \n    # Artifact/Snippet 연결 확인\n    for event in timeline_data[\"timeline\"]:\n        assert \"seq\" in event\n        assert \"type\" in event\n        assert \"summary\" in event\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "3b6ea1833c4b36467c9ff6152138f154c53ed63d9dec80f9d08966ced4fc35d1",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-03-python",
+        "SNP-cursor_export_unknown_5248-062-03-python",
+        "SNP-cursor_export_unknown_5248-064-03-python",
+        "SNP-cursor_export_unknown_5248-066-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-04-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\ndef test_parser_e2e_with_report():\n    \"\"\"\n    테스트 실행 후 상세 보고 포함\n    \"\"\"\n    # ... 테스트 실행 ...\n    \n    # 결과 분석\n    report = {\n        \"test_name\": \"parser_e2e\",\n        \"input_file\": str(input_file),\n        \"results\": {\n            \"total_turns\": len(result[\"turns\"]),\n            \"user_turns\": len(user_turns),\n            \"cursor_turns\": len(cursor_turns),\n            \"unknown_ratio\": unknown_ratio,\n            \"code_blocks\": len(all_code_blocks),\n            \"artifacts\": len(result.get(\"artifacts\", []))\n        },\n        \"warnings\": [],\n        \"errors\": []\n    }\n    \n    if unknown_ratio > 0.2:\n        report[\"warnings\"].append(\n            f\"High Unknown speaker ratio: {unknown_ratio:.1%}\"\n        )\n    \n    # 리포트 출력\n    import json\n    print(\"\\n\" + \"=\"*50)\n    print(\"E2E Test Report\")\n    print(\"=\"*50)\n    print(json.dumps(report, indent=2, ensure_ascii=False))\n    print(\"=\"*50)\n    \n    # 리포트 파일 저장\n    report_file = Path(__file__).parent / \"reports\" / \"parser_e2e_report.json\"\n    report_file.parent.mkdir(exist_ok=True)\n    report_file.write_text(\n        json.dumps(report, indent=2, ensure_ascii=False),\n        encoding='utf-8'\n    )\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "6c1f4e6bb0846f7f10b4575db5effe0d2eab1d175a138083522a53d239477bf9",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-04-python",
+        "SNP-cursor_export_unknown_5248-062-04-python",
+        "SNP-cursor_export_unknown_5248-064-04-python",
+        "SNP-cursor_export_unknown_5248-066-04-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-05-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\ndef test_parser_golden_comparison():\n    \"\"\"\n    Golden 파일과 비교하여 회귀 테스트\n    \"\"\"\n    # 실제 파싱\n    result = parse_markdown(text, source_doc)\n    \n    # Golden 파일 로드\n    golden_file = Path(__file__).parent / \"golden\" / \"parser_expected.json\"\n    if golden_file.exists():\n        expected = json.loads(golden_file.read_text(encoding='utf-8'))\n        \n        # 비교 (주요 필드만)\n        assert result[\"session_meta\"].session_id == expected[\"session_meta\"][\"session_id\"]\n        assert len(result[\"turns\"]) == len(expected[\"turns\"])\n    else:\n        # Golden 파일 생성 (최초 1회)\n        golden_file.parent.mkdir(exist_ok=True)\n        golden_file.write_text(\n            json.dumps({\n                \"session_meta\": result[\"session_meta\"].dict(),\n                \"turns_count\": len(result[\"turns\"])\n            }, indent=2, ensure_ascii=False),\n            encoding='utf-8'\n        )\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "4f1fbfa84e98ee61511fb84a399f07af73defae0e4f011ee20af0bf4c3987005",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-05-python",
+        "SNP-cursor_export_unknown_5248-062-05-python",
+        "SNP-cursor_export_unknown_5248-064-05-python",
+        "SNP-cursor_export_unknown_5248-066-05-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-06-python",
+      "lang": "python",
+      "code": "# 테스트 실행 시 로그 파일로 저장\nimport logging\nfrom pathlib import Path\n\ndef setup_test_logging():\n    \"\"\"\n    테스트용 로깅 설정\n    \"\"\"\n    log_dir = Path(__file__).parent / \"logs\"\n    log_dir.mkdir(exist_ok=True)\n    \n    log_file = log_dir / f\"test_{time.strftime('%Y%m%d_%H%M%S')}.log\"\n    \n    logging.basicConfig(\n        level=logging.DEBUG,\n        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',\n        handlers=[\n            logging.FileHandler(log_file, encoding='utf-8'),\n            logging.StreamHandler()\n        ]\n    )\n    \n    return logging.getLogger(__name__)\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "7a2036dd4454e6897f0ac04042e49952510954e8452a38cc6e6d234a115177e6",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-06-python",
+        "SNP-cursor_export_unknown_5248-062-06-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-058-07-python",
+      "lang": "python",
+      "code": "# tests/test_api_e2e.py\nimport pytest\nfrom pathlib import Path\nimport httpx\nimport json\n\n@pytest.mark.e2e\ndef test_full_pipeline_e2e(client: httpx.Client):\n    \"\"\"\n    전체 파이프라인 E2E 테스트\n    파일 업로드 → 파싱 → Timeline 생성 → Issues 생성 → Export\n    \"\"\"\n    input_file = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\n    \n    # 1. 파일 업로드 및 파싱\n    with open(input_file, \"rb\") as f:\n        files = {\"file\": (\"cursor_phase_6_3.md\", f, \"text/markdown\")}\n        parse_response = client.post(\"/api/parse\", files=files)\n    \n    assert parse_response.status_code == 200\n    parse_data = parse_response.json()\n    \n    # 2. Timeline 생성\n    timeline_response = client.post(\n        \"/api/timeline\",\n        json={\n            \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n            \"events\": parse_data[\"events\"],\n            \"session_meta\": parse_data[\"session_meta\"]\n        }\n    )\n    assert timeline_response.status_code == 200\n    timeline_data = timeline_response.json()\n    \n    # 3. Issues 생성\n    issues_response = client.post(\n        \"/api/issues\",\n        json={\n            \"session_id\": parse_data[\"session_meta\"][\"session_id\"],\n            \"events\": parse_data[\"events\"],\n            \"turns\": parse_data[\"turns\"]\n        }\n    )\n    assert issues_response.status_code == 200\n    issues_data = issues_response.json()\n    \n    # 4. Export 테스트\n    export_response = client.post(\n        \"/api/export/all\",\n        json={\n            \"session_id\": parse_data[\"session_meta\"][\"session_id\"]\n        }\n    )\n    assert export_response.status_code == 200\n    \n    # 5. 결과 검증\n    assert len(timeline_data[\"timeline\"]) > 0\n    assert len(issues_data[\"issues\"]) >= 0  # 이슈가 없을 수도 있음\n    \n    # 6. 리포트 생성\n    report = {\n        \"test\": \"full_pipeline_e2e\",\n        \"timeline_events\": len(timeline_data[\"timeline\"]),\n        \"issues\": len(issues_data[\"issues\"]),\n        \"status\": \"PASS\"\n    }\n    \n    print(json.dumps(report, indent=2, ensure_ascii=False))\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "1fdae692844935dd5d0d943568912c5882212f047578e58d9c9d1466828c7334",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-060-07-python",
+        "SNP-cursor_export_unknown_5248-062-07-python",
+        "SNP-cursor_export_unknown_5248-064-07-python",
+        "SNP-cursor_export_unknown_5248-066-07-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-060-00-text",
+      "lang": "text",
+      "code": "tests/\n├── fixtures/\n│   └── cursor_phase_6_3.md    # 실제 입력 데이터\n├── golden/\n│   ├── parser_expected.json\n│   ├── timeline_expected.json\n│   └── issues_expected.json\n├── logs/                        # 로그 파일 (자동 생성)\n│   ├── test_parser_e2e_20250101_120000.log\n│   └── ...\n├── results/                     # 실행 결과 (자동 생성)\n│   ├── parser_e2e_20250101_120000.json\n│   └── ...\n├── reports/                     # 리포트 파일 (자동 생성)\n│   ├── parser_e2e_report.json\n│   └── ...\n├── conftest_e2e.py             # E2E 테스트 fixture\n├── test_parser_e2e.py\n├── test_event_normalizer_e2e.py\n├── test_timeline_issues_e2e.py\n├── test_snippet_e2e.py\n└── test_api_e2e.py\n",
+      "source": {
+        "turn_index": 60,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          61
+        ]
+      },
+      "snippet_hash": "53352f03a8122cba2e7f142b3d472c4da37e1cf2065ab748ca9f8026a381063d",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-062-00-text",
+        "SNP-cursor_export_unknown_5248-064-00-text",
+        "SNP-cursor_export_unknown_5248-066-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-062-01-python",
+      "lang": "python",
+      "code": "# tests/conftest_e2e.py\nimport pytest\nimport subprocess\nimport time\nimport httpx\nimport logging\nfrom pathlib import Path\nfrom datetime import datetime\n\n# Phase 6+ 전용: 실제 서버 실행 fixture\n@pytest.fixture(scope=\"session\")\ndef test_server():\n    \"\"\"\n    실제 uvicorn 서버 실행 fixture (Phase 6+ API 테스트용)\n    \"\"\"\n    # 서버 시작\n    process = subprocess.Popen(\n        [\"poetry\", \"run\", \"uvicorn\", \"backend.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"],\n        cwd=Path(__file__).parent.parent,\n        stdout=subprocess.PIPE,\n        stderr=subprocess.PIPE\n    )\n    \n    # 서버 준비 대기\n    max_retries = 30\n    for _ in range(max_retries):\n        try:\n            response = httpx.get(\"http://localhost:8000/health\", timeout=1.0)\n            if response.status_code == 200:\n                break\n        except:\n            time.sleep(0.5)\n    else:\n        process.terminate()\n        raise RuntimeError(\"Server failed to start\")\n    \n    yield process\n    \n    # 서버 종료\n    process.terminate()\n    process.wait()\n\n@pytest.fixture\ndef client(test_server):\n    \"\"\"\n    httpx.Client fixture (실제 HTTP 요청, Phase 6+ 전용)\n    \"\"\"\n    return httpx.Client(base_url=\"http://localhost:8000\", timeout=30.0)\n\n# 모든 E2E 테스트에 자동 적용: 로그 파일 저장\n@pytest.fixture(autouse=True)\ndef setup_test_logging(request):\n    \"\"\"\n    모든 E2E 테스트에 자동으로 로깅 설정 (필수)\n    \"\"\"\n    log_dir = Path(__file__).parent / \"logs\"\n    log_dir.mkdir(exist_ok=True)\n    \n    timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n    test_name = request.node.name\n    log_file = log_dir / f\"{test_name}_{timestamp}.log\"\n    \n    # 기존 핸들러 제거 (중복 방지)\n    for handler in logging.root.handlers[:]:\n        logging.root.removeHandler(handler)\n    \n    logging.basicConfig(\n        level=logging.DEBUG,\n        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',\n        handlers=[\n            logging.FileHandler(log_file, encoding='utf-8'),\n            logging.StreamHandler()\n        ],\n        force=True\n    )\n    \n    logger = logging.getLogger(__name__)\n    logger.info(f\"Test started: {test_name}\")\n    logger.info(f\"Log file: {log_file}\")\n    \n    yield\n    \n    # 테스트 종료 후 로그 파일 경로 출력\n    logger.info(f\"Test completed: {test_name}\")\n    print(f\"\\n[LOG] Test log saved to: {log_file}\")\n",
+      "source": {
+        "turn_index": 62,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          63
+        ]
+      },
+      "snippet_hash": "51779a9870771d8cf47fd3be8a5e327cd5d4545d89b43438411e924598eba6ce",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-064-01-python",
+        "SNP-cursor_export_unknown_5248-066-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-064-06-python",
+      "lang": "python",
+      "code": "# tests/test_parser_e2e.py\nfrom datetime import datetime\nfrom pathlib import Path\nimport json\n\ndef test_parser_e2e():\n    # ... 테스트 실행 ...\n    \n    # 상세 결과 저장 (필수)\n    results_dir = Path(__file__).parent / \"results\"\n    results_dir.mkdir(exist_ok=True)\n    \n    timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n    results_file = results_dir / f\"parser_e2e_{timestamp}.json\"\n    \n    # Pydantic 모델을 dict로 변환하여 저장\n    detailed_results = {\n        \"session_meta\": result[\"session_meta\"].dict(),\n        \"turns\": [turn.dict() for turn in result[\"turns\"]],\n        \"code_blocks\": [block.dict() for block in result[\"code_blocks\"]],\n        \"artifacts\": result[\"artifacts\"],\n        \"test_metadata\": {\n            \"timestamp\": timestamp,\n            \"input_file\": str(INPUT_FILE),\n            \"test_name\": \"parser_e2e\",\n        }\n    }\n    \n    results_file.write_text(\n        json.dumps(detailed_results, indent=2, ensure_ascii=False),\n        encoding=\"utf-8\"\n    )\n    \n    print(f\"\\n[RESULTS] Detailed results saved to: {results_file}\")\n",
+      "source": {
+        "turn_index": 64,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          65
+        ]
+      },
+      "snippet_hash": "8e04a5e5b1c490ff4cc772b702031b7c9fb4c3d0084fed42dfb7741225f2b783",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-066-06-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-066-08-text",
+      "lang": "text",
+      "code": "\n`conftest_e2e.py` 생성 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 66,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          67
+        ]
+      },
+      "snippet_hash": "5ae931b7c40fb32d631ab6de59f82f9ea9814efdc5c6203d27d49974fb412f07",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-066-09-text",
+      "lang": "text",
+      "code": "\n`test_parser_e2e.py`에 상세 결과 저장 기능 추가 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 66,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          67
+        ]
+      },
+      "snippet_hash": "44885f882ba1aa5b0e98251643fa09a547b7be05bc4d29c4c448501f245a53a9",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-066-11-text",
+      "lang": "text",
+      "code": "\nTODOs.md 업데이트 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 66,
+        "block_index": 11
+      },
+      "links": {
+        "event_seq": [
+          67
+        ]
+      },
+      "snippet_hash": "b0be3fe8fcdc1c9b54ea11f3b04356c1160cd52414bc8ec2d4ce774d657f5beb",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-130-00-text",
+      "lang": "text",
+      "code": "\nPhase 3과 Phase 5의 E2E 테스트 섹션 업데이트 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 130,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          131
+        ]
+      },
+      "snippet_hash": "91c5522e57796d99e51df1b2eec2c6fd574130a8305dbd9f58ed0a58ac31e1b2",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-146-03-text",
+      "lang": "text",
+      "code": "\n파일을 다시 읽어 정확한 위치를 확인 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 146,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          147
+        ]
+      },
+      "snippet_hash": "950e25b8691b10e3f3b6703456e50698f66b799bd515b89a7195bfb20b14eee5",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-196-00-ignore",
+      "lang": "ignore",
+      "code": "# Environment variables\n.env\n.env.local\n.env*.local\n.env.production\n.env.development\n\n# Python\n__pycache__/\n*.py[cod]\n*$py.class\n*.so\n.Python\nbuild/\ndevelop-eggs/\ndist/\ndownloads/\neggs/\n.eggs/\nlib/\nlib64/\nparts/\nsdist/\nvar/\nwheels/\npip-wheel-metadata/\nshare/python-wheels/\n*.egg-info/\n.installed.cfg\n*.egg\nMANIFEST\n\n# Virtual environments\nvenv/\nenv/\nENV/\n.venv/\nenv.bak/\nvenv.bak/\n\n# Poetry\n# poetry.lock  # 프로젝트 정책에 따라 주석 해제\n\n# Testing\n.pytest_cache/\n.coverage\nhtmlcov/\n.tox/\n.nox/\ncoverage.xml\n*.cover\n*.py,cover\n.hypothesis/\ntests/reports/\ntests/logs/\ntests/results/\n\n# IDEs\n.vscode/\n.idea/\n*.swp\n*.swo\n*~\n.DS_Store\n\n# Next.js\n.next/\nout/\nbuild/\ndist/\n.vercel\n\n# Node\nnode_modules/\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n.pnp\n.pnp.js\n.yarn/cache\n.yarn/unplugged\n.yarn/build-state.yml\n.yarn/install-state.gz\n\n# TypeScript\n*.tsbuildinfo\nnext-env.d.ts\n\n# Database\n*.db\n*.sqlite\n*.sqlite3\n*.db-journal\n\n# Cache and temp\ncache/\ntemp/\ntmp/\n*.log\n*.tmp\n\n# OS\nThumbs.db\n.DS_Store\n*.swp\n*.swo\n\n# Project specific\nsnippets/\n*.zip\nreports/\nlogs/\n\n# Mypy\n.mypy_cache/\n.dmypy.json\ndmypy.json\n\n# Ruff\n.ruff_cache/\n\n# Black\n.black\n\n# Jupyter Notebook\n.ipynb_checkpoints\n\n# pyenv\n.python-version\n\n# Celery\ncelerybeat-schedule\ncelerybeat.pid\n\n# SageMath parsed files\n*.sage.py\n\n# Spyder project settings\n.spyderproject\n.spyproject\n\n# Rope project settings\n.ropeproject\n\n# mkdocs documentation\n/site\n\n# mypy\n.mypy_cache/\n.dmypy.json\ndmypy.json\n\n# Pyre type checker\n.pyre/\n\n# pytype static type analyzer\n.pytype/\n\n# Cython debug symbols\ncython_debug/\n\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "84f3a541b59d33cf7a78c89e60d078d2438f7098b54f2e69df895edb1dde4013",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-196-01-python",
+      "lang": "python",
+      "code": "\"\"\"\n파서 E2E 테스트\n\n실제 입력 데이터로 전체 파서 파이프라인을 테스트합니다.\n\"\"\"\n\nimport pytest\nimport json\nfrom pathlib import Path\nfrom datetime import datetime\nfrom backend.parser import parse_markdown\nfrom backend.parser.turns import check_parse_health\n\n\n# 실제 입력 데이터 경로\nINPUT_FILE = Path(__file__).parent.parent / \"docs\" / \"cursor_phase_6_3.md\"\nREPORT_DIR = Path(__file__).parent / \"reports\"\nRESULTS_DIR = Path(__file__).parent / \"results\"\n\n\ndef test_parser_e2e():\n  \"\"\"\n  실제 입력 데이터로 전체 파서 파이프라인 테스트\n  \"\"\"\n  # 1. 실제 입력 데이터 로드\n  if not INPUT_FILE.exists():\n  pytest.skip(f\"Input file not found: {INPUT_FILE}\")\n\n  text = INPUT_FILE.read_text(encoding=\"utf-8\")\n\n  # 2. 파싱 실행\n  result = parse_markdown(text, source_doc=str(INPUT_FILE))\n\n  # 3. 정합성 검증\n  assert result[\"session_meta\"] is not None, \"session_meta가 없음\"\n  assert result[\"session_meta\"].session_id is not None, \"session_id가 없음\"\n  assert len(result[\"turns\"]) > 0, \"turns가 비어있음\"\n\n  # Session Meta 추출 정확성\n  session_meta = result[\"session_meta\"]\n  assert session_meta.source_doc == str(INPUT_FILE), \"source_doc가 올바르지 않음\"\n  # phase, subphase, exported_at, cursor_version은 있을 수도 없을 수도 있음\n\n  # Turn 블록 분할 정확성\n  user_turns = [t for t in result[\"turns\"] if t.speaker == \"User\"]\n  cursor_turns = [t for t in result[\"turns\"] if t.speaker == \"Cursor\"]\n  unknown_turns = [t for t in result[\"turns\"] if t.speaker == \"Unknown\"]\n\n  assert len(user_turns) > 0, \"User turns가 없음\"\n  assert len(cursor_turns) > 0, \"Cursor turns가 없음\"\n\n  # 코드 스니펫 추출 정확성\n  all_code_blocks = result[\"code_blocks\"]\n  # 코드 블록이 있을 수도 없을 수도 있음\n\n  # Artifact 추출 정확성\n  all_artifacts = result[\"artifacts\"]\n  # Artifact가 있을 수도 없을 수도 있음\n\n  # 4. 타당성 검증\n  # 파싱 실패율 검증\n  health = check_parse_health(result[\"turns\"])\n  unknown_ratio = health[\"unknown_ratio\"]\n\n  assert unknown_ratio < 0.2, f\"파싱 실패율이 너무 높음: {unknown_ratio:.1%}\"\n\n  # 5. 결과 분석 및 자동 보고\n  report = {\n  \"test_name\": \"parser_e2e\",\n  \"input_file\": str(INPUT_FILE),\n  \"results\": {\n  \"total_turns\": len(result[\"turns\"]),\n  \"user_turns\": len(user_turns),\n  \"cursor_turns\": len(cursor_turns),\n  \"unknown_turns\": len(unknown_turns),\n  \"unknown_ratio\": unknown_ratio,\n  \"code_blocks\": len(all_code_blocks),\n  \"artifacts\": len(all_artifacts),\n  \"session_meta\": {\n  \"session_id\": session_meta.session_id,\n  \"exported_at\": session_meta.exported_at,\n  \"cursor_version\": session_meta.cursor_version,\n  \"phase\": session_meta.phase,\n  \"subphase\": session_meta.subphase,\n  },\n  },\n  \"warnings\": health.get(\"warnings\", []),\n  \"errors\": [],\n  \"status\": \"PASS\" if unknown_ratio < 0.2 else \"WARNING\",\n  }\n\n  # 리포트 출력\n  print(\"\\n\" + \"=\" * 50)\n  print(\"Parser E2E Test Report\")\n  print(\"=\" * 50)\n  print(json.dumps(report, indent=2, ensure_ascii=False))\n  print(\"=\" * 50)\n\n  # 리포트 파일 저장\n  REPORT_DIR.mkdir(exist_ok=True)\n  report_file = REPORT_DIR / \"parser_e2e_report.json\"\n  report_file.write_text(\n  json.dumps(report, indent=2, ensure_ascii=False),\n  encoding=\"utf-8\",\n  )\n\n  # 상세 실행 결과 저장 (필수)\n  timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n  RESULTS_DIR.mkdir(exist_ok=True)\n  results_file = RESULTS_DIR / f\"parser_e2e_{timestamp}.json\"\n\n  detailed_results = {\n  \"session_meta\": session_meta.model_dump(),\n  \"turns\": [turn.model_dump() for turn in result[\"turns\"]],\n  \"code_blocks\": [block.model_dump() for block in result[\"code_blocks\"]],\n  \"artifacts\": result[\"artifacts\"],\n  \"test_metadata\": {\n  \"timestamp\": timestamp,\n  \"input_file\": str(INPUT_FILE),\n  \"test_name\": \"parser_e2e\",\n  },\n  }\n\n  results_file.write_text(\n  json.dumps(detailed_results, indent=2, ensure_ascii=False),\n  encoding=\"utf-8\",\n  )\n\n  print(f\"\\n[RESULTS] Detailed results saved to: {results_file}\")\n\n  # 최종 검증\n  assert unknown_ratio < 0.2, f\"Unknown speaker 비율이 너무 높음: {unknown_ratio:.1%}\"\n\n\n",
+      "source": {
+        "turn_index": 196,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          197
+        ]
+      },
+      "snippet_hash": "4e5d3bfc936bff7482b53a1992131ee96d194b75f13f1ac32f50461300759c2b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-198-00-python",
+      "lang": "python",
+      "code": "# backend/core/models.py\nclass CodeBlock(BaseModel):\n  \"\"\"코드 블록\"\"\"\n\n  turn_index: int  # 추가: 어느 Turn에서 추출되었는지\n  block_index: int  # Turn 내에서의 인덱스\n  lang: str\n  code: str\n",
+      "source": {
+        "turn_index": 198,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          199
+        ]
+      },
+      "snippet_hash": "9b72390afc0210192e8b8bab48b5a9f1ae19096b9bd7efa5d208deeda9899c6b",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-198-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-198-01-python",
+      "lang": "python",
+      "code": "# backend/parser/turns.py\ndef parse_turn(block: str, turn_index: int) -> Turn:\n  # ...\n  code_blocks = extract_code_blocks(block)\n\n  # turn_index를 각 CodeBlock에 추가\n  for code_block in code_blocks:\n  code_block.turn_index = turn_index  # 또는 CodeBlock 생성 시 전달\n",
+      "source": {
+        "turn_index": 198,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          199
+        ]
+      },
+      "snippet_hash": "8a06a2e26bcbe4f9847d9bdff13cbf337890b311320e40a5dbdbb827e51d2013",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-198-04-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-198-02-python",
+      "lang": "python",
+      "code": "# backend/parser/snippets.py\ndef extract_code_blocks(text: str, turn_index: int) -> List[CodeBlock]:\n  \"\"\"\n  코드 펜스 추출\n\n  Args:\n  text: 텍스트\n  turn_index: Turn 인덱스\n\n  Returns:\n  CodeBlock 리스트\n  \"\"\"\n  blocks = []\n  matches = CODE_FENCE_RE.finditer(text)\n\n  for idx, match in enumerate(matches):\n  lang = (match.group(1) or \"\").lower()\n  code = match.group(2)\n\n  blocks.append(\n  CodeBlock(\n  turn_index=turn_index,  # 추가\n  block_index=idx,\n  lang=lang,\n  code=code,\n  )\n  )\n\n  return blocks\n",
+      "source": {
+        "turn_index": 198,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          199
+        ]
+      },
+      "snippet_hash": "45b47c066dd6d867502f1950604f0d362ec1e168dcbc7a92f8542ad5f1d8746a",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-198-05-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-202-00-python",
+      "lang": "python",
+      "code": "\"\"\"\n데이터 모델 정의\n\n이 모듈은 파서, 빌더, API에서 사용하는 Pydantic 모델을 정의합니다.\n\"\"\"\n\nfrom pydantic import BaseModel\nfrom typing import Optional, List\n\n\nclass SessionMeta(BaseModel):\n  \"\"\"세션 메타데이터\"\"\"\n\n  session_id: str\n  exported_at: Optional[str] = None\n  cursor_version: Optional[str] = None\n  phase: Optional[int] = None\n  subphase: Optional[int] = None\n  source_doc: str\n\n\nclass CodeBlock(BaseModel):\n  \"\"\"코드 블록\"\"\"\n\n  turn_index: int  # 어느 Turn에서 추출되었는지\n  block_index: int  # Turn 내에서의 인덱스\n  lang: str  # 언어 (빈 문자열 가능)\n  code: str  # 코드 내용\n\n\nclass Turn(BaseModel):\n  \"\"\"Turn 블록 (User/Cursor 대화 단위)\"\"\"\n\n  turn_index: int\n  speaker: str  # \"User\", \"Cursor\", \"Unknown\"\n  body: str  # 본문 텍스트 (코드 블록 제외)\n  code_blocks: List[CodeBlock] = []  # 코드 블록 리스트\n  path_candidates: List[str] = []  # 파일/경로 후보 리스트\n\n\n",
+      "source": {
+        "turn_index": 202,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          203
+        ]
+      },
+      "snippet_hash": "6ffa394b8ffde10d41cd800e22d59a9e0f18dc5b4e744010e99143dda44ff449",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-202-01-python",
+      "lang": "python",
+      "code": "\"\"\"\n코드 스니펫 추출 모듈\n\n마크다운 파일에서 코드 블록을 추출합니다.\n\"\"\"\n\nimport re\nfrom typing import List\nfrom backend.core.models import CodeBlock\n\n\nCODE_FENCE_RE = re.compile(\n  r\"",
+      "source": {
+        "turn_index": 202,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          203
+        ]
+      },
+      "snippet_hash": "c4c957dcfdfee0baac6055946cd10f6d171be0388b6d32a43632b3098f859e92",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-202-03-text",
+      "lang": "text",
+      "code": "\n테스트 파일 확인 및 수정 중입니다.\n\n\n테스트 파일 수정 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 202,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          203
+        ]
+      },
+      "snippet_hash": "dda85f9c9fb5f127a65cbc3764945bc6eee3a8f1ad21a192f58b6b6032f4fb2d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-01-text",
+      "lang": "text",
+      "code": "\nREADME 업데이트 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "082b4f1e0bfec0bbbf1e6def51ef33bfb40549962748bce240265943d3e487c5",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-02-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/                    # FastAPI 백엔드\n│   ├── parser/                 # 마크다운 파서 모듈\n│   │   ├── normalize.py        # 텍스트 정규화\n│   │   ├── meta.py             # 세션 메타데이터 추출\n│   │   ├── turns.py            # Turn 블록 파싱\n│   │   ├── snippets.py         # 코드 스니펫 추출\n│   │   └── artifacts.py        # Artifact 추출\n│   ├── builders/               # Timeline/Issue Cards 빌더\n│   ├── render/                 # Markdown 렌더러\n│   ├── api/routes/             # FastAPI 라우터\n│   ├── core/                   # 상수, 유틸리티, 모델\n│   └── main.py                 # FastAPI 앱 진입점\n├── frontend/                   # Next.js 프론트엔드\n├── tests/                      # 테스트 파일\n│   ├── fixtures/               # 테스트 입력 데이터\n│   ├── golden/                 # 예상 결과 (Golden 파일)\n│   ├── logs/                   # E2E 테스트 로그\n│   ├── results/                # E2E 테스트 실행 결과\n│   └── reports/                # 테스트 리포트\n├── docs/                       # 문서\n└── .cursor/rules/              # Cursor Rules\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "6cef20880bb769d3a9a137e31977856cb8c71d0991a406da0c27c83e0c41815e",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-302-08-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-03-powershell",
+      "lang": "powershell",
+      "code": "poetry install\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "861de8f7f91322e0fc57d573c24d2f3ff2e01b90cba340e9f6354455cc342a9a",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-302-09-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-04-powershell",
+      "lang": "powershell",
+      "code": "cd frontend\nnpm install\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "06dc7491ab1a750aa8c3ffb6f9d788764596f52810a2739259daf917f4d40886",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-302-10-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-05-powershell",
+      "lang": "powershell",
+      "code": "poetry run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "d8fb4f2d751275b4560a3438c81f265858aa65eec14cf401bc31db667dfa24e2",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-302-11-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-06-powershell",
+      "lang": "powershell",
+      "code": "cd frontend\nnpm run dev\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "f585edc39eaa12d7a1b140e6711512722027726438a61fab4364ca16459cef21",
+      "aliases": [
+        "SNP-cursor_export_unknown_5248-302-12-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-13-python",
+      "lang": "python",
+      "code": "from backend.parser import parse_markdown\n\n# 마크다운 파일 파싱\nresult = parse_markdown(text, source_doc=\"input.md\")\n\n# 결과 구조\n{\n    \"session_meta\": SessionMeta(\n        session_id=\"cursor_export_2025-12-14_223636_KST\",\n        phase=6,\n        subphase=7,\n        ...\n    ),\n    \"turns\": [\n        Turn(\n            turn_index=0,\n            speaker=\"User\",\n            body=\"...\",\n            code_blocks=[...],\n            path_candidates=[...]\n        ),\n        ...\n    ],\n    \"code_blocks\": [...],  # 모든 Turn의 코드 블록 통합\n    \"artifacts\": [...]     # 파일 경로 후보\n}\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 13
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "b115ba05bc9aaaaf0eb2c00ec75bf703519fd42306e60d8fff57a6b90004c93e",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-302-14-powershell",
+      "lang": "powershell",
+      "code": "# 단위 테스트\npoetry run pytest tests/test_parser.py -v\n\n# E2E 테스트\npoetry run pytest tests/test_parser_e2e.py -v\n",
+      "source": {
+        "turn_index": 302,
+        "block_index": 14
+      },
+      "links": {
+        "event_seq": [
+          303
+        ]
+      },
+      "snippet_hash": "5aaa860c3c21af1a02cda72c3e8377d4129a4c26abd900329ffe4497e85d2052",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_5248-318-00-text",
+      "lang": "text",
+      "code": "\nREADME 업데이트 항목을 체크하고 최종 확인 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 318,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          319
+        ]
+      },
+      "snippet_hash": "1af1e2b824a8df0a1a88f8d0e6f1be6df47f74d0b5c42008a190d06828a87762",
+      "aliases": []
+    }
+  ]
+}

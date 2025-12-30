@@ -1,0 +1,1379 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_4730",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 1,
+    "subphase": null,
+    "source_doc": "longcontext_phase_1.md"
+  },
+  "snippets": [
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-004-00-text",
+      "lang": "text",
+      "code": "  backend/\n  ├── api/routes/     # FastAPI 라우터\n  ├── parser/         # 마크다운 파서\n  ├── builders/       # Timeline/Issue Cards 빌더\n  ├── render/         # Markdown 렌더러\n  └── core/           # models.py, constants.py\n  ",
+      "source": {
+        "turn_index": 4,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          5
+        ]
+      },
+      "snippet_hash": "96902b77ca6381df1b06c092e86f2e3a6ea1bd34414ce137ca548414b319d00f",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-005-00-plaintext"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-004-01-text",
+      "lang": "text",
+      "code": "  frontend/\n  ├── app/page.tsx          # 메인 페이지\n  ├── components/           # UI 컴포넌트\n  ├── lib/                  # api.ts, constants.ts\n  └── types/api.ts          # 타입 정의\n  ",
+      "source": {
+        "turn_index": 4,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          5
+        ]
+      },
+      "snippet_hash": "e4f2b90f60dc42128e925c16069a6afe8f1d76f736f97bf9291ecb964d11cfb8",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-005-01-plaintext"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-00-markdown",
+      "lang": "markdown",
+      "code": "# Longtext Analysis\n\n> Cursor IDE에서 export된 세션 대화 마크다운 파일을 파싱하여 Timeline, Issue Cards, 코드 스니펫을 생성하는 웹 애플리케이션\n\n## 프로젝트 개요\n\n이 프로젝트는 Cursor IDE에서 export된 세션 대화 마크다운 파일을 입력으로 받아:\n1. 프로젝트 단계별 진행 작업(Timeline)\n2. 디버깅 이슈 히스토리(Issue Cards)\n3. 코드 스니펫 분리 저장\n\n을 구조화된 산출물(JSON/Markdown)로 생성합니다.\n\n## 기술 스택\n\n- **백엔드**: Python FastAPI (Poetry)\n- **프론트엔드**: Next.js 14+ (App Router, TypeScript)\n- **LLM**: OpenAI API (옵션, 요약/라벨링 보조)\n- **저장**: 로컬 파일 기반 (JSON/MD)\n- **배포**: 로컬 개발 환경\n\n## 프로젝트 구조\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "a5bd4527098f69d04014df30d4aaaa5874767c0e22066422769d533180abf4d6",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-01-bash",
+      "lang": "bash",
+      "code": "\n## 개발 환경 설정\n\n### 필수 요구사항\n\n- Python 3.11 이상\n- Poetry 1.8.5 이상\n- Node.js 18 이상\n- npm 또는 yarn\n\n### 설치 방법\n\n1. Poetry 의존성 설치:\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "31037f04670f2b15bb5ee6a7c86e5f9f01ba2f06cab8cc3a70c434668038d614",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-02-text",
+      "lang": "text",
+      "code": "\n2. 프론트엔드 의존성 설치 (프론트엔드 디렉토리 생성 후):\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "198fd2eb6a63b760022cded0ba2893b1bbc5acf5bc098f0cf11e35877e86b89b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-03-text",
+      "lang": "text",
+      "code": "\n### 환경 변수 설정\n\n`.env.example` 파일을 참고하여 `.env` 파일을 생성하세요.\n\n## 실행 방법\n\n### 백엔드 서버 실행\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "26260cd19646c8b96209470a4f5acff7b7b8b561c0bbc588abd0364869c93efc",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-04-text",
+      "lang": "text",
+      "code": "\n### 프론트엔드 서버 실행\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "ccecc59f9dee2a036401c95295470136f2dd076567175c2da14a6a962975c78b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-05-text",
+      "lang": "text",
+      "code": "\n## 참고 문서\n\n- [PRD](docs/PRD_longtext.md)\n- [TODOs](TODOs.md)\n- [AGENTS.md](AGENTS.md)\n\n## 개발 가이드\n\n프로젝트는 Phase별로 진행됩니다. 자세한 내용은 [TODOs.md](TODOs.md)를 참고하세요.\n\n**현재 Phase**: Phase 1 (프로젝트 초기 설정 및 환경 구성)\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "cc021c410d66dc17baffa502c53b5e5c481b7a9fa4e09b0f41342d0e2b055f65",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-06-python",
+      "lang": "python",
+      "code": "# Backend package\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "66c7106c8589ffed73532fa724ebc00680bf60451dff1a34fd2f8d737bba384c",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-07-python",
+      "lang": "python",
+      "code": "# Parser module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "be5e4cba2d828e525c33fc7d2158d60c52943791cbd4b009c9ed0d1e7004eafa",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-08-python",
+      "lang": "python",
+      "code": "# Builders module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "422337b62a90cbb9ef739c35bd0024eb5e9c1f4abbbffbb32217fa5726023115",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-09-python",
+      "lang": "python",
+      "code": "# Render module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "51fd64c92d5ac25f9dd7c82a802631b4f1ddab714c03c1111c65784a0335951e",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-10-python",
+      "lang": "python",
+      "code": "# API module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 10
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "879f526d933051e5a7740596e934af28a2cfaf25f4fff602dd677ec1dce9cf00",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-11-python",
+      "lang": "python",
+      "code": "# API routes module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 11
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "c04855268830b9f5056795a3997c640bbe46b71df20f9566905cd18f314c0958",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-12-python",
+      "lang": "python",
+      "code": "# Core module\n\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 12
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "b15da4c2d9cbba3b9bdf4f49b03353854f118ed5779a18fdc40842ec7c42e6a7",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-007-13-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/          ✅ (parser, builders, render, api/routes, core)\n├── frontend/         ✅ (Next.js 초기화 완료, components, lib, types)\n├── tests/            ✅ (fixtures, golden, reports)\n├── .env.example      ✅\n├── README.md         ✅\n└── poetry.lock       ✅\n",
+      "source": {
+        "turn_index": 7,
+        "block_index": 13
+      },
+      "links": {
+        "event_seq": [
+          8
+        ]
+      },
+      "snippet_hash": "d3c39cb59cb5c36afe49f300185c3631e6e118f604f6f780a5de421e41fd6c93",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-007-14-plaintext"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-010-00-text",
+      "lang": "text",
+      "code": "마크다운 파일 업로드\n  ↓\nIngest & Normalize\n  ↓\nSession Meta 추출\n  ↓\nTurn 파싱\n  ↓\nArtifact 추출\n  ↓\nEvent 정규화\n  ↓\nTimeline 생성 + Issue Cards 생성 + 코드 스니펫 분리\n  ↓\nJSON/MD 출력\n  ↓\n다운로드\n",
+      "source": {
+        "turn_index": 10,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          11
+        ]
+      },
+      "snippet_hash": "758d6681093611f4ca7715a8b847d7221ad952ab6fd36a38cd11884f0e5b4265",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-059-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-019-00-python",
+      "lang": "python",
+      "code": "class SessionMeta(BaseModel):\n    session_id: str\n    exported_at: Optional[str]\n    cursor_version: Optional[str]\n    phase: Optional[int]\n    subphase: Optional[int]\n    source_doc: str\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "73d4661d4230494d7d93efd4ca453388e0ee295a479c0e0f0001a6ccd5e2f4aa",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-068-00-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-019-01-python",
+      "lang": "python",
+      "code": "class TimelineEvent(BaseModel):\n    seq: int\n    session_id: str\n    phase: Optional[int]\n    subphase: Optional[int]\n    type: EventType  # status_review|plan|artifact|debug|completion|next_step|turn\n    summary: str\n    artifacts: List[ArtifactRef]\n    snippet_refs: List[str]  # snippet_id\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "d59e38bf063e3ab9000a2f611b625a399cf3156a64e8a508d8781bb0abf2e2d5",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-068-01-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-019-02-python",
+      "lang": "python",
+      "code": "class IssueCard(BaseModel):\n    issue_id: str\n    scope: IssueScope\n    title: str\n    symptoms: List[str]\n    root_cause: Optional[RootCause]\n    evidence: List[Evidence]\n    fix: List[Fix]\n    validation: List[str]\n    related_artifacts: List[ArtifactRef]\n    snippet_refs: List[str]\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "ace47983ec5d34a35c06ba425212df196310ee8932d21d5338d0fbba3b339e08",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-068-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-019-03-python",
+      "lang": "python",
+      "code": "class Snippet(BaseModel):\n    snippet_id: str\n    lang: str\n    code: str\n    source: SnippetSource\n    links: SnippetLinks\n",
+      "source": {
+        "turn_index": 19,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          20
+        ]
+      },
+      "snippet_hash": "5c9b0818c07e045f81b741fd8ca3cb5e1cbc9d72880b10308c51220adc1befde",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-068-03-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-020-00-text",
+      "lang": "text",
+      "code": "longtext-analysis/\n├── backend/\n│   ├── api/\n│   │   └── routes/\n│   │       ├── parse.py\n│   │       ├── timeline.py\n│   │       ├── issues.py\n│   │       ├── snippets.py\n│   │       └── export.py\n│   ├── parser/\n│   │   ├── normalize.py\n│   │   ├── meta.py\n│   │   ├── turns.py\n│   │   ├── snippets.py\n│   │   └── artifacts.py\n│   ├── builders/\n│   │   ├── event_normalizer.py\n│   │   ├── timeline_builder.py\n│   │   ├── issues_builder.py\n│   │   └── snippet_manager.py\n│   ├── render/\n│   │   └── render_md.py\n│   ├── core/\n│   │   ├── models.py\n│   │   ├── constants.py\n│   │   ├── llm_service.py\n│   │   └── snippet_storage.py\n│   ├── main.py\n│   └── pyproject.toml\n├── frontend/\n│   ├── app/\n│   │   └── page.tsx\n│   ├── components/\n│   │   ├── FileUpload.tsx\n│   │   ├── SessionMetaPreview.tsx\n│   │   ├── TimelinePreview.tsx\n│   │   ├── IssuesPreview.tsx\n│   │   └── SnippetsPreview.tsx\n│   ├── lib/\n│   │   ├── api.ts\n│   │   └── constants.ts\n│   ├── types/\n│   │   └── api.ts\n│   └── package.json\n├── tests/\n│   ├── fixtures/\n│   ├── golden/\n│   ├── test_parser.py\n│   ├── test_event_normalizer.py\n│   ├── test_timeline_builder.py\n│   ├── test_issues_builder.py\n│   ├── test_api.py\n│   └── test_integration.py\n├── docs/\n│   ├── PRD_longtext.md\n│   ├── instruction_detail.md\n│   └── instruction_moredetail.md\n├── .cursor/\n│   └── rules/\n├── AGENTS.md\n├── api-contract-sync.mdc\n└── README.md\n",
+      "source": {
+        "turn_index": 20,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          21
+        ]
+      },
+      "snippet_hash": "2f88b0c9d66685f3d771ff3674cd59e418825b79610c205372ce6acfa5b82ad7",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-069-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-021-00-markdown",
+      "lang": "markdown",
+      "code": "# Longtext Analysis\n\n## 📋 프로젝트 개요\n- 목적 및 배경\n- 주요 기능\n\n## 🏗️ 프로젝트 구조\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "c0539a8a3d1406525414c1a701c4f2209ce7326cf359ce7527d79784a0f6d1d1",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-070-00-markdown"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-021-01-text",
+      "lang": "text",
+      "code": "\n## 🚀 시작하기\n### 필수 요구사항\n### 설치 방법\n### 환경 변수 설정\n### 실행 방법\n\n## 📖 사용 가이드\n### 입력 파일 형식\n### 출력 형식\n### API 사용법\n\n## 🧪 테스트\n### 테스트 실행 방법\n### E2E 테스트\n\n## 📚 참고 문서\n- PRD\n- TODOs.md\n- AGENTS.md\n\n## 🔧 개발 가이드\n### 코드 스타일\n### 커밋 규칙\n### Phase별 진행 상황\n\n## 📝 변경 이력\n- Phase별 완료 사항\n- 최근 업데이트\n",
+      "source": {
+        "turn_index": 21,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          22
+        ]
+      },
+      "snippet_hash": "69c1047a9e94f95af9f4e50240ed3da84bb5e4b77c429a46bd01a6420728ad59",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-070-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-025-00-text",
+      "lang": "text",
+      "code": "\n",
+      "source": {
+        "turn_index": 25,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          26
+        ]
+      },
+      "snippet_hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-025-01-text",
+        "SNP-cursor_export_unknown_4730-025-02-text",
+        "SNP-cursor_export_unknown_4730-036-00-text",
+        "SNP-cursor_export_unknown_4730-047-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-026-00-text",
+      "lang": "text",
+      "code": "## Phase X 시작 준비\n\n**작업 범위**: [Phase 제목]\n- [ ] 작업 목록 1\n- [ ] 작업 목록 2\n- ...\n\n**예상 시간**: [예상 소요 시간]\n**의존성**: [이전 Phase 완료 여부]\n\n진행하시겠습니까?\n",
+      "source": {
+        "turn_index": 26,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          27
+        ]
+      },
+      "snippet_hash": "9cc3838d0ab7d0e9a66c0da16db2da962b0952cc035d33d814f8a0254015968d",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-037-00-text",
+        "SNP-cursor_export_unknown_4730-048-00-text",
+        "SNP-cursor_export_unknown_4730-080-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-026-01-text",
+      "lang": "text",
+      "code": "## Phase X 완료\n\n**완료된 작업**:\n- [완료된 항목들]\n\n**확인 사항**:\n- [사용자가 확인해야 할 것들]\n\n**다음 단계**:\n- Phase X+1 진행 준비\n\n피드백 주시면 다음 Phase로 진행하겠습니다.\n",
+      "source": {
+        "turn_index": 26,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          27
+        ]
+      },
+      "snippet_hash": "9f201cb5bbbe5423024ef238be4b5fb90891b6ddcf4e044c850dc8822559e29e",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-037-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-027-00-text",
+      "lang": "text",
+      "code": "## 작업 내용\n- 무엇을 할 것인지 명확히 설명\n\n## 작업 이유\n- 왜 이 작업이 필요한지 설명\n\n## 실행 방법\n- 어떻게 실행할 것인지 단계별 설명\n\n## 예상 결과\n- 성공 시: 어떤 결과가 나올지\n- 실패 시: 어떤 문제가 발생할지\n\n## 확인 사항\n- 사용자가 확인해야 할 것들\n- 실행 전 체크리스트\n",
+      "source": {
+        "turn_index": 27,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          28
+        ]
+      },
+      "snippet_hash": "04fc7380a648c212cdbf3a3fd820fd906ff1eca5d578ef3c3460a5bf0469409b",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-038-00-text",
+        "SNP-cursor_export_unknown_4730-049-00-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-027-01-text",
+      "lang": "text",
+      "code": "## 실행 결과\n- 실제로 무엇이 실행되었는지\n- 결과 파일/로그 위치\n\n## 결과 해석\n- 성공/실패 여부\n- 문제가 있다면 원인 분석\n- 로그/데이터 기반 정량적 설명\n\n## 다음 단계\n- 성공 시: 다음 작업\n- 실패 시: 해결 방법 및 재시도\n- 사용자가 해야 할 일\n",
+      "source": {
+        "turn_index": 27,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          28
+        ]
+      },
+      "snippet_hash": "57231dd4e4e234ecfb94eed9799bd600e1fe2a5b44d64c98ec536f1e1e5b31bd",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-038-01-text",
+        "SNP-cursor_export_unknown_4730-049-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-00-powershell",
+      "lang": "powershell",
+      "code": "# ✅ 세미콜론 사용\ncd /path/to/project; python -m pytest tests/\n\n# ❌ Bash && 연산자 사용 금지\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "020091b9111e5ee216373388e0c51f9978af907539b0833738574b6cfc87001c",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-00-powershell",
+        "SNP-cursor_export_unknown_4730-050-00-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-01-powershell",
+      "lang": "powershell",
+      "code": "# 설정\n$env:PYTHONPATH = \"/path/to/project\"\n$env:API_KEY = \"your-api-key\"\n\n# 확인\necho $env:API_KEY\nGet-ChildItem Env:\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "cfe58b33cd12bfbbd39dea0a32f7bd0f1ea15f48f65eb7e6c228a3a38745c727",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-01-powershell",
+        "SNP-cursor_export_unknown_4730-050-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-02-powershell",
+      "lang": "powershell",
+      "code": "New-Item -ItemType Directory -Path \"backend\\api\\models\" -Force  # 디렉토리 생성\nGet-Content file.txt          # 읽기\nCopy-Item src.txt dst.txt     # 복사\nRemove-Item file.txt          # 삭제\nTest-Path .env                # 존재 확인\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "8ecea14dccd38f6910902cca689933350b311b8aff963607ea8c45c536565b83",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-02-powershell",
+        "SNP-cursor_export_unknown_4730-050-02-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-03-powershell",
+      "lang": "powershell",
+      "code": "python -m pytest backend/tests/ -v\n$env:LOG_LEVEL = \"DEBUG\"; python script.py\npython -c 'print(\"Hello\")'  # 작은따옴표 사용\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "42ae05611fe589a62f61501fe85e8f83e375a897592494b166b335805cb4ce17",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-03-powershell",
+        "SNP-cursor_export_unknown_4730-050-03-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-04-powershell",
+      "lang": "powershell",
+      "code": "# ❌ BAD - 직접 실행 (PowerShell 인코딩 문제)\npoetry run python -c \"from pathlib import Path; print(list(Path('data').glob('*.json')))\"\n\n# ✅ GOOD - 스크립트 파일로 작성 후 실행\n# 1. 스크립트 파일 작성\n# check_files.py 파일 생성\n# 2. 실행\npoetry run python check_files.py\n# 3. 정리\nRemove-Item check_files.py\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "6896a8c7135a416d9f1f5487b42c2d840690ef39b61fb3123f94daeb6cfe2f6c",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-04-powershell",
+        "SNP-cursor_export_unknown_4730-050-04-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-05-powershell",
+      "lang": "powershell",
+      "code": "# 1. -m 옵션 사용 (권장)\npoetry run python -m module.submodule.script_name\n\n# 2. PYTHONPATH 설정\n$env:PYTHONPATH = \"/path/to/project/root\"\npoetry run python module/submodule/script.py\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "86c2fc3a7f99a5d5aee544b80f4606eb1611c9e041872b0d6a46b0319619e90b",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-05-powershell",
+        "SNP-cursor_export_unknown_4730-050-05-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-06-powershell",
+      "lang": "powershell",
+      "code": "# 백엔드 (FastAPI 등)\npoetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\n\n# 프론트엔드 (Next.js 등)\nnpm --prefix frontend run dev\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "7ff7ec79af92412eaaa7cceb09ee9536d9e9ec8d50be407267437f4f00e243ea",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-06-powershell",
+        "SNP-cursor_export_unknown_4730-050-06-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-07-powershell",
+      "lang": "powershell",
+      "code": "git diff file.py | Select-Object -First 50  # head 대체\ngit log | Select-Object -Last 20            # tail 대체\ngit status | Select-String \"modified\"        # 필터링\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "c7fd80e5ea6bb16807338ad8bf98bf19ab47a12bba78a003b68538d4acabafb8",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-07-powershell",
+        "SNP-cursor_export_unknown_4730-050-07-powershell",
+        "SNP-cursor_export_unknown_4730-082-08-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-08-powershell",
+      "lang": "powershell",
+      "code": "# ❌ 실패\npython -c \"from pypdf import PdfReader; reader = PdfReader(r'data\\input\\1등의 통찰.pdf')\"\nSelect-String -Pattern \"CACHE_SAVE|서버 로그|파싱 완료\"\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 8
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "2189562310b87157c7a65930b31ba57eb46fbcd104b6f63d03f38f9f6caca2d9",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-08-powershell",
+        "SNP-cursor_export_unknown_4730-050-08-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-09-powershell",
+      "lang": "powershell",
+      "code": "# ✅ Python 스크립트 파일 사용 (권장)\npoetry run python script.py\n\n# ✅ 세션 시작 시 인코딩 설정\n[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n$OutputEncoding = [System.Text.Encoding]::UTF8\nchcp 65001\n\n# ✅ Select-String은 영문 패턴 사용\nSelect-String -Pattern \"CACHE_SAVE|server|parsing\"\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 9
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "f3ea73ee1f52f1b88b894479453c00befd6e84538e42e04c66eed397c44cce7e",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-09-powershell",
+        "SNP-cursor_export_unknown_4730-050-09-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-10-powershell",
+      "lang": "powershell",
+      "code": "# ❌ 실패\nTee-Object -FilePath \"output.log\" -Encoding UTF8\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 10
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "e00efd5894bbcb8d50fb5f655bc24104112903c493d68b8e2214502ae14240d8",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-10-powershell",
+        "SNP-cursor_export_unknown_4730-050-10-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-11-powershell",
+      "lang": "powershell",
+      "code": "# ✅ Out-File 사용\npoetry run pytest ... | Out-File -FilePath \"output.log\" -Encoding UTF8\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 11
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "fdbfc15b963ed60f5c052f087406af6e3563f063b59195bfe9804f66bd3adb92",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-11-powershell",
+        "SNP-cursor_export_unknown_4730-050-11-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-028-12-powershell",
+      "lang": "powershell",
+      "code": "# ✅ 절대 경로 사용\n$pdfPath = (Resolve-Path \"data\\input\\1등의 통찰.pdf\").Path\n\n# ✅ 파일 존재 확인 후 처리\n$file = Get-ChildItem \"path\" | Select-Object -First 1\nif ($file) { Get-Content $file.FullName -Raw -Encoding UTF8 }\n",
+      "source": {
+        "turn_index": 28,
+        "block_index": 12
+      },
+      "links": {
+        "event_seq": [
+          29
+        ]
+      },
+      "snippet_hash": "b347ef43d5c109538a9813625ee73953ddfcb7e81600c0fa7820871ae11681d8",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-039-12-powershell",
+        "SNP-cursor_export_unknown_4730-050-12-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-031-00-powershell",
+      "lang": "powershell",
+      "code": "taskkill /F /IM node.exe\ntaskkill /F /IM python.exe\n# 또는\nStop-Process -Name \"node\" -Force\n",
+      "source": {
+        "turn_index": 31,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          32
+        ]
+      },
+      "snippet_hash": "7495d7833c998a07aebc59d87fff1882b9d80f91f5f3cec83cb84853884f1a74",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-042-00-powershell",
+        "SNP-cursor_export_unknown_4730-053-00-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-031-01-powershell",
+      "lang": "powershell",
+      "code": "netstat -ano | findstr :3000  # 포트 확인\ntaskkill /F /PID [PID번호]    # PID로 종료\n",
+      "source": {
+        "turn_index": 31,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          32
+        ]
+      },
+      "snippet_hash": "e55b13d55bb9dacd75deccb89caf028fa506a99d0c985acee94d13a26a8b7a9a",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-042-01-powershell",
+        "SNP-cursor_export_unknown_4730-053-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-031-02-powershell",
+      "lang": "powershell",
+      "code": "Get-Process | Where-Object {$_.ProcessName -eq \"node\"}\nGet-Process | Where-Object {$_.ProcessName -eq \"python\"}\n",
+      "source": {
+        "turn_index": 31,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          32
+        ]
+      },
+      "snippet_hash": "71ee3b15d71088573ea57fc6b242e76984152ddd3536857b8ba8ee50d0af9594",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-042-02-powershell",
+        "SNP-cursor_export_unknown_4730-053-02-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-032-00-powershell",
+      "lang": "powershell",
+      "code": "Get-ChildItem -Name \"*.env*\" -Force  # 1. -Force 옵션 (최우선)\nGet-Content .env                      # 2. 파일 내용 확인\nTest-Path .env                       # 3. 파일 존재 확인\n",
+      "source": {
+        "turn_index": 32,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          33
+        ]
+      },
+      "snippet_hash": "6d8ea8ad89cd790108e6d5df1239ec8332f65ff6f2e9b457875f9a532560578d",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-043-00-powershell",
+        "SNP-cursor_export_unknown_4730-054-00-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-032-01-powershell",
+      "lang": "powershell",
+      "code": "echo $env:OPENAI_API_KEY\nGet-ChildItem Env:\n",
+      "source": {
+        "turn_index": 32,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          33
+        ]
+      },
+      "snippet_hash": "0b216accb943f0c84a1a481c53861827b7c02add4288c0b4c3be1d3c9aa1087a",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-043-01-powershell",
+        "SNP-cursor_export_unknown_4730-054-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-032-02-python",
+      "lang": "python",
+      "code": "import os\nfrom dotenv import load_dotenv\nload_dotenv()\nprint(f\"API_KEY: {os.getenv('API_KEY')}\")\n",
+      "source": {
+        "turn_index": 32,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          33
+        ]
+      },
+      "snippet_hash": "a68b4b5008165f6391a2dccbfe2edb909484150efbe4bc5b8aae6e0c0917436f",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-043-02-python",
+        "SNP-cursor_export_unknown_4730-054-02-python"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-033-00-powershell",
+      "lang": "powershell",
+      "code": "# 버전 확인 및 업데이트\npoetry --version\npip install --upgrade poetry>=1.8.5\n",
+      "source": {
+        "turn_index": 33,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          34
+        ]
+      },
+      "snippet_hash": "768d35086a270780c9dfd224026a9274aecf23e06a4936cd1507de519d5f5145",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-044-00-powershell",
+        "SNP-cursor_export_unknown_4730-055-00-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-033-01-powershell",
+      "lang": "powershell",
+      "code": "pip uninstall poetry -y\npip install poetry>=1.8.5\npoetry lock\npoetry install\n",
+      "source": {
+        "turn_index": 33,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          34
+        ]
+      },
+      "snippet_hash": "eaa40b2652a348cf50e14885c9f455f3683505ac62d5acde2c12d42449cb8783",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-044-01-powershell",
+        "SNP-cursor_export_unknown_4730-055-01-powershell",
+        "SNP-cursor_export_unknown_4730-083-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-033-02-powershell",
+      "lang": "powershell",
+      "code": "poetry --version  # 1.8.5 이상 확인\npoetry lock       # lock 파일 생성\npoetry install    # 패키지 설치\n",
+      "source": {
+        "turn_index": 33,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          34
+        ]
+      },
+      "snippet_hash": "0584fe6e602ae6b7636043ad3c48802bd8925099e8343f1020697068adc835dd",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-044-02-powershell",
+        "SNP-cursor_export_unknown_4730-055-02-powershell",
+        "SNP-cursor_export_unknown_4730-083-02-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-00-powershell",
+      "lang": "powershell",
+      "code": "# 원격 저장소 확인\ngit remote -v\n\n# 원격 저장소 설정 (최초 1회, 예시)\ngit remote add origin https://github.com/username/repository.git\n\n# 원격 저장소 변경사항 가져오기\ngit pull origin main\n\n# 로컬 변경사항 푸시\ngit push origin main\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "b517c99006690c95fa235a46bc9050aa39d479ef0d596ba65e4df8a60d7574ba",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-00-powershell",
+        "SNP-cursor_export_unknown_4730-056-00-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-01-powershell",
+      "lang": "powershell",
+      "code": "# 1. 현재 상태 확인\ngit status\n\n# 2. 원격 저장소 변경사항 가져오기\ngit pull origin main\n\n# 3. 브랜치 확인 (필요시)\ngit branch\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "697075de4542331fbfd85c9ceaa451c4d7298430567a81404b06d4773e770e36",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-01-powershell",
+        "SNP-cursor_export_unknown_4730-056-01-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-02-powershell",
+      "lang": "powershell",
+      "code": "# 변경사항 확인\ngit status\ngit diff\n\n# 특정 파일만 확인\ngit diff path/to/file.py\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "d67b49ae34108bf28a781d26f1f9ffbd1cac43527df5205172eba3e5ac672029",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-02-powershell",
+        "SNP-cursor_export_unknown_4730-056-02-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-03-powershell",
+      "lang": "powershell",
+      "code": "# 1. 변경사항 스테이징\ngit add .\n\n# 또는 특정 파일만\ngit add path/to/file.py\n\n# 2. 커밋 (의미 있는 메시지 작성)\ngit commit -m \"feat: 프로젝트 기초 및 환경 설정 완료\"\n\n# 3. 원격 저장소에 푸시\ngit push origin main\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "53db2f8c8665457d4f2576b1f9c14a94beb77d96e69de337926c108091e015eb",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-03-powershell",
+        "SNP-cursor_export_unknown_4730-056-03-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-04-powershell",
+      "lang": "powershell",
+      "code": "git commit -m \"feat: 프로젝트 초기화 및 기본 구조 생성\"\ngit commit -m \"feat: API 클라이언트 구현 (재시도 로직 포함)\"\ngit commit -m \"fix: 모듈 import 오류 수정\"\ngit commit -m \"test: E2E 테스트 추가 (실제 데이터 사용)\"\ngit commit -m \"docs: API 문서 업데이트\"\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "d5386f756e9d83802ed1569d74b6b5fedfe22a96d701e047bb93a892392c35ff",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-04-powershell",
+        "SNP-cursor_export_unknown_4730-056-04-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-05-powershell",
+      "lang": "powershell",
+      "code": "# 상태 확인\ngit status\n\n# 변경사항 확인 (간략) - 멈춤 문제 시 대안\ngit status --short\n\n# 변경사항 확인 (상세)\ngit diff\n\n# 변경사항 확인 (특정 파일)\ngit diff path/to/file.py\n\n# 커밋 로그 확인\ngit log --oneline -10\n\n# 브랜치 목록\ngit branch\n\n# 원격 저장소 정보\ngit remote -v\n\n# 원격 변경사항 가져오기\ngit pull origin main\n\n# 로컬 변경사항 푸시\ngit push origin main\n\n# 마지막 커밋 수정 (아직 푸시하지 않은 경우)\ngit commit --amend -m \"수정된 커밋 메시지\"\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "cdee42c60979d3989b78172390aae5938e1268006d3f7a431d4d72c1380635d8",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-05-powershell",
+        "SNP-cursor_export_unknown_4730-056-05-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-06-powershell",
+      "lang": "powershell",
+      "code": "# 1. 충돌 파일 확인\ngit status\n\n# 2. 충돌 파일 열어서 수정\n# <<<<<<< HEAD\n# 로컬 변경사항\n# =======\n# 원격 변경사항\n# >>>>>>> origin/main\n\n# 3. 충돌 해결 후\ngit add .\ngit commit -m \"Merge conflict resolved\"\ngit push origin main\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "5b640051c2f0ed5c8c82bff0d39dbaee7a34d2536f633dd78dca5b6bae6d4146",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-06-powershell",
+        "SNP-cursor_export_unknown_4730-056-06-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-034-07-powershell",
+      "lang": "powershell",
+      "code": "# .gitignore 확인\nGet-Content .gitignore\n\n# 추적 중인 파일 중 .gitignore에 포함된 파일 확인\ngit ls-files | Select-String \"\\.env\"\n",
+      "source": {
+        "turn_index": 34,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          35
+        ]
+      },
+      "snippet_hash": "8998adab70146b9c6ed28f93003be4a48cf1e64ed991502a0a4d9b4fffd9a212",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-045-07-powershell",
+        "SNP-cursor_export_unknown_4730-056-07-powershell"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-048-01-text",
+      "lang": "text",
+      "code": "## Phase X 완료\n\n**완료된 작업**:\n- [완료된 항목들]\n\n**확인 사항**:\n- [사용자가 확인해야 할 것들]\n\n**다음 단계**:\n- Phase X+1 진행 준비\n\n**Phase 완료 후 필수 작업**:\n1. TODOs.md 업데이트 (체크박스 및 진행 상황 추적)\n2. Git commit 실행 (feat: Phase X 완료 - [Phase 제목])\n\n피드백 주시면 다음 Phase로 진행하겠습니다.\n",
+      "source": {
+        "turn_index": 48,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          49
+        ]
+      },
+      "snippet_hash": "5824e356e9da5d2cc627e64b948387b800ec08b4c3e9b6f3eedc2f7c55a4d1ba",
+      "aliases": [
+        "SNP-cursor_export_unknown_4730-074-01-text",
+        "SNP-cursor_export_unknown_4730-080-01-text"
+      ]
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-058-00-text",
+      "lang": "text",
+      "code": "\nTODOs.md의 진행 상황 추적 섹션을 다시 업데이트 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 58,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          59
+        ]
+      },
+      "snippet_hash": "6042cf348646ff7dc5f4c4f78ce77cee4ceca692db6a966b5faf8785e71b863f",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-074-00-text",
+      "lang": "text",
+      "code": "\n작업 완료. 최종 확인 중입니다.\n\n\n",
+      "source": {
+        "turn_index": 74,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          75
+        ]
+      },
+      "snippet_hash": "6d218527250266acd9acb72858f8452cf7330a53b0b2a2ef629266c479e1a2b9",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-074-02-text",
+      "lang": "text",
+      "code": "\n## Phase 1 완료 및 규칙 반영 완료\n\n**완료된 작업**:\n\n1. **TODOs.md 업데이트**\n   - Phase 1의 모든 체크박스 완료 표시\n   - 진행 상황 추적 섹션 업데이트 (Phase 1 완료, Phase 2로 진행)\n\n2. **AGENTS.md 규칙 추가**\n   - \"Phase 완료 시 필수 작업\" 섹션 추가 (4번 항목)\n   - 규칙 내용:\n     - TODOs.md 업데이트 (체크박스 및 진행 상황 추적)\n     - Git Commit 실행 (커밋 메시지 형식 명시)\n     - 작업 순서 명확화\n   - Phase 완료 후 템플릿에 필수 작업 항목 추가\n\n3. **Git Commit 실행**\n   - 첫 번째 커밋: `feat: Phase 1 완료 - 프로젝트 초기 설정 및 환경 구성`\n   - 두 번째 커밋: `docs: Phase 1 완료 상태 반영 및 AGENTS.md 규칙 업데이트`\n\n**AGENTS.md에 추가된 규칙**:\n\n",
+      "source": {
+        "turn_index": 74,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          75
+        ]
+      },
+      "snippet_hash": "ad4da150f2e4416a4fa016ac66bcc43c33f956af5e491fb73510b5b4957787fb",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-074-03-text",
+      "lang": "text",
+      "code": "\n**Git 커밋 내역**:\n- `655ca58` - docs: Phase 1 완료 상태 반영 및 AGENTS.md 규칙 업데이트\n- `bc23152` - feat: Phase 1 완료 - 프로젝트 초기 설정 및 환경 구성\n\n이제 모든 Phase 완료 시 자동으로 TODOs.md 업데이트와 Git commit이 수행됩니다.\n\n피드백 주시면 다음 Phase로 진행하겠습니다.\n\n",
+      "source": {
+        "turn_index": 74,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          75
+        ]
+      },
+      "snippet_hash": "8556fadfb2cc2dd2170f0d2bb590818a3b376761ef3d8923de987022c268bd52",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-00-powershell",
+      "lang": "powershell",
+      "code": "# ✅ 세미콜론 사용\ncd /path/to/project; python -m pytest tests/\n\n# ✅ 서버 실행 (프로젝트 루트에서)\npoetry run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000\nnpm --prefix frontend run dev\n\n# ❌ cd 사용 금지\ncd subdirectory; poetry run uvicorn...  # ModuleNotFoundError 발생\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "8f9ed5113a508eb50061d609f0158428d6561ebaa1ff6e61b4d78a0921c7d42d",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-01-powershell",
+      "lang": "powershell",
+      "code": "# 환경 변수 설정\n$env:PYTHONPATH = \"C:\\Projects\\vibe-coding\\longtext-analysis\"\n$env:API_KEY = \"your-api-key\"\n$env:LOG_LEVEL = \"DEBUG\"\n\n# 환경 변수 확인\necho $env:API_KEY\nGet-ChildItem Env: | Select-String \"API\"\n\n# 환경 변수와 함께 Python 실행\n$env:LOG_LEVEL = \"DEBUG\"; poetry run python script.py\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "0cfdd36face5e6e139a81049a6ac0a82a1750722f0809a884d1fc13091d1d62f",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-02-powershell",
+      "lang": "powershell",
+      "code": "Get-ChildItem -Name \"*.env*\" -Force  # 1. -Force 옵션 (최우선, 숨김 파일 포함)\nGet-Content .env                      # 2. 파일 내용 확인\nTest-Path .env                       # 3. 파일 존재 확인\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "b38656f2aa8201b92f58bb7505937b45ff58031443260ccca21916cca0cacafc",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-03-powershell",
+      "lang": "powershell",
+      "code": "# ✅ 권장\npoetry run python -m module.submodule.script_name\n\n# ❌ 피하기\npoetry run python module/submodule/script.py  # ModuleNotFoundError 가능\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 3
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "52b1bfe8abc25ea590306053952789f25427b941565e66806a713c2d0ac27b8e",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-04-powershell",
+      "lang": "powershell",
+      "code": "# ❌ 금지: python -c로 복잡한 코드 직접 실행\npoetry run python -c \"from pathlib import Path; print(list(Path('data').glob('*.json')))\"\n\n# ✅ 규칙: 스크립트 파일 작성 → 실행 → 삭제\n# 1. check_files.py 파일 생성\n# 2. 실행\npoetry run python check_files.py\n# 3. 정리 (테스트용 스크립트는 보존)\nRemove-Item check_files.py\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 4
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "1d4cd90578bbdd78b20e6bd36acf1cdb0ab057700c3eba62d1cde957f367efae",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-05-powershell",
+      "lang": "powershell",
+      "code": "New-Item -ItemType Directory -Path \"backend\\api\\models\" -Force  # 디렉토리 생성\nGet-Content file.txt -Encoding UTF8        # 읽기 (UTF-8 명시)\nCopy-Item src.txt dst.txt                  # 복사\nRemove-Item file.txt                       # 삭제\nTest-Path .env                             # 존재 확인\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 5
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "86e45845465618447534aea67ef8b0135ef479a221369694a548c12cd5dee02b",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-06-powershell",
+      "lang": "powershell",
+      "code": "# ❌ 실패\npython -c \"from pypdf import PdfReader; reader = PdfReader(r'data\\input\\1등의 통찰.pdf')\"\nSelect-String -Pattern \"CACHE_SAVE|서버 로그|파싱 완료\"\n\n# ✅ 해결\n# 1. Python 스크립트 파일 사용 (권장)\npoetry run python script.py\n\n# 2. 절대 경로 사용\n$pdfPath = (Resolve-Path \"data\\input\\1등의 통찰.pdf\").Path\n\n# 3. Select-String은 영문 패턴 사용\nSelect-String -Pattern \"CACHE_SAVE|server|parsing\"\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 6
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "9b4b24898a32b00ff30182d2fc6defa819e441b6da589f5dfc0cf8ecf653108c",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-082-07-powershell",
+      "lang": "powershell",
+      "code": "# ❌ PowerShell 5.1에서 Tee-Object -Encoding 미지원\nTee-Object -FilePath \"output.log\" -Encoding UTF8\n\n# ✅ Out-File 사용\npoetry run pytest ... | Out-File -FilePath \"output.log\" -Encoding UTF8\n",
+      "source": {
+        "turn_index": 82,
+        "block_index": 7
+      },
+      "links": {
+        "event_seq": [
+          83
+        ]
+      },
+      "snippet_hash": "a97efc705885077c0b1229a4fc2f7c4b1d46753afe63c7b0f2e1d9ccb60c3931",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-083-00-powershell",
+      "lang": "powershell",
+      "code": "poetry --version  # 버전 확인\npip install --upgrade poetry>=1.8.5  # 업데이트\n",
+      "source": {
+        "turn_index": 83,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          84
+        ]
+      },
+      "snippet_hash": "0b9e9f8ecf8b9b73f6ddc559ec9f3656f82c18f0fc84d352aad937e9f6bb3481",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-084-00-powershell",
+      "lang": "powershell",
+      "code": "git status --short  # 상태 확인 (멈춤 문제 시 --short 사용)\ngit pull origin main  # 원격 변경사항 가져오기\n",
+      "source": {
+        "turn_index": 84,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          85
+        ]
+      },
+      "snippet_hash": "aa8cad78c5beee49b3d25a206d3747edeac981a8ddaeeea82b5bbdb7b078ea14",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-084-01-powershell",
+      "lang": "powershell",
+      "code": "git add .\ngit commit -m \"타입: 작업 내용\"  # 예: feat, fix, docs, test, refactor, chore\ngit push origin main\n",
+      "source": {
+        "turn_index": 84,
+        "block_index": 1
+      },
+      "links": {
+        "event_seq": [
+          85
+        ]
+      },
+      "snippet_hash": "f5def4d2cdabe879ca0ffbfbc2394a63c3d0a7011c0f0e9c6c4f558710294931",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-084-02-powershell",
+      "lang": "powershell",
+      "code": "git status --short          # 상태 확인 (간략, 멈춤 문제 대안)\ngit diff                     # 변경사항 확인\ngit log --oneline -10        # 커밋 로그\ngit remote -v                # 원격 저장소 정보\ngit pull origin main         # 원격 변경사항 가져오기\ngit push origin main         # 로컬 변경사항 푸시\n",
+      "source": {
+        "turn_index": 84,
+        "block_index": 2
+      },
+      "links": {
+        "event_seq": [
+          85
+        ]
+      },
+      "snippet_hash": "ed2ad1835f7abc7886833f4709b3203b1a4409ec30cb0010e941dec34c331931",
+      "aliases": []
+    },
+    {
+      "snippet_id": "SNP-cursor_export_unknown_4730-086-00-powershell",
+      "lang": "powershell",
+      "code": "# 프로세스 강제 종료\ntaskkill /F /IM node.exe\ntaskkill /F /IM python.exe\nStop-Process -Name \"node\" -Force\n\n# 포트 점유 확인 및 종료\nnetstat -ano | findstr :3000  # 포트 확인\ntaskkill /F /PID [PID번호]    # PID로 종료\n\n# 프로세스 모니터링\nGet-Process | Where-Object {$_.ProcessName -eq \"node\"}\nGet-Process | Where-Object {$_.ProcessName -eq \"python\"}\n",
+      "source": {
+        "turn_index": 86,
+        "block_index": 0
+      },
+      "links": {
+        "event_seq": [
+          87
+        ]
+      },
+      "snippet_hash": "da14d82e1f1dd8c8a6de6c2fefe3b5fdbe7b6b0eedf13b2426e0ce599a7b1853",
+      "aliases": []
+    }
+  ]
+}

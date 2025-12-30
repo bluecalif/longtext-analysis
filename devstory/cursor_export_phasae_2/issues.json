@@ -1,0 +1,101 @@
+{
+  "session_meta": {
+    "session_id": "cursor_export_unknown_5248",
+    "exported_at": null,
+    "cursor_version": null,
+    "phase": 2,
+    "subphase": null,
+    "source_doc": "longcontext_phase_2.md"
+  },
+  "issues": [
+    {
+      "issue_id": "ISS-197-6006",
+      "scope": {
+        "session_id": "cursor_export_unknown_5248",
+        "phase": 2,
+        "subphase": null
+      },
+      "title": "code_blocks 내 block_index 중복 문제 해결을 위해 turn_index 필드 추가",
+      "symptoms": [
+        "code_blocks 리스트에서 block_index가 여러 Turn에 걸쳐 동일하게 반복되어 고유 식별에 문제가 발생함"
+      ],
+      "root_cause": {
+        "status": "confirmed",
+        "text": "block_index는 각 Turn 내에서 0부터 시작하는 로컬 인덱스이며, parse_markdown()에서 모든 Turn의 코드 블록을 하나의 리스트로 합치면서 turn_index 정보가 사라져 중복이 발생함"
+      },
+      "evidence": [],
+      "fix": [
+        {
+          "summary": "CodeBlock 모델에 turn_index 필드를 추가하고, extract_code_blocks() 함수에서 turn_index를 포함하여 CodeBlock을 생성하도록 수정하여 turn_index와 block_index 조합으로 고유 식별 가능하도록 변경함",
+          "snippet_refs": []
+        }
+      ],
+      "validation": [
+        "수정된 모델과 함수로 테스트 파일을 수정하고 모든 단위 및 E2E 테스트를 실행하여 통과함을 확인함"
+      ],
+      "related_artifacts": [
+        {
+          "path": "backend/parser/turns.py",
+          "action": "create"
+        },
+        {
+          "path": "backend/parser/snippets.py",
+          "action": "create"
+        },
+        {
+          "path": "backend/core/models.py",
+          "action": "create"
+        },
+        {
+          "path": "tests/test_parser.py",
+          "action": "create"
+        },
+        {
+          "path": "cursor_phase_6_3.md",
+          "action": "create"
+        },
+        {
+          "path": "backend/builders/event_normalizer.py",
+          "action": "read"
+        },
+        {
+          "path": "TODOs.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/cursor_phase_6_3.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/PRD_longtext.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/instruction_detail.md",
+          "action": "read"
+        },
+        {
+          "path": "docs/instruction_moredetail.md",
+          "action": "read"
+        }
+      ],
+      "snippet_refs": [
+        "turn_198_block_0",
+        "turn_202_block_3",
+        "turn_198_block_1",
+        "turn_202_block_1",
+        "turn_198_block_2",
+        "turn_198_block_5",
+        "turn_202_block_0",
+        "turn_202_block_2",
+        "turn_198_block_4",
+        "turn_198_block_3"
+      ],
+      "section_id": null,
+      "section_title": null,
+      "related_events": [],
+      "related_turns": [],
+      "confidence_score": null
+    }
+  ]
+}
