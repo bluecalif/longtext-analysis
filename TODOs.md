@@ -602,7 +602,7 @@
    - Turn 분리 정확도 검증
    - Body에 코드 블록 내용이 포함되지 않았는지 검증
 
-**현재 진행 중인 작업**:
+**완료된 작업**:
 - ✅ Turn 분리 로직을 Speaker 기준으로 단순화 (`split_to_turns_by_speaker()`)
 - ✅ `turn_index 12` 문제 해결 완료
 - ✅ Body에서 코드 블록 제거 로직 개선 완료
@@ -613,6 +613,9 @@
   - 언어태그 없는 ``` 처리 규칙 구현 완료
   - look-ahead 로직 구현 완료
   - 모든 테스트 케이스 통과 (케이스 1-5, 케이스 2-1 포함)
+- ✅ 실제 마크다운 파일 파싱 테스트 완료
+  - `longcontext_phase_2.md`: 39 turns, Unknown 2.56%, Code blocks 66개, Body 정리 100%
+  - `longcontext_phase_4_3.md`: 65 turns, Unknown 1.54%, Code blocks 140개, Body 정리 100%
 
 **테스트 결과** (최신):
 - ✅ **중첩 코드 블록 테스트**: 모든 케이스 통과 (6/6)
@@ -638,22 +641,204 @@
 
 ---
 
-## Phase 10: 프로젝트 전체 최적화 (예정)
+## Phase 10: 파이프라인 검증 및 브라우저 품질 확인
 
-**목표**: 프로젝트 전반의 품질, 성능, 문서화 개선
+**목표**: Phase 9에서 완료한 파싱 품질 개선(Turn 분리, 코드 블록 추출, Body 정리)이 이후 파이프라인(이벤트 정규화, 타임라인, 이슈카드)과 API에 문제없이 동작하는지 확인하고, 브라우저에서 사용자가 직접 품질을 확인할 수 있도록 검증합니다.
 
-**계획**:
-- [ ] 전체 시스템 통합 테스트
-- [ ] 품질 체크 (JSON Schema 검증 등)
-- [ ] 성능 최적화
-- [ ] 문서화 완성
-- [ ] 코드 리팩토링 및 정리
+**⚠️ 중요: Phase별 진행 원칙 (AGENTS.md 준수)**
+- 각 Sub Phase (10.1, 10.2, ...) 단위로만 작업 진행
+- **작업 전 사용자 확인 필수**: Sub Phase 시작 전 반드시 사용자에게 설명하고 승인 받기
+- **Sub Phase 완료 후 피드백 대기**: 다음 Sub Phase 진행은 사용자 명시적 승인 후에만 시작
+- **테스트 실행 검증 필수**: 
+  - ❌ 절대 금지: 테스트 파일만 작성하고 실행하지 않은 채 완료 보고
+  - ✅ 필수: 테스트 파일 작성 후 반드시 실제로 실행 (`poetry run pytest tests/test_xxx.py -v`)
+  - ✅ 필수: 테스트 통과 확인 및 결과 파일 생성 확인 (`tests/logs/`, `tests/results/`)
+  - ✅ 필수: 완료 보고에 테스트 실행 명령어 및 결과 포함
+- **Phase 10 완료 시 필수 작업 순서**: 테스트 실행 검증 (해당 시) → TODOs.md 업데이트 → Git add → Git commit → 사용자 피드백 요청
+
+### Phase 10.1: 파이프라인 E2E 테스트 작성 및 실행
+
+**목표**: Phase 9 개선된 파싱 결과가 이벤트 정규화, 타임라인 생성, 이슈카드 생성까지 정상 동작하는지 E2E 테스트로 검증
+
+**구현 계획**:
+- [x] `tests/test_pipeline_e2e_phase10.py` 생성
+  - [x] Phase 9에서 개선된 파싱 결과를 사용하여 전체 파이프라인 테스트
+  - [x] 입력 파일: `docs/longcontext_phase_4_3.md` (Phase 9에서 검증된 파일)
+  - [x] 테스트 단계:
+    1. 파싱 실행 (`parse_markdown`)
+    2. 이벤트 정규화 (`normalize_turns_to_events`)
+    3. 타임라인 생성 (`build_timeline`)
+    4. 이슈카드 생성 (`build_issue_cards`)
+    5. 스니펫 처리 (`process_snippets`)
+  - [x] 검증 항목:
+    - 파싱 결과 정확성 (Turn 개수, 코드 블록 개수, Body 정리 상태)
+    - 이벤트 정규화 정확성 (Event 개수 = Turn 개수, 이벤트 타입 분류)
+    - 타임라인 생성 정확성 (Section 개수, Event 연결)
+    - 이슈카드 생성 정확성 (Issue 개수, Timeline Section 연결)
+    - 스니펫 처리 정확성 (스니펫 개수, 중복 제거, 링킹)
+  - [x] 결과 저장: `tests/results/pipeline_e2e_phase10_{timestamp}.json`
+  - [x] 리포트 생성: `tests/reports/pipeline_e2e_phase10_report.json`
+
+**⚠️ 중요: 테스트 실행 검증 필수**
+- ❌ 절대 금지: 테스트 파일만 작성하고 실행하지 않은 채 완료 보고
+- ✅ 필수: 테스트 파일 작성 후 반드시 실제로 실행
+- ✅ 필수: 테스트 통과 확인 및 결과 파일 생성 확인
+- ✅ 필수: 완료 보고에 테스트 실행 명령어 및 결과 포함
+
+**검증 방법**:
+- E2E 테스트 실행: `poetry run pytest tests/test_pipeline_e2e_phase10.py -v` (프로젝트 루트에서 실행)
+- 모든 테스트 통과 확인
+- 결과 파일 및 리포트 생성 확인 (`tests/logs/`, `tests/results/`, `tests/reports/`)
+- 테스트 실행 후 자동 상세 보고 (정량적 데이터 제시, 문제 발견 시 원인 분석 포함)
+
+### Phase 10.2: API 영향 확인 테스트
+
+**목표**: Phase 9 파싱 개선이 API 엔드포인트에 미치는 영향을 확인
+
+**구현 계획**:
+- [x] `tests/test_api_phase10.py` 생성
+  - [x] 입력 파일: `docs/longcontext_phase_4_3.md`
+  - [x] 테스트 엔드포인트:
+    1. `POST /api/parse` - 파싱 결과 검증
+    2. `POST /api/timeline` - 타임라인 생성 검증
+    3. `POST /api/issues` - 이슈카드 생성 검증
+    4. `POST /api/snippets/process` - 스니펫 처리 검증
+    5. `GET /api/snippets/{snippet_id}` - 스니펫 조회 검증
+  - [x] 검증 항목:
+    - API 응답 스키마 정확성
+    - 파싱 결과 일관성 (Phase 9 개선 사항 반영)
+    - 이벤트/Timeline/Issues 데이터 정확성
+    - 에러 처리 정확성
+  - [x] 결과 저장: `tests/results/api_phase10_{timestamp}.json`
+  - [x] 리포트 생성: `tests/reports/api_phase10_report.json`
+
+**⚠️ 중요: 테스트 실행 검증 필수**
+- ❌ 절대 금지: 테스트 파일만 작성하고 실행하지 않은 채 완료 보고
+- ✅ 필수: 테스트 파일 작성 후 반드시 실제로 실행
+- ✅ 필수: 테스트 통과 확인 및 결과 파일 생성 확인
+- ✅ 필수: 완료 보고에 테스트 실행 명령어 및 결과 포함
+
+**검증 방법**:
+- 실제 서버 실행 필수 (`test_server` fixture 사용, `conftest.py`의 `test_server` fixture 사용)
+- E2E 테스트 실행: `poetry run pytest tests/test_api_phase10.py -v` (프로젝트 루트에서 실행)
+- 모든 테스트 통과 확인
+- API 응답 스키마 검증
+- 테스트 실행 후 자동 상세 보고 (정량적 데이터 제시, 문제 발견 시 원인 분석 포함)
+
+### Phase 10.3: 브라우저 품질 확인 가이드 작성
+
+**목표**: 사용자가 브라우저에서 직접 품질을 확인할 수 있도록 가이드 작성
+
+**구현 계획**:
+- [x] `docs/phase10_browser_quality_check.md` 생성
+  - [x] 서버 실행 방법 (⚠️ 중요: 프로젝트 루트에서 실행, cd 사용 금지)
+    - 백엔드: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000` (프로젝트 루트에서)
+    - 프론트엔드: `npm --prefix frontend run dev` (프로젝트 루트에서)
+  - [x] 확인 항목:
+    1. 파일 업로드 및 파싱
+       - 파일 업로드 성공 확인
+       - Session Meta 표시 확인
+       - Turn 개수 확인
+    2. Timeline 미리보기
+       - Timeline Section 리스트 표시 확인
+       - 각 Section의 이벤트 표시 확인
+       - 이슈 연결 표시 확인
+       - 코드 스니펫 링크 확인
+    3. Issues 미리보기
+       - Issue Card 리스트 표시 확인
+       - 카드 상세 정보 확인 (증상, 원인, 조치, 검증)
+       - 관련 스니펫 링크 확인
+    4. Snippets 미리보기
+       - 언어별 필터 동작 확인
+       - 스니펫 목록 표시 확인
+       - 코드 접기/펼치기 기능 확인
+    5. Export 기능
+       - Timeline 다운로드 (JSON/MD) 확인
+       - Issues 다운로드 (JSON/MD) 확인
+       - 전체 다운로드 (ZIP) 확인
+  - [x] 품질 체크리스트:
+    - 파싱 정확도 (Unknown speaker 비율 < 20%)
+    - 코드 블록 추출 정확도 (Body에 코드 블록 내용 없음)
+    - 이벤트 타입 분류 정확도
+    - Timeline Section 구조 정확도
+    - Issue Card 품질 (증상/원인/조치/검증 완성도)
+    - 스니펫 링킹 정확도
+
+**검증 방법**:
+- 가이드 문서 작성 완료 확인
+- 사용자가 따라할 수 있는 명확한 단계별 설명 확인
+
+### Phase 10.4: 브라우저 품질 확인 실행
+
+**목표**: 실제 브라우저에서 품질 확인을 수행하고 결과 문서화
+
+**구현 계획**:
+- [x] 서버 실행 (⚠️ 중요: 프로젝트 루트에서 실행, cd 사용 금지)
+  - [x] 백엔드 서버 실행: `poetry run uvicorn backend.main:app --host 0.0.0.0 --port 8000` (프로젝트 루트에서)
+  - [x] 프론트엔드 서버 실행: `npm --prefix frontend run dev` (프로젝트 루트에서)
+  - [x] 서버 정상 동작 확인 (Health Check: `http://localhost:8000/health`)
+- [x] 브라우저에서 품질 확인
+  - [x] `http://localhost:3000` 접속
+  - [x] 테스트 파일 업로드: `docs/longcontext_phase_4_3.md`
+  - [x] 전체 파이프라인 실행 (파싱 → Timeline → Issues → Snippets)
+  - [x] 각 단계별 결과 확인:
+    - [x] 파싱 결과 확인 (Turn 개수, 코드 블록 개수, Body 정리 상태)
+    - [x] Timeline 미리보기 확인 (Section 구조, 이벤트 표시, 이슈 연결)
+    - [x] Issues 미리보기 확인 (카드 리스트, 상세 정보, 스니펫 링크)
+    - [x] Snippets 미리보기 확인 (언어별 필터, 코드 표시)
+    - [x] Export 기능 확인 (JSON/MD/ZIP 다운로드)
+  - [x] 품질 체크리스트 확인:
+    - [x] 파싱 정확도 (Unknown speaker 비율)
+    - [x] 코드 블록 추출 정확도 (Body 정리 상태)
+    - [x] 이벤트 타입 분류 정확도
+    - [x] Timeline Section 구조 정확도
+    - [x] Issue Card 품질
+    - [x] 스니펫 링킹 정확도
+- [x] 결과 문서화
+  - [x] 사용자 확인 완료 (결과: 훌륭함)
+
+**검증 방법**:
+- 브라우저에서 모든 기능 정상 동작 확인
+- 품질 체크리스트 모든 항목 확인
+- 결과 문서화 완료 확인
+
+### Phase 10.5: Phase 완료 작업
+
+**목표**: Phase 10 완료 후 필수 작업 수행
+
+**⚠️ 중요: Phase 완료 시 필수 작업 순서 (AGENTS.md 준수)**
+1. 테스트 실행 검증 (해당 시)
+2. TODOs.md 업데이트 (체크박스 및 진행 상황 추적)
+3. Git add → Git commit → Git push
+4. 사용자 피드백 요청
+
+**구현 계획**:
+- [x] 테스트 실행 검증 (⚠️ 필수)
+  - [x] E2E 테스트 실행: `poetry run pytest tests/test_pipeline_e2e_phase10.py -v` (프로젝트 루트에서)
+  - [x] API 테스트 실행: `poetry run pytest tests/test_api_phase10.py -v` (프로젝트 루트에서)
+  - [x] 모든 테스트 통과 확인
+  - [x] 결과 파일 및 리포트 생성 확인 (`tests/logs/`, `tests/results/`, `tests/reports/`)
+  - [x] 테스트 실행 후 자동 상세 보고 (정량적 데이터 제시, 문제 발견 시 원인 분석 포함)
+- [x] TODOs.md 업데이트
+  - [x] Phase 10 섹션 업데이트 (체크박스 및 진행 상황 추적)
+  - [x] 완료된 Sub Phase 기록
+  - [x] 테스트 결과 요약 기록
+- [ ] Git Commit (⚠️ 중요: 프로젝트 루트에서 실행)
+  - [ ] `git status --short` 확인 → `git pull origin main` 실행 (작업 전)
+  - [ ] `git add .`
+  - [ ] `git commit -m "feat: Phase 10 완료 - 파이프라인 검증 및 브라우저 품질 확인"`
+  - [ ] `git push origin main`
+
+**검증 방법**:
+- 모든 테스트 통과 확인
+- TODOs.md 업데이트 확인
+- Git commit 완료 확인
 
 ---
 
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 9 완료, Phase 10 준비 중
+**현재 Phase**: Phase 10 완료 (파이프라인 검증 및 브라우저 품질 확인)
 
 **마지막 업데이트**: 2025-12-30
 
@@ -683,9 +868,21 @@
   - ✅ `turn_index 12` 문제 해결 완료
   - ✅ 중첩 코드 블록 테스트 완료 (6/6 통과)
   - ✅ 실제 마크다운 파일 파싱 테스트 완료 (phase_2, phase_4_3 모두 통과)
-
-**다음 단계**:
-- Phase 9 완료 후 Phase 10: 프로젝트 전체 최적화 진행
+- Phase 10: 파이프라인 검증 및 브라우저 품질 확인 (2025-12-30 완료)
+  - ✅ Phase 10.1: 파이프라인 E2E 테스트 작성 및 실행
+    - 테스트 결과: PASS (50.83초, 모든 검증 통과)
+    - 파싱 정확도: Unknown speaker 1.54%, Body 정리 100%
+    - 파이프라인 결과: 65 turns, 65 events, 5 timeline sections, 2 issue cards, 111 snippets
+  - ✅ Phase 10.2: API 영향 확인 테스트
+    - 테스트 결과: 5/5 PASSED (24.65초)
+    - 모든 API 엔드포인트 정상 동작 확인
+    - Phase 9 파싱 개선 사항 정상 반영 확인
+  - ✅ Phase 10.3: 브라우저 품질 확인 가이드 작성
+    - 가이드 문서: `docs/phase10_browser_quality_check.md` 생성 완료
+  - ✅ Phase 10.4: 브라우저 품질 확인 실행
+    - 사용자 확인 완료 (결과: 훌륭함)
+  - ✅ Phase 10.5: Phase 완료 작업
+    - TODOs.md 업데이트 완료
 
 ---
 
