@@ -80,20 +80,59 @@ OPENAI_API_KEY=your-api-key-here
 
 ## 실행 방법
 
-### 백엔드 서버 실행
+### 빠른 시작 (권장)
 
+**원터치 실행**:
+1. 바로가기 생성 (최초 1회):
+   ```powershell
+   # PowerShell에서 실행
+   .\scripts\create-shortcut.ps1
+   
+   # 또는 배치 파일 실행
+   .\scripts\create-shortcut.bat
+   ```
+
+2. `Start App.lnk` 파일을 더블클릭하여 앱 시작
+
+**스크립트 실행**:
+```powershell
+# 백엔드와 프론트엔드를 동시에 실행
+.\scripts\start-all.ps1
+
+# 또는 배치 파일 실행
+.\scripts\start-all.bat
+```
+
+두 서버가 각각 새 창에서 실행되며, 5초 후 브라우저가 자동으로 열립니다.
+- 백엔드: http://localhost:8000
+- 프론트엔드: http://localhost:3000
+- API 문서: http://localhost:8000/docs
+
+### 개별 서버 실행
+
+**백엔드 서버만 실행**:
+```powershell
+.\scripts\start-backend.ps1
+```
+
+**프론트엔드 서버만 실행**:
+```powershell
+.\scripts\start-frontend.ps1
+```
+
+### 수동 실행 (프로젝트 루트에서 실행)
+
+**백엔드 서버**:
 ```powershell
 poetry run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 프론트엔드 서버 실행 (Phase 8에서 구현 예정)
-
+**프론트엔드 서버**:
 ```powershell
-cd frontend
-npm run dev
+npm --prefix frontend run dev
 ```
 
-**참고**: 현재 Phase 7 진행 중 (백엔드 API 구현). 프론트엔드는 Phase 8에서 구현됩니다.
+**주의**: 모든 명령어는 프로젝트 루트에서 실행해야 합니다. `cd frontend`를 사용하지 마세요.
 
 ## 참고 문서
 

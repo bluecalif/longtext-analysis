@@ -836,9 +836,41 @@
 
 ---
 
+## Phase 11: 실행 환경 보강 (완료)
+
+**목표**: 윈도우 환경에서 원터치로 백엔드와 프론트엔드 서버를 실행할 수 있도록 스크립트와 바로가기를 제공합니다.
+
+**완료된 Sub Phase**:
+- ✅ Phase 11.1: 서버 실행 스크립트 작성
+  - `scripts/start-backend.ps1`: 백엔드 서버 실행 (PowerShell)
+  - `scripts/start-frontend.ps1`: 프론트엔드 서버 실행 (PowerShell)
+  - `scripts/start-all.ps1`: 두 서버를 하나의 스크립트로 실행 (PowerShell, 새 창 사용)
+  - `scripts/start-all.bat`: 배치 파일 버전 (바로가기용)
+- ✅ Phase 11.2: 윈도우 바로가기 생성 스크립트 작성
+  - `scripts/create-shortcut.ps1`: 바로가기 생성 PowerShell 스크립트
+  - `scripts/create-shortcut.bat`: 배치 파일 버전 (간단한 래퍼)
+  - `Start App.lnk`: 프로젝트 루트에 생성되는 바로가기 파일
+- ✅ Phase 11.3: 실행 환경 문서화
+  - README.md 실행 방법 섹션 업데이트 (스크립트 사용법 추가)
+
+**주요 기능**:
+- 프로젝트 루트 자동 확인
+- 포트 충돌 체크 및 자동 종료 (8000, 3000)
+- 환경 변수 확인 (.env 파일)
+- Poetry/Node.js 설치 확인
+- 브라우저 자동 실행 (5초 후)
+- 두 서버를 별도 창에서 실행하여 로그 구분
+
+**사용 방법**:
+1. 바로가기 생성 (최초 1회): `.\scripts\create-shortcut.ps1` 또는 `.\scripts\create-shortcut.bat`
+2. `Start App.lnk` 파일을 더블클릭하여 앱 시작
+3. 또는 스크립트 직접 실행: `.\scripts\start-all.ps1` 또는 `.\scripts\start-all.bat`
+
+---
+
 ## 진행 상황 추적
 
-**현재 Phase**: Phase 10 완료 (파이프라인 검증 및 브라우저 품질 확인)
+**현재 Phase**: Phase 11 완료 (실행 환경 보강)
 
 **마지막 업데이트**: 2025-12-30
 
@@ -869,6 +901,10 @@
   - ✅ 중첩 코드 블록 테스트 완료 (6/6 통과)
   - ✅ 실제 마크다운 파일 파싱 테스트 완료 (phase_2, phase_4_3 모두 통과)
 - Phase 10: 파이프라인 검증 및 브라우저 품질 확인 (2025-12-30 완료)
+- Phase 11: 실행 환경 보강 (2025-12-30 완료)
+  - ✅ Phase 11.1: 서버 실행 스크립트 작성
+  - ✅ Phase 11.2: 윈도우 바로가기 생성 스크립트 작성
+  - ✅ Phase 11.3: 실행 환경 문서화
   - ✅ Phase 10.1: 파이프라인 E2E 테스트 작성 및 실행
     - 테스트 결과: PASS (50.83초, 모든 검증 통과)
     - 파싱 정확도: Unknown speaker 1.54%, Body 정리 100%
