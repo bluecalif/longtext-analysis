@@ -859,7 +859,8 @@
 - 환경 변수 확인 (.env 파일)
 - Poetry/Node.js 설치 확인
 - 브라우저 자동 실행 (5초 후)
-- 두 서버를 별도 창에서 실행하여 로그 구분
+- 두 서버를 별도 창에서 실행 (숨김 상태)
+- UTF-8 BOM 인코딩 지원 (한글 인코딩 문제 해결)
 
 **사용 방법**:
 1. 바로가기 생성 (최초 1회): `.\scripts\create-shortcut.ps1` 또는 `.\scripts\create-shortcut.bat`
@@ -927,6 +928,8 @@
   - ✅ Phase 11.1: 서버 실행 스크립트 작성
   - ✅ Phase 11.2: 윈도우 바로가기 생성 스크립트 작성
   - ✅ Phase 11.3: 실행 환경 문서화
+  - ✅ PowerShell 스크립트 인코딩 문제 해결 (UTF-8 BOM)
+  - ✅ PowerShell 창 숨김 처리 (WindowStyle Hidden)
 - Phase 12: 문서화 정리 (2025-12-30 완료)
   - ✅ Phase 12.1: README.md 업데이트 (API 엔드포인트, 트러블슈팅, 프로젝트 상태)
   - ✅ Phase 12.2: 커서룰 보강 (실행 환경 규칙 추가)
