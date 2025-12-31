@@ -1,4 +1,4 @@
-# 윈도우 바로가기 생성 스크립트
+﻿# 윈도우 바로가기 생성 스크립트
 # 이 스크립트는 프로젝트 루트에 "Start App.lnk" 바로가기를 생성합니다.
 
 # 프로젝트 루트로 이동
@@ -20,19 +20,19 @@ $shortcutPath = Join-Path $projectRoot "Start App.lnk"
 try {
     # WScript.Shell COM 객체 생성
     $shell = New-Object -ComObject WScript.Shell
-    
+
     # 바로가기 생성
     $shortcut = $shell.CreateShortcut($shortcutPath)
     $shortcut.TargetPath = $targetScript
     $shortcut.WorkingDirectory = $projectRoot
     $shortcut.Description = "Longtext Analysis 앱 시작"
     $shortcut.WindowStyle = 1  # Normal window
-    
+
     # 아이콘 설정 (PowerShell 아이콘 사용, 또는 사용자 지정 아이콘 경로 지정 가능)
     # $shortcut.IconLocation = "C:\Windows\System32\shell32.dll,13"  # 실행 아이콘
-    
+
     $shortcut.Save()
-    
+
     Write-Host "[성공] 바로가기가 생성되었습니다:" -ForegroundColor Green
     Write-Host "  $shortcutPath" -ForegroundColor White
     Write-Host ""
