@@ -16,16 +16,16 @@ Write-Host ""
 $backendScript = Join-Path $scriptDir "start-backend.ps1"
 $frontendScript = Join-Path $scriptDir "start-frontend.ps1"
 
-# 백엔드 서버를 새 창에서 실행
+# 백엔드 서버를 새 창에서 실행 (숨김 상태)
 Write-Host "백엔드 서버를 새 창에서 시작합니다..." -ForegroundColor Cyan
-Start-Process powershell.exe -ArgumentList "-NoExit", "-File", "`"$backendScript`"" -WorkingDirectory $projectRoot
+$backendProcess = Start-Process powershell.exe -ArgumentList "-NoExit", "-File", "`"$backendScript`"" -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru
 
 # 잠시 대기 (백엔드 서버 시작 시간 확보)
 Start-Sleep -Seconds 3
 
-# 프론트엔드 서버를 새 창에서 실행
+# 프론트엔드 서버를 새 창에서 실행 (숨김 상태)
 Write-Host "프론트엔드 서버를 새 창에서 시작합니다..." -ForegroundColor Cyan
-Start-Process powershell.exe -ArgumentList "-NoExit", "-File", "`"$frontendScript`"" -WorkingDirectory $projectRoot
+$frontendProcess = Start-Process powershell.exe -ArgumentList "-NoExit", "-File", "`"$frontendScript`"" -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green
