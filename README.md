@@ -52,8 +52,9 @@ longtext-analysis/
 
 - Python 3.11 이상
 - Poetry 1.8.5 이상 (PEP 621 메타데이터 버전 2.4 지원)
-- Node.js 18 이상 (프론트엔드용, Phase 8에서 사용)
-- npm 또는 yarn (프론트엔드용)
+- Node.js 18 이상 (프론트엔드용)
+- npm (Node.js와 함께 설치됨)
+- Windows PowerShell 5.1 이상 (실행 스크립트 사용 시)
 
 ### 설치 방법
 
@@ -62,11 +63,12 @@ longtext-analysis/
 poetry install
 ```
 
-2. 프론트엔드 의존성 설치 (프론트엔드 디렉토리 생성 후):
+2. 프론트엔드 의존성 설치:
 ```powershell
-cd frontend
-npm install
+npm --prefix frontend install
 ```
+
+**주의**: 모든 명령어는 프로젝트 루트에서 실행해야 합니다. `cd frontend`를 사용하지 마세요.
 
 ### 환경 변수 설정
 
@@ -133,6 +135,109 @@ npm --prefix frontend run dev
 ```
 
 **주의**: 모든 명령어는 프로젝트 루트에서 실행해야 합니다. `cd frontend`를 사용하지 마세요.
+
+## API 엔드포인트
+
+### 주요 엔드포인트
+
+- **POST `/api/parse`** - 마크다운 파일 업로드 및 파싱
+  - 입력: 마크다운 파일 (.md)
+  - 출력: 세션 메타데이터, Turn 리스트, Event 리스트
+  - Query 파라미터: `use_llm` (bool, 기본값: True)
+
+- **POST `/api/timeline`** - Timeline 생성
+  - 입력: TimelineRequest (session_meta, events, issue_cards)
+  - 출력: TimelineResponse (session_meta, sections, events)
+  - Query 파라미터: `use_llm` (bool, 기본값: True)
+
+- **POST `/api/issues`** - Issue Cards 생성
+  - 입력: IssuesRequest (session_meta, turns, events, timeline_sections)
+  - 출력: IssuesResponse (session_meta, issues)
+  - Query 파라미터: `use_llm` (bool, 기본값: True)
+
+- **POST `/api/snippets/process`** - 스니펫 처리 (중복 제거, 링킹)
+  - 입력: SnippetsProcessRequest (session_meta, turns, events, issue_cards)
+  - 출력: SnippetsProcessResponse (session_meta, snippets, events, issue_cards)
+
+- **GET `/api/snippets/{snippet_id}`** - 스니펫 조회
+  - 입력: snippet_id
+  - 출력: SnippetResponse (snippet)
+
+- **POST `/api/export/timeline`** - Timeline 다운로드
+  - 입력: ExportTimelineRequest (session_meta, sections, events, format)
+  - 출력: JSON 또는 Markdown 파일
+  - 형식: `format` 파라미터로 "json" 또는 "md" 선택
+
+- **POST `/api/export/issues`** - Issues 다운로드
+  - 입력: ExportIssuesRequest (session_meta, issues, format)
+  - 출력: JSON 또는 Markdown 파일
+  - 형식: `format` 파라미터로 "json" 또는 "md" 선택
+
+- **POST `/api/export/all`** - 전체 산출물 다운로드
+  - 입력: ExportAllRequest (session_meta, sections, events, issues, snippets, format)
+  - 출력: ZIP 파일 (Timeline, Issues, Snippets 포함)
+  - 형식: `format` 파라미터로 "json" 또는 "md" 선택
+
+### API 문서
+
+서버 실행 후 다음 URL에서 상세 API 문서를 확인할 수 있습니다:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## 트러블슈팅
+
+### 포트 충돌
+
+**문제**: 포트 8000 또는 3000이 이미 사용 중입니다.
+
+**해결**:
+- 실행 스크립트는 자동으로 포트를 사용 중인 프로세스를 종료합니다.
+- 수동으로 종료하려면:
+  ```powershell
+  # 포트 8000 사용 중인 프로세스 확인 및 종료
+  netstat -ano | findstr :8000
+  taskkill /F /PID [PID번호]
+  
+  # 포트 3000 사용 중인 프로세스 확인 및 종료
+  netstat -ano | findstr :3000
+  taskkill /F /PID [PID번호]
+  ```
+
+### 환경 변수 오류
+
+**문제**: `.env` 파일을 찾을 수 없거나 OPENAI_API_KEY가 설정되지 않았습니다.
+
+**해결**:
+1. 프로젝트 루트에 `.env` 파일 생성:
+   ```env
+   OPENAI_API_KEY=your-api-key-here
+   ```
+2. 파일이 숨김 파일인지 확인:
+   ```powershell
+   Get-ChildItem -Name "*.env*" -Force
+   ```
+
+### PowerShell 실행 정책 오류
+
+**문제**: PowerShell 스크립트 실행이 차단됩니다.
+
+**해결**:
+- 현재 세션에서만 허용 (권장):
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  ```
+- 또는 배치 파일(.bat) 사용: 스크립트 실행 시 자동으로 실행 정책을 우회합니다.
+
+### Poetry 버전 오류
+
+**문제**: "Unknown metadata version: 2.4" 오류가 발생합니다.
+
+**해결**:
+- Poetry 1.8.5 이상 필요:
+  ```powershell
+  pip install --upgrade poetry>=1.8.5
+  poetry --version
+  ```
 
 ## 참고 문서
 
@@ -380,7 +485,7 @@ poetry run pytest tests/test_snippet_e2e.py -v
 
 프로젝트는 Phase별로 진행됩니다. 자세한 내용은 [TODOs.md](TODOs.md)를 참고하세요.
 
-**현재 Phase**: Phase 6 완료, Phase 7 진행 준비 (백엔드 API 구현)
+**현재 Phase**: Phase 11 완료 (실행 환경 보강)
 
 ### 완료된 주요 Phase
 - Phase 1-2: 프로젝트 초기 설정 및 파서 구현
@@ -388,7 +493,9 @@ poetry run pytest tests/test_snippet_e2e.py -v
 - Phase 4: Timeline 및 Issue Cards 생성 (구조화 개선 포함)
 - Phase 5: 코드 스니펫 분리 및 저장
 - Phase 6: LLM 호출 최적화 (배치 처리, 타임라인 구조화 최적화)
-
-### 다음 Phase
 - Phase 7: 백엔드 API 구현 (FastAPI 엔드포인트, Markdown 렌더러)
+- Phase 8: 프론트엔드 UI 구현 (Next.js 14+, TypeScript)
+- Phase 9: 파싱 개선 (Turn 분리, 중첩 코드 블록 처리, Body 정리)
+- Phase 10: 파이프라인 검증 및 브라우저 품질 확인
+- Phase 11: 실행 환경 보강 (원터치 실행 스크립트 및 바로가기)
 
